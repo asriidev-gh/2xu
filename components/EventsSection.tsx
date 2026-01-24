@@ -12,7 +12,6 @@ export default function EventsSection() {
   const [currentCarouselPage, setCurrentCarouselPage] = useState(0);
   
   const eventImages = [
-    '/images/events-runner.png',
     '/images/events-runner2.jpg',
     '/images/events-runner3.jpg',
     '/images/events-runner4.jpg'
@@ -53,21 +52,21 @@ export default function EventsSection() {
     };
   }, []);
 
-  // Cycle through images after each flash completes with fade in/fade out effect
+  // Cycle through images after each flash completes with fast crossfade effect
   useEffect(() => {
     let imageInterval: NodeJS.Timeout;
     
     const changeImage = () => {
       // Start fade out
       setIsFading(true);
-      // After fade out completes, change image and fade in
+      // Change image quickly (at 30% of fade duration) to start crossfade
       setTimeout(() => {
         setCurrentImageIndex((prevIndex) => (prevIndex + 1) % eventImages.length);
-        // Fade in
+        // Immediately start fade in (overlapping with fade out)
         setTimeout(() => {
           setIsFading(false);
-        }, 50);
-      }, 500); // Fade out duration (500ms)
+        }, 10);
+      }, 90); // Change image at 90ms (30% of 300ms transition)
     };
     
     // Initial delay to sync with first flash completion
@@ -375,7 +374,7 @@ export default function EventsSection() {
               backgroundColor: 'black'
             }}
           >
-            {/* Image with fade transition */}
+            {/* Current image fading out */}
             <div
               className="absolute inset-0"
               style={{
@@ -384,7 +383,21 @@ export default function EventsSection() {
                 backgroundPosition: 'center center',
                 backgroundRepeat: 'no-repeat',
                 opacity: isFading ? 0 : 1,
-                transition: 'opacity 0.5s ease-in-out'
+                transition: 'opacity 0.3s ease-in-out',
+                zIndex: 1
+              }}
+            ></div>
+            {/* Next image fading in (crossfade) */}
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `url(${eventImages[(currentImageIndex + 1) % eventImages.length]})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center center',
+                backgroundRepeat: 'no-repeat',
+                opacity: isFading ? 1 : 0,
+                transition: 'opacity 0.3s ease-in-out',
+                zIndex: 2
               }}
             ></div>
             
