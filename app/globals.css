@@ -16,6 +16,10 @@
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
@@ -26,9 +30,72 @@ body {
     rgb(var(--background-start-rgb));
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shine {
+  0%, 75% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  80%, 90% {
+    transform: translateX(150%) translateY(150%) rotate(45deg);
+  }
+  95%, 100% {
+    transform: translateX(150%) translateY(150%) rotate(45deg);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 75% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  80%, 90% {
+    opacity: 0.3;
+    transform: scale(1.1);
+  }
+  95%, 100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  
+  .font-sweet-sans {
+    font-family: 'Sweet Sans Pro', sans-serif;
+  }
+  
+  .font-druk {
+    font-family: 'Druk', sans-serif;
+  }
+  
+  .font-fira-sans {
+    font-family: var(--font-fira-sans), sans-serif;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.8s ease-out forwards;
+    opacity: 0;
+  }
+  
+  .animate-shine {
+    animation: shine 10s ease-in-out infinite;
+  }
+  
+  .animate-pulse-glow {
+    animation: pulseGlow 10s ease-in-out infinite;
   }
 }
 

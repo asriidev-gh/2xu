@@ -4,6 +4,21 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
 
+const smoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+  e.preventDefault();
+  const element = document.querySelector(targetId);
+  if (element) {
+    const headerOffset = 80;
+    const elementPosition = element.getBoundingClientRect().top;
+    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: 'smooth'
+    });
+  }
+};
+
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -25,19 +40,19 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link href="/" className="text-gray-700 hover:text-orange-600 font-medium transition-colors">
+            <a href="#home" onClick={(e) => smoothScroll(e, '#home')} className="text-gray-700 hover:text-orange-600 font-medium transition-colors font-fira-sans cursor-pointer">
               Home
-            </Link>
-            <Link href="/events" className="text-gray-700 hover:text-orange-600 font-medium transition-colors">
+            </a>
+            <a href="#events" onClick={(e) => smoothScroll(e, '#events')} className="text-gray-700 hover:text-orange-600 font-medium transition-colors font-fira-sans cursor-pointer">
               Events
-            </Link>
-            <Link href="/about" className="text-gray-700 hover:text-orange-600 font-medium transition-colors">
-              About
-            </Link>
-            <Link href="/contact" className="text-gray-700 hover:text-orange-600 font-medium transition-colors">
-              Contact
-            </Link>
-            <button className="bg-orange-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-orange-700 transition-colors">
+            </a>
+            <a href="#mission-vision" onClick={(e) => smoothScroll(e, '#mission-vision')} className="text-gray-700 hover:text-orange-600 font-medium transition-colors font-fira-sans cursor-pointer">
+              Mission & Vision
+            </a>
+            <a href="#partners" onClick={(e) => smoothScroll(e, '#partners')} className="text-gray-700 hover:text-orange-600 font-medium transition-colors font-fira-sans cursor-pointer">
+              Partners
+            </a>
+            <button className="bg-orange-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-orange-700 transition-colors font-fira-sans">
               Join Now
             </button>
           </div>
@@ -69,19 +84,19 @@ export default function Header() {
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden py-4 space-y-4">
-            <Link href="/" className="block text-gray-700 hover:text-orange-600 font-medium">
+            <a href="#home" onClick={(e) => { smoothScroll(e, '#home'); setIsMenuOpen(false); }} className="block text-gray-700 hover:text-orange-600 font-medium font-fira-sans">
               Home
-            </Link>
-            <Link href="/events" className="block text-gray-700 hover:text-orange-600 font-medium">
+            </a>
+            <a href="#events" onClick={(e) => { smoothScroll(e, '#events'); setIsMenuOpen(false); }} className="block text-gray-700 hover:text-orange-600 font-medium font-fira-sans">
               Events
-            </Link>
-            <Link href="/about" className="block text-gray-700 hover:text-orange-600 font-medium">
-              About
-            </Link>
-            <Link href="/contact" className="block text-gray-700 hover:text-orange-600 font-medium">
-              Contact
-            </Link>
-            <button className="w-full bg-orange-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-orange-700 transition-colors">
+            </a>
+            <a href="#mission-vision" onClick={(e) => { smoothScroll(e, '#mission-vision'); setIsMenuOpen(false); }} className="block text-gray-700 hover:text-orange-600 font-medium font-fira-sans">
+              Mission & Vision
+            </a>
+            <a href="#partners" onClick={(e) => { smoothScroll(e, '#partners'); setIsMenuOpen(false); }} className="block text-gray-700 hover:text-orange-600 font-medium font-fira-sans">
+              Partners
+            </a>
+            <button className="w-full bg-orange-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-orange-700 transition-colors font-fira-sans">
               Join Now
             </button>
           </div>
