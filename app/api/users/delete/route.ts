@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 import { ObjectId } from 'mongodb';
 import clientPromise from '@/lib/mongodb';
 
+export const dynamic = 'force-dynamic';
+
 // Check if user is authenticated
 async function isAuthenticated() {
   const cookieStore = await cookies();

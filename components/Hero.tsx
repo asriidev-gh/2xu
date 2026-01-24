@@ -122,7 +122,7 @@ export default function Hero() {
 
           {/* Main Heading */}
           <h1 className="text-3xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight animate-fade-in" style={{ animationDelay: '0.6s' }}>
-            <span className="block font-druk" style={{ color: '#F8C74F' }}>SAVE THE DATE</span>
+            <span className="block text-yellow-500 font-druk">SAVE THE DATE</span>
             {/* Subheading */}
             <p className="text-xl sm:text-1xl text-gray-200 mb-4 max-w-2xl mx-auto font-sweet-sans">
                 PUSH YOUR PACE, TEST YOUR LIMITS
@@ -133,40 +133,16 @@ export default function Hero() {
             <div className="text-xl sm:text-2xl text-white font-sweet-sans">
               AYALA TRIANGLE, MAKATI<br/>
               <p>
-                  JAN <span style={{ color: '#F8C74F' }}>26th</span> 2026
+                  JAN <span className='text-yellow-500'>26th</span> 2026
               </p>
             </div>
           </div>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col mt-4 sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: '1s' }}>
-              <button 
-                onClick={() => {
-                  const registrationSection = document.getElementById('registration');
-                  if (registrationSection) {
-                    const headerOffset = 80;
-                    const elementPosition = registrationSection.getBoundingClientRect().top;
-                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-                    window.scrollTo({
-                      top: offsetPosition,
-                      behavior: 'smooth'
-                    });
-                  }
-                }}
-                className="w-full sm:w-auto text-white px-8 py-4 rounded-full font-bold text-lg transition-all transform hover:scale-105 shadow-lg"
-                style={{ 
-                  backgroundColor: '#F8C74F',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#E6B43D';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#F8C74F';
-                }}
-              >
-                Register Here
-              </button>
+          {/* CTA Buttons */}
+          <div className="flex flex-col mt-4 sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: '1s' }}>
+            <button className="w-full sm:w-auto bg-yellow-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-orange-700 transition-all transform hover:scale-105 shadow-lg">
+              Register Here
+            </button>
             <button 
               onClick={scrollToEvents}
               className="w-full sm:w-auto bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-full font-bold text-lg border-2 border-white/30 hover:bg-white/20 transition-all"
