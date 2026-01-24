@@ -22,6 +22,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* 
+          ============================================
+          DEVELOPED BY: Andy Radam
+          Contact: 09664665514
+          Email: asriidev@gmail.com
+          ============================================
+        */}
         {/* Sweet Sans Pro Font - Add your CDN link here */}
         {/* If using Adobe Fonts: */}
         {/* <link rel="stylesheet" href="https://use.typekit.net/YOUR_PROJECT_ID.css" /> */}

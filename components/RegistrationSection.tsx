@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Swal from 'sweetalert2';
 
 export default function RegistrationSection() {
   const registrationSectionRef = useRef<HTMLElement>(null);
   const [isRegistrationVisible, setIsRegistrationVisible] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -61,21 +63,72 @@ export default function RegistrationSection() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log('Form submitted:', formData);
-    alert('Registration submitted successfully! We will contact you soon.');
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      contact: '',
-      gender: '',
-      birthday: '',
-      affiliations: '',
-      promotional: false
-    });
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit registration');
+      }
+
+      // Success - Show SweetAlert2
+      await Swal.fire({
+        title: 'Success!',
+        text: 'Registration submitted successfully! We will contact you soon.',
+        icon: 'success',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#ea580c', // Orange-600 color
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        allowEnterKey: true,
+        showCloseButton: false,
+        buttonsStyling: true,
+        customClass: {
+          confirmButton: 'font-fira-sans'
+        }
+      });
+      
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        contact: '',
+        gender: '',
+        birthday: '',
+        affiliations: '',
+        promotional: false
+      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      await Swal.fire({
+        title: 'Error!',
+        text: error instanceof Error ? error.message : 'Failed to submit registration. Please try again.',
+        icon: 'error',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#ea580c',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        allowEnterKey: true,
+        showCloseButton: false,
+        buttonsStyling: true,
+        customClass: {
+          confirmButton: 'font-fira-sans'
+        }
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -251,9 +304,10 @@ export default function RegistrationSection() {
                 <div className="pt-4">
                   <button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-orange-600 to-orange-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:from-orange-700 hover:to-orange-600 transition-all transform hover:scale-105 shadow-lg font-fira-sans"
+                    disabled={isSubmitting}
+                    className="w-full bg-gradient-to-r from-orange-600 to-orange-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:from-orange-700 hover:to-orange-600 transition-all transform hover:scale-105 shadow-lg font-fira-sans disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   >
-                    Submit Registration
+                    {isSubmitting ? 'Submitting...' : 'Submit Registration'}
                   </button>
                 </div>
               </form>
