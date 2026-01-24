@@ -73,6 +73,20 @@ export default function Hero() {
     }
   };
 
+  const scrollToRegistration = () => {
+    const registrationSection = document.getElementById('registration');
+    if (registrationSection) {
+      const headerOffset = 80; // Height of fixed header
+      const elementPosition = registrationSection.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   return (
     <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 w-screen">
       {/* Background Video */}
@@ -100,7 +114,7 @@ export default function Hero() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center mt-8 md:mt-0">
         <div className="max-w-4xl mx-auto">
           {/* Badge */}
           <div className="inline-flex items-center px-4 py-2 bg-orange-600/90 backdrop-blur-sm rounded-full text-white text-sm font-semibold mb-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
@@ -140,7 +154,10 @@ export default function Hero() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col mt-4 sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: '1s' }}>
-            <button className="w-full sm:w-auto bg-yellow-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-orange-700 transition-all transform hover:scale-105 shadow-lg">
+            <button 
+              onClick={scrollToRegistration}
+              className="w-full sm:w-auto bg-yellow-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-orange-700 transition-all transform hover:scale-105 shadow-lg"
+            >
               Register Here
             </button>
             <button 
