@@ -42,14 +42,20 @@ body {
 }
 
 @keyframes shine {
-  0%, 75% {
+  0%, 50% {
     transform: translateX(-100%) translateY(-100%) rotate(45deg);
+    opacity: 0;
   }
-  80%, 90% {
-    transform: translateX(150%) translateY(150%) rotate(45deg);
+  52% {
+    opacity: 1;
   }
-  95%, 100% {
-    transform: translateX(150%) translateY(150%) rotate(45deg);
+  98% {
+    transform: translateX(200%) translateY(200%) rotate(45deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(200%) translateY(200%) rotate(45deg);
+    opacity: 0;
   }
 }
 
@@ -91,7 +97,7 @@ body {
   }
   
   .animate-shine {
-    animation: shine 10s ease-in-out infinite;
+    animation: shine 4s ease-in-out infinite;
   }
   
   .animate-pulse-glow {

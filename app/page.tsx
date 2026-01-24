@@ -3,11 +3,19 @@
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import Image from 'next/image';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function Home() {
   const leftSectionRef = useRef<HTMLDivElement>(null);
   const rightSectionRef = useRef<HTMLDivElement>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  const eventImages = [
+    '/images/events-runner.png',
+    '/images/events-runner2.jpg',
+    '/images/events-runner3.jpg',
+    '/images/events-runner4.jpg'
+  ];
 
   useEffect(() => {
     const matchHeights = () => {
@@ -42,6 +50,27 @@ export default function Home() {
       window.removeEventListener('resize', matchHeights);
     };
   }, []);
+
+  // Cycle through images after each flash completes
+  // Flash completes at 98% of 4s cycle, so change image right after flash (at 4s)
+  useEffect(() => {
+    let imageInterval: NodeJS.Timeout;
+    
+    // Initial delay to sync with first flash completion
+    const initialTimeout = setTimeout(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % eventImages.length);
+      
+      // Then continue cycling every 4 seconds (after each flash)
+      imageInterval = setInterval(() => {
+        setCurrentImageIndex((prevIndex) => (prevIndex + 1) % eventImages.length);
+      }, 4000); // Change image every 4 seconds (right after flash completes)
+    }, 4000); // First change after 4 seconds (when first flash completes)
+
+    return () => {
+      clearTimeout(initialTimeout);
+      if (imageInterval) clearInterval(imageInterval);
+    };
+  }, [eventImages.length]);
   return (
     <main className="min-h-screen scroll-smooth">
       <Header />
@@ -133,15 +162,22 @@ export default function Home() {
             {/* Right Section - Visual (1/3 width) */}
             <div 
               ref={rightSectionRef} 
-              className="lg:col-span-1 relative overflow-hidden"
+              className="lg:col-span-1 relative overflow-hidden group"
               style={{ 
                 minHeight: '400px',
-                backgroundImage: 'url(/images/events-runner.png)',
+                backgroundImage: `url(${eventImages[currentImageIndex]})`,
                 backgroundSize: '100% 100%',
                 backgroundPosition: 'center center',
                 backgroundRepeat: 'no-repeat',
                 width: '100%',
-                height: '100%'
+                height: '100%',
+                transition: 'background-size 1.5s ease-in-out, background-image 0.5s ease-in-out'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundSize = '110% 110%';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundSize = '100% 100%';
               }}
             >
               {/* Black vertical stripe on right */}
@@ -151,11 +187,11 @@ export default function Home() {
               <div 
                 className="absolute inset-0 animate-shine z-40 pointer-events-none" 
                 style={{ 
-                  background: 'linear-gradient(105deg, transparent 0%, transparent 20%, rgba(255,255,255,0.3) 40%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.3) 60%, transparent 80%, transparent 100%)',
-                  width: '200%',
-                  height: '200%',
-                  top: '-50%',
-                  left: '-50%',
+                  background: 'linear-gradient(105deg, transparent 0%, transparent 15%, rgba(255,255,255,0.4) 35%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0.4) 65%, transparent 85%, transparent 100%)',
+                  width: '300%',
+                  height: '300%',
+                  top: '-100%',
+                  left: '-100%',
                 }}
               ></div>
               
