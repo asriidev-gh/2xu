@@ -52,7 +52,26 @@ export default function Home() {
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 rounded-lg overflow-hidden shadow-2xl" style={{ gap: 0 }}>
             {/* Left Section - Program Details (2/3 width) */}
-            <div ref={leftSectionRef} className="lg:col-span-2 bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4 lg:p-6">
+            <div 
+              ref={leftSectionRef} 
+              className="lg:col-span-2 bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4 lg:p-6 relative overflow-hidden"
+            >
+              {/* Logo overlay - on top of gradient background */}
+              <div 
+                className="absolute z-0"
+                style={{
+                  backgroundImage: 'url(/images/oneofakindasia-logo.png)',
+                  backgroundSize: 'contain',
+                  backgroundPosition: 'left bottom',
+                  backgroundRepeat: 'no-repeat',
+                  opacity: 0.07,
+                  left: 0,
+                  bottom: 0,
+                  width: '80%',
+                  height: '80%'
+                }}
+              ></div>
+              
               <div className="relative z-10">
                 {/* Program Title */}
                 <h2 className="text-xl lg:text-1xl font-bold text-white mb-3 font-druk leading-tight">
