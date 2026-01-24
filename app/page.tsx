@@ -11,6 +11,7 @@ export default function Home() {
   const eventsSectionRef = useRef<HTMLElement>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isEventsVisible, setIsEventsVisible] = useState(false);
+  const [isFlipping, setIsFlipping] = useState(false);
   
   const eventImages = [
     '/images/events-runner.png',
@@ -53,18 +54,28 @@ export default function Home() {
     };
   }, []);
 
-  // Cycle through images after each flash completes
+  // Cycle through images after each flash completes with cube flip effect
   // Flash completes at 98% of 4s cycle, so change image right after flash (at 4s)
   useEffect(() => {
     let imageInterval: NodeJS.Timeout;
     
+    const changeImage = () => {
+      setIsFlipping(true);
+      setTimeout(() => {
+        setCurrentImageIndex((prevIndex) => (prevIndex + 1) % eventImages.length);
+        setTimeout(() => {
+          setIsFlipping(false);
+        }, 50);
+      }, 400); // Change image at midpoint of flip (400ms of 800ms animation)
+    };
+    
     // Initial delay to sync with first flash completion
     const initialTimeout = setTimeout(() => {
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % eventImages.length);
+      changeImage();
       
       // Then continue cycling every 4 seconds (after each flash)
       imageInterval = setInterval(() => {
-        setCurrentImageIndex((prevIndex) => (prevIndex + 1) % eventImages.length);
+        changeImage();
       }, 4000); // Change image every 4 seconds (right after flash completes)
     }, 4000); // First change after 4 seconds (when first flash completes)
 
@@ -235,18 +246,60 @@ export default function Home() {
               style={{ 
                 animationDelay: '0.3s',
                 minHeight: '400px',
-                backgroundImage: `url(${eventImages[currentImageIndex]})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center center',
-                backgroundRepeat: 'no-repeat',
-                width: '100%',
-                height: '100%',
-                backgroundColor: 'transparent',
-                transition: 'background-image 0.5s ease-in-out'
+                perspective: '1000px',
+                transformStyle: 'preserve-3d',
+                backgroundColor: 'black'
               }}
             >
+              {/* Cube container */}
+              <div
+                className="absolute inset-0"
+                style={{
+                  transformStyle: 'preserve-3d',
+                  transform: isFlipping ? 'rotateY(90deg)' : 'rotateY(0deg)',
+                  transition: 'transform 0.8s cubic-bezier(0.4, 0.0, 0.2, 1)'
+                }}
+              >
+                {/* Current image face */}
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    backgroundImage: `url(${eventImages[currentImageIndex]})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center center',
+                    backgroundRepeat: 'no-repeat',
+                    backfaceVisibility: 'hidden',
+                    transform: 'rotateY(0deg) translateZ(0)'
+                  }}
+                ></div>
+                {/* Next image face (behind) */}
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    backgroundImage: `url(${eventImages[(currentImageIndex + 1) % eventImages.length]})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center center',
+                    backgroundRepeat: 'no-repeat',
+                    backfaceVisibility: 'hidden',
+                    transform: 'rotateY(90deg) translateZ(0)'
+                  }}
+                ></div>
+              </div>
               
               {/* Shiny overlay effect - appears periodically */}
+              <div 
+                className="absolute inset-0 animate-shine z-40 pointer-events-none" 
+                style={{ 
+                  background: 'linear-gradient(105deg, transparent 0%, transparent 15%, rgba(255,255,255,0.4) 35%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0.4) 65%, transparent 85%, transparent 100%)',
+                  width: '300%',
+                  height: '300%',
+                  top: '-100%',
+                  left: '-100%',
+                }}
+              ></div>
+              
+              {/* Pulse glow effect - appears periodically */}
+              <div className="absolute inset-0 bg-yellow-400/30 blur-2xl animate-pulse-glow z-40 pointer-events-none"></div>
               <div 
                 className="absolute inset-0 animate-shine z-40 pointer-events-none" 
                 style={{ 
