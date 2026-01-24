@@ -37,30 +37,35 @@ export default function MissionVisionSection() {
   }, []);
 
   return (
-    <section ref={missionVisionSectionRef} id="mission-vision" className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-white via-gray-50 to-white relative overflow-hidden">
-      {/* Decorative background elements */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-orange-500 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-yellow-500 rounded-full blur-3xl"></div>
-      </div>
-      
+    <section 
+      ref={missionVisionSectionRef} 
+      id="mission-vision" 
+      className="py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
+      style={{
+        backgroundImage: 'url(/images/mission-and-vision-bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
+      }}
+    >
       <div className="container mx-auto max-w-7xl relative z-10">
         {/* Section Header */}
         <div className={`text-center mb-16 ${isMissionVisionVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.2s' }}>
-          <div className="inline-block px-4 py-2 bg-orange-100 rounded-full mb-4">
-            <span className="text-orange-600 font-semibold text-sm font-fira-sans uppercase tracking-wide">Our Foundation</span>
+          <div className="inline-block px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-500 rounded-full mb-4 shadow-lg">
+            <span className="text-white font-semibold text-sm font-fira-sans uppercase tracking-wide">Our Foundation</span>
           </div>
-          <h2 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-4 font-druk">
+          <h2 className="text-5xl lg:text-6xl font-bold text-white mb-4 font-druk drop-shadow-lg">
             Mission & Vision
           </h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-orange-500 to-yellow-500 mx-auto rounded-full"></div>
+          <div className="w-24 h-1 bg-gradient-to-r from-orange-500 to-yellow-500 mx-auto rounded-full shadow-md"></div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Mission Card */}
           <div className={`group relative ${isMissionVisionVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.4s' }}>
             <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-yellow-500/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
-            <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl p-8 lg:p-10 shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-300 h-full">
+            <div className="relative bg-black/50 backdrop-blur-md rounded-2xl p-8 lg:p-10 shadow-2xl border border-white/30 hover:border-white/40 transition-all duration-300 h-full">
               {/* Icon/Number */}
               <div className="flex items-center mb-6">
                 <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -69,7 +74,7 @@ export default function MissionVisionSection() {
                   </svg>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-3xl font-bold text-gray-900 font-druk">Our Mission</h3>
+                  <h3 className="text-3xl font-bold text-white font-druk">Our Mission</h3>
                   <div className="w-12 h-0.5 bg-gradient-to-r from-orange-500 to-yellow-500 mt-2"></div>
                 </div>
               </div>
@@ -78,25 +83,25 @@ export default function MissionVisionSection() {
               <div className="space-y-4">
                 <div className="flex items-start">
                   <div className="flex-shrink-0 w-2 h-2 bg-orange-500 rounded-full mt-2 mr-3"></div>
-                  <p className="text-gray-700 leading-relaxed font-sweet-sans text-base">
+                  <p className="text-white/95 leading-relaxed font-sweet-sans text-base">
                     To pioneer Global Sports Development that inspires communities to pursue a brighter and sustainable future.
                   </p>
                 </div>
                 <div className="flex items-start">
                   <div className="flex-shrink-0 w-2 h-2 bg-orange-500 rounded-full mt-2 mr-3"></div>
-                  <p className="text-gray-700 leading-relaxed font-sweet-sans text-base">
+                  <p className="text-white/95 leading-relaxed font-sweet-sans text-base">
                     To Promote tourism, culture, and heritage through various events and open an economic gateway between Asia and the world.
                   </p>
                 </div>
                 <div className="flex items-start">
                   <div className="flex-shrink-0 w-2 h-2 bg-orange-500 rounded-full mt-2 mr-3"></div>
-                  <p className="text-gray-700 leading-relaxed font-sweet-sans text-base">
+                  <p className="text-white/95 leading-relaxed font-sweet-sans text-base">
                     To prosper (fund) charitable institutions and sports development programs in underserved communities.
                   </p>
                 </div>
                 <div className="flex items-start">
                   <div className="flex-shrink-0 w-2 h-2 bg-orange-500 rounded-full mt-2 mr-3"></div>
-                  <p className="text-gray-700 leading-relaxed font-sweet-sans text-base">
+                  <p className="text-white/95 leading-relaxed font-sweet-sans text-base">
                     To prepare and propel the next generation of athletes through sports discipline.
                   </p>
                 </div>
@@ -107,7 +112,7 @@ export default function MissionVisionSection() {
           {/* Vision Card */}
           <div className={`group relative ${isMissionVisionVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.6s' }}>
             <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-orange-500/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
-            <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl p-8 lg:p-10 shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-300 h-full">
+            <div className="relative bg-black/50 backdrop-blur-md rounded-2xl p-8 lg:p-10 shadow-2xl border border-white/30 hover:border-white/40 transition-all duration-300 h-full">
               {/* Icon/Number */}
               <div className="flex items-center mb-6">
                 <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -117,7 +122,7 @@ export default function MissionVisionSection() {
                   </svg>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-3xl font-bold text-gray-900 font-druk">Our Vision</h3>
+                  <h3 className="text-3xl font-bold text-white font-druk">Our Vision</h3>
                   <div className="w-12 h-0.5 bg-gradient-to-r from-yellow-500 to-orange-500 mt-2"></div>
                 </div>
               </div>
@@ -125,7 +130,7 @@ export default function MissionVisionSection() {
               {/* Content */}
               <div className="relative">
                 <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-yellow-500 to-orange-500 rounded-full"></div>
-                <p className="text-gray-700 leading-relaxed font-sweet-sans text-lg pl-6">
+                <p className="text-white/95 leading-relaxed font-sweet-sans text-lg pl-6">
                   To become the pioneer Sports Innovation company in Asia, delivering world-class, first-to-market, and socially responsible events that inspire and unite communities and partners through the power of sports.
                 </p>
               </div>
