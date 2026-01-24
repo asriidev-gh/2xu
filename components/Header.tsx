@@ -52,7 +52,22 @@ export default function Header() {
             <a href="#partners" onClick={(e) => smoothScroll(e, '#partners')} className="text-gray-700 hover:text-orange-600 font-medium transition-colors font-fira-sans cursor-pointer">
               Partners
             </a>
-            <button className="bg-orange-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-orange-700 transition-colors font-fira-sans">
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                const element = document.getElementById('registration');
+                if (element) {
+                  const headerOffset = 80;
+                  const elementPosition = element.getBoundingClientRect().top;
+                  const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                  window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                  });
+                }
+              }}
+              className="bg-orange-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-orange-700 transition-colors font-fira-sans"
+            >
               Join Now
             </button>
           </div>
@@ -96,7 +111,23 @@ export default function Header() {
             <a href="#partners" onClick={(e) => { smoothScroll(e, '#partners'); setIsMenuOpen(false); }} className="block text-gray-700 hover:text-orange-600 font-medium font-fira-sans">
               Partners
             </a>
-            <button className="w-full bg-orange-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-orange-700 transition-colors font-fira-sans">
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                setIsMenuOpen(false);
+                const element = document.getElementById('registration');
+                if (element) {
+                  const headerOffset = 80;
+                  const elementPosition = element.getBoundingClientRect().top;
+                  const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                  window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                  });
+                }
+              }}
+              className="w-full bg-orange-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-orange-700 transition-colors font-fira-sans"
+            >
               Join Now
             </button>
           </div>

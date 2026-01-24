@@ -138,11 +138,25 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col mt-4 sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: '1s' }}>
-            <button className="w-full sm:w-auto bg-yellow-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-orange-700 transition-all transform hover:scale-105 shadow-lg">
-              Register Here
-            </button>
+            {/* CTA Buttons */}
+            <div className="flex flex-col mt-4 sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: '1s' }}>
+              <button 
+                onClick={() => {
+                  const registrationSection = document.getElementById('registration');
+                  if (registrationSection) {
+                    const headerOffset = 80;
+                    const elementPosition = registrationSection.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                    window.scrollTo({
+                      top: offsetPosition,
+                      behavior: 'smooth'
+                    });
+                  }
+                }}
+                className="w-full sm:w-auto bg-yellow-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-orange-700 transition-all transform hover:scale-105 shadow-lg"
+              >
+                Register Here
+              </button>
             <button 
               onClick={scrollToEvents}
               className="w-full sm:w-auto bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-full font-bold text-lg border-2 border-white/30 hover:bg-white/20 transition-all"

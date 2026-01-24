@@ -5,6 +5,7 @@ import Hero from '@/components/Hero';
 import EventsSection from '@/components/EventsSection';
 import MissionVisionSection from '@/components/MissionVisionSection';
 import PartnersSection from '@/components/PartnersSection';
+import RegistrationSection from '@/components/RegistrationSection';
 
 export default function Home() {
   return (
@@ -14,6 +15,7 @@ export default function Home() {
       <EventsSection />
       <MissionVisionSection />
       <PartnersSection />
+      <RegistrationSection />
     </main>
   );
 }
