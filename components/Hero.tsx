@@ -169,7 +169,7 @@ export default function Hero() {
           </div>
 
           {/* Stats */}
-          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 animate-fade-in" style={{ animationDelay: '1.2s' }}>
+          <div className="mt-16 mb-12 md:mb-0 grid grid-cols-2 md:grid-cols-4 gap-8 animate-fade-in" style={{ animationDelay: '1.2s' }}>
             <div className="text-center">
               <div className="text-4xl font-bold text-orange-500 mb-2">
                 <CountUp end={10000} suffix="+" duration={2000} delay={1200} />

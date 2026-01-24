@@ -8,7 +8,7 @@ export default function EventsSection() {
   const eventsSectionRef = useRef<HTMLElement>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isEventsVisible, setIsEventsVisible] = useState(false);
-  const [isFlipping, setIsFlipping] = useState(false);
+  const [isFading, setIsFading] = useState(false);
   const [currentCarouselPage, setCurrentCarouselPage] = useState(0);
   
   const eventImages = [
@@ -53,18 +53,21 @@ export default function EventsSection() {
     };
   }, []);
 
-  // Cycle through images after each flash completes with cube flip effect
+  // Cycle through images after each flash completes with fade in/fade out effect
   useEffect(() => {
     let imageInterval: NodeJS.Timeout;
     
     const changeImage = () => {
-      setIsFlipping(true);
+      // Start fade out
+      setIsFading(true);
+      // After fade out completes, change image and fade in
       setTimeout(() => {
         setCurrentImageIndex((prevIndex) => (prevIndex + 1) % eventImages.length);
+        // Fade in
         setTimeout(() => {
-          setIsFlipping(false);
+          setIsFading(false);
         }, 50);
-      }, 400); // Change image at midpoint of flip (400ms of 800ms animation)
+      }, 500); // Fade out duration (500ms)
     };
     
     // Initial delay to sync with first flash completion
@@ -369,45 +372,21 @@ export default function EventsSection() {
             style={{ 
               animationDelay: '0.3s',
               minHeight: '400px',
-              perspective: '1000px',
-              transformStyle: 'preserve-3d',
               backgroundColor: 'black'
             }}
           >
-            {/* Cube container */}
+            {/* Image with fade transition */}
             <div
               className="absolute inset-0"
               style={{
-                transformStyle: 'preserve-3d',
-                transform: isFlipping ? 'rotateY(90deg)' : 'rotateY(0deg)',
-                transition: 'transform 0.8s cubic-bezier(0.4, 0.0, 0.2, 1)'
+                backgroundImage: `url(${eventImages[currentImageIndex]})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center center',
+                backgroundRepeat: 'no-repeat',
+                opacity: isFading ? 0 : 1,
+                transition: 'opacity 0.5s ease-in-out'
               }}
-            >
-              {/* Current image face */}
-              <div
-                className="absolute inset-0"
-                style={{
-                  backgroundImage: `url(${eventImages[currentImageIndex]})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center center',
-                  backgroundRepeat: 'no-repeat',
-                  backfaceVisibility: 'hidden',
-                  transform: 'rotateY(0deg) translateZ(0)'
-                }}
-              ></div>
-              {/* Next image face (behind) */}
-              <div
-                className="absolute inset-0"
-                style={{
-                  backgroundImage: `url(${eventImages[(currentImageIndex + 1) % eventImages.length]})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center center',
-                  backgroundRepeat: 'no-repeat',
-                  backfaceVisibility: 'hidden',
-                  transform: 'rotateY(90deg) translateZ(0)'
-                }}
-              ></div>
-            </div>
+            ></div>
             
             {/* Shiny overlay effect - appears periodically */}
             <div 
