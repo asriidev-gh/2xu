@@ -59,6 +59,20 @@ function CountUp({ end, suffix = '', duration = 2000, delay = 0 }: { end: number
 }
 
 export default function Hero() {
+  const scrollToEvents = () => {
+    const eventsSection = document.getElementById('events');
+    if (eventsSection) {
+      const headerOffset = 80; // Height of fixed header
+      const elementPosition = eventsSection.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   return (
     <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 w-screen">
       {/* Background Video */}
@@ -129,7 +143,10 @@ export default function Hero() {
             <button className="w-full sm:w-auto bg-yellow-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-orange-700 transition-all transform hover:scale-105 shadow-lg">
               Register Here
             </button>
-            <button className="w-full sm:w-auto bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-full font-bold text-lg border-2 border-white/30 hover:bg-white/20 transition-all">
+            <button 
+              onClick={scrollToEvents}
+              className="w-full sm:w-auto bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-full font-bold text-lg border-2 border-white/30 hover:bg-white/20 transition-all"
+            >
               Learn More
             </button>
           </div>
