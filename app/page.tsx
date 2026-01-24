@@ -111,11 +111,53 @@ export default function Home() {
       {/* Events Section */}
       <section ref={eventsSectionRef} id="events" className="py-8 px-0 bg-white">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 rounded-lg overflow-hidden shadow-2xl" style={{ gap: 0 }}>
+          {/* Header Section with Background Image */}
+          <div 
+            className="relative w-full rounded-t-lg overflow-hidden mb-0"
+            style={{
+              minHeight: '150px',
+              backgroundImage: 'url(/images/events-header-img.png)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center center',
+              backgroundRepeat: 'no-repeat'
+            }}
+          >
+            {/* Overlay for better text readability */}
+            <div className="absolute inset-0 bg-black/20"></div>
+            
+            {/* Text Content */}
+            <div className="relative z-10 p-4 lg:p-6 h-full flex flex-col lg:flex-row justify-between items-start lg:items-end">
+              {/* Left Side - Program Title */}
+              <div className={`flex-1 ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.1s' }}>
+                <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-1 font-druk leading-tight">
+                  PROGRAM:
+                </h2>
+                <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-1 font-druk leading-tight">
+                  2XU SPEED RUN: ASIA SERIES
+                </h2>
+                <h2 className="text-xl lg:text-2xl font-bold text-gray-900 font-druk leading-tight">
+                  WITH ONE OF A KIND EVENT HIGHLIGHT
+                </h2>
+              </div>
+              
+              {/* Right Side - Summary Title */}
+              <div className={`mt-4 lg:mt-0 lg:text-right ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.3s' }}>
+                <h3 className="text-base lg:text-lg font-bold text-black mb-1 font-druk">
+                  SUMMARY OF THE KEY DRIVERS
+                </h3>
+                <h3 className="text-base lg:text-lg font-bold text-gray-900 font-druk">
+                  2XU ASIA RUN PROGRAM
+                </h3>
+              </div>
+            </div>
+          </div>
+          
+          {/* Bottom Section - Left and Right Containers */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 rounded-b-lg overflow-hidden shadow-2xl" style={{ gap: 0, minHeight: '500px' }}>
             {/* Left Section - Program Details (2/3 width) */}
             <div 
               ref={leftSectionRef} 
-              className="lg:col-span-2 bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4 lg:p-6 relative overflow-hidden"
+              className="lg:col-span-2 bg-gradient-to-br from-gray-900 via-gray-800 to-black p-6 lg:p-8 relative overflow-hidden"
             >
               {/* Logo overlay - on top of gradient background */}
               <div 
@@ -134,56 +176,51 @@ export default function Home() {
               ></div>
               
               <div className="relative z-10">
-                {/* Program Title */}
-                <h2 className={`text-xl lg:text-1xl font-bold text-white mb-3 font-druk leading-tight ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.2s' }}>
-                  PROGRAM:<br/> 2XU SPEED RUN: ASIA SERIES WITH ONE OF A KIND EVENT HIGHLIGHT
-                </h2>
-
                 {/* Advocacy Section */}
-                <div className={`mb-4 ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.4s' }}>
-                  <h3 className="text-base font-bold text-white mb-1.5 font-druk">Advocacy</h3>
-                  <p className="text-gray-200 leading-relaxed font-sweet-sans text-xs">
+                <div className={`mb-6 ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.4s' }}>
+                  <h3 className="text-lg lg:text-xl font-bold text-white mb-2 font-druk">Advocacy</h3>
+                  <p className="text-gray-200 leading-relaxed font-sweet-sans text-sm lg:text-base">
                     Empower athletes in Asia through sports development and leadership training via One of A Kind Asia Sports and Leadership Training Academy.
                   </p>
                 </div>
 
                 {/* Event Highlights */}
                 <div className={isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'} style={{ animationDelay: '0.6s' }}>
-                  <h3 className="text-base font-bold text-white mb-3 font-druk">EVENT HIGHLIGHTS</h3>
-                  <ul className="space-y-2">
+                  <h3 className="text-lg lg:text-xl font-bold text-white mb-4 font-druk">EVENT HIGHLIGHTS</h3>
+                  <ul className="space-y-4">
                     <li className={`flex items-start ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.8s' }}>
-                      <span className="text-yellow-500 mr-2 mt-0.5 font-bold text-sm flex-shrink-0">•</span>
+                      <span className="text-yellow-500 mr-3 mt-1 font-bold text-base flex-shrink-0">•</span>
                       <div className="flex-1">
-                        <h4 className="text-white font-bold font-druk text-sm mb-0.5">Pocket Events</h4>
-                        <p className="text-gray-300 font-sweet-sans text-xs leading-relaxed">Mini-events and activities for spectators and participants.</p>
+                        <h4 className="text-white font-bold font-druk text-base lg:text-lg mb-1">Pocket Events</h4>
+                        <p className="text-gray-300 font-sweet-sans text-sm lg:text-base leading-relaxed">Mini-events and activities for spectators and participants.</p>
                       </div>
                     </li>
                     <li className={`flex items-start ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '1s' }}>
-                      <span className="text-yellow-500 mr-2 mt-0.5 font-bold text-sm flex-shrink-0">•</span>
+                      <span className="text-yellow-500 mr-3 mt-1 font-bold text-base flex-shrink-0">•</span>
                       <div className="flex-1">
-                        <h4 className="text-white font-bold font-druk text-sm mb-0.5">2XU Speed Run Competition</h4>
-                        <p className="text-gray-300 font-sweet-sans text-xs leading-relaxed">Athletes compete in Speed Run category.</p>
+                        <h4 className="text-white font-bold font-druk text-base lg:text-lg mb-1">2XU Speed Run Competition</h4>
+                        <p className="text-gray-300 font-sweet-sans text-sm lg:text-base leading-relaxed">Athletes compete in Speed Run category.</p>
                       </div>
                     </li>
                     <li className={`flex items-start ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '1.2s' }}>
-                      <span className="text-yellow-500 mr-2 mt-0.5 font-bold text-sm flex-shrink-0">•</span>
+                      <span className="text-yellow-500 mr-3 mt-1 font-bold text-base flex-shrink-0">•</span>
                       <div className="flex-1">
-                        <h4 className="text-white font-bold font-druk text-sm mb-0.5">One of A Kind Event Highlight</h4>
-                        <p className="text-gray-300 font-sweet-sans text-xs leading-relaxed">Premier event in Asia showcasing unique aspects of the run.</p>
+                        <h4 className="text-white font-bold font-druk text-base lg:text-lg mb-1">One of A Kind Event Highlight</h4>
+                        <p className="text-gray-300 font-sweet-sans text-sm lg:text-base leading-relaxed">Premier event in Asia showcasing unique aspects of the run.</p>
                       </div>
                     </li>
                     <li className={`flex items-start ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '1.4s' }}>
-                      <span className="text-yellow-500 mr-2 mt-0.5 font-bold text-sm flex-shrink-0">•</span>
+                      <span className="text-yellow-500 mr-3 mt-1 font-bold text-base flex-shrink-0">•</span>
                       <div className="flex-1">
-                        <h4 className="text-white font-bold font-druk text-sm mb-0.5">Leadership Training Sessions</h4>
-                        <p className="text-gray-300 font-sweet-sans text-xs leading-relaxed">Part of One of A Kind Asia Sports and Leadership Training Academy Program.</p>
+                        <h4 className="text-white font-bold font-druk text-base lg:text-lg mb-1">Leadership Training Sessions</h4>
+                        <p className="text-gray-300 font-sweet-sans text-sm lg:text-base leading-relaxed">Part of One of A Kind Asia Sports and Leadership Training Academy Program.</p>
                       </div>
                     </li>
                     <li className={`flex items-start ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '1.6s' }}>
-                      <span className="text-yellow-500 mr-2 mt-0.5 font-bold text-sm flex-shrink-0">•</span>
+                      <span className="text-yellow-500 mr-3 mt-1 font-bold text-base flex-shrink-0">•</span>
                       <div className="flex-1">
-                        <h4 className="text-white font-bold font-druk text-sm mb-0.5">Networking Opportunities</h4>
-                        <p className="text-gray-300 font-sweet-sans text-xs leading-relaxed">Connect athletes with corporate partners and investors.</p>
+                        <h4 className="text-white font-bold font-druk text-base lg:text-lg mb-1">Networking Opportunities</h4>
+                        <p className="text-gray-300 font-sweet-sans text-sm lg:text-base leading-relaxed">Connect athletes with corporate partners and investors.</p>
                       </div>
                     </li>
                   </ul>
