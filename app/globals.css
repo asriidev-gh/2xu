@@ -41,6 +41,17 @@ body {
   }
 }
 
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
 @keyframes shine {
   0%, 50% {
     transform: translateX(-100%) translateY(-100%) rotate(45deg);
@@ -94,6 +105,10 @@ body {
   .animate-fade-in {
     animation: fadeIn 0.8s ease-out forwards;
     opacity: 0;
+  }
+  
+  .animate-fade-out {
+    animation: fadeOut 0.8s ease-out forwards;
   }
   
   .animate-shine {

@@ -8,7 +8,9 @@ import { useEffect, useRef, useState } from 'react';
 export default function Home() {
   const leftSectionRef = useRef<HTMLDivElement>(null);
   const rightSectionRef = useRef<HTMLDivElement>(null);
+  const eventsSectionRef = useRef<HTMLElement>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isEventsVisible, setIsEventsVisible] = useState(false);
   
   const eventImages = [
     '/images/events-runner.png',
@@ -71,13 +73,43 @@ export default function Home() {
       if (imageInterval) clearInterval(imageInterval);
     };
   }, [eventImages.length]);
+
+  // Trigger animations when Events section comes into view, fade out when leaving
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          // Check if section is intersecting and has enough visibility
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.1) {
+            setIsEventsVisible(true);
+          } else {
+            setIsEventsVisible(false);
+          }
+        });
+      },
+      { 
+        threshold: [0, 0.1, 0.5, 1.0], // Multiple thresholds for better detection
+        rootMargin: '-50px 0px -50px 0px' // Trigger slightly before fully in view
+      }
+    );
+
+    if (eventsSectionRef.current) {
+      observer.observe(eventsSectionRef.current);
+    }
+
+    return () => {
+      if (eventsSectionRef.current) {
+        observer.unobserve(eventsSectionRef.current);
+      }
+    };
+  }, []);
   return (
     <main className="min-h-screen scroll-smooth">
       <Header />
       <Hero />
       
       {/* Events Section */}
-      <section id="events" className="py-8 px-0 bg-white">
+      <section ref={eventsSectionRef} id="events" className="py-8 px-0 bg-white">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 rounded-lg overflow-hidden shadow-2xl" style={{ gap: 0 }}>
             {/* Left Section - Program Details (2/3 width) */}
@@ -103,12 +135,12 @@ export default function Home() {
               
               <div className="relative z-10">
                 {/* Program Title */}
-                <h2 className="text-xl lg:text-1xl font-bold text-white mb-3 font-druk leading-tight">
+                <h2 className={`text-xl lg:text-1xl font-bold text-white mb-3 font-druk leading-tight ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.2s' }}>
                   PROGRAM:<br/> 2XU SPEED RUN: ASIA SERIES WITH ONE OF A KIND EVENT HIGHLIGHT
                 </h2>
 
                 {/* Advocacy Section */}
-                <div className="mb-4">
+                <div className={`mb-4 ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.4s' }}>
                   <h3 className="text-base font-bold text-white mb-1.5 font-druk">Advocacy</h3>
                   <p className="text-gray-200 leading-relaxed font-sweet-sans text-xs">
                     Empower athletes in Asia through sports development and leadership training via One of A Kind Asia Sports and Leadership Training Academy.
@@ -116,38 +148,38 @@ export default function Home() {
                 </div>
 
                 {/* Event Highlights */}
-                <div>
+                <div className={isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'} style={{ animationDelay: '0.6s' }}>
                   <h3 className="text-base font-bold text-white mb-3 font-druk">EVENT HIGHLIGHTS</h3>
                   <ul className="space-y-2">
-                    <li className="flex items-start">
+                    <li className={`flex items-start ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.8s' }}>
                       <span className="text-yellow-500 mr-2 mt-0.5 font-bold text-sm flex-shrink-0">•</span>
                       <div className="flex-1">
                         <h4 className="text-white font-bold font-druk text-sm mb-0.5">Pocket Events</h4>
                         <p className="text-gray-300 font-sweet-sans text-xs leading-relaxed">Mini-events and activities for spectators and participants.</p>
                       </div>
                     </li>
-                    <li className="flex items-start">
+                    <li className={`flex items-start ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '1s' }}>
                       <span className="text-yellow-500 mr-2 mt-0.5 font-bold text-sm flex-shrink-0">•</span>
                       <div className="flex-1">
                         <h4 className="text-white font-bold font-druk text-sm mb-0.5">2XU Speed Run Competition</h4>
                         <p className="text-gray-300 font-sweet-sans text-xs leading-relaxed">Athletes compete in Speed Run category.</p>
                       </div>
                     </li>
-                    <li className="flex items-start">
+                    <li className={`flex items-start ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '1.2s' }}>
                       <span className="text-yellow-500 mr-2 mt-0.5 font-bold text-sm flex-shrink-0">•</span>
                       <div className="flex-1">
                         <h4 className="text-white font-bold font-druk text-sm mb-0.5">One of A Kind Event Highlight</h4>
                         <p className="text-gray-300 font-sweet-sans text-xs leading-relaxed">Premier event in Asia showcasing unique aspects of the run.</p>
                       </div>
                     </li>
-                    <li className="flex items-start">
+                    <li className={`flex items-start ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '1.4s' }}>
                       <span className="text-yellow-500 mr-2 mt-0.5 font-bold text-sm flex-shrink-0">•</span>
                       <div className="flex-1">
                         <h4 className="text-white font-bold font-druk text-sm mb-0.5">Leadership Training Sessions</h4>
                         <p className="text-gray-300 font-sweet-sans text-xs leading-relaxed">Part of One of A Kind Asia Sports and Leadership Training Academy Program.</p>
                       </div>
                     </li>
-                    <li className="flex items-start">
+                    <li className={`flex items-start ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '1.6s' }}>
                       <span className="text-yellow-500 mr-2 mt-0.5 font-bold text-sm flex-shrink-0">•</span>
                       <div className="flex-1">
                         <h4 className="text-white font-bold font-druk text-sm mb-0.5">Networking Opportunities</h4>
@@ -159,11 +191,12 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Section - Visual (1/3 width) */}
+            {/* Right Section - Visual (1/3 width) - Hidden on mobile */}
             <div 
               ref={rightSectionRef} 
-              className="lg:col-span-1 relative overflow-hidden group"
+              className={`hidden lg:block lg:col-span-1 relative overflow-hidden group ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`}
               style={{ 
+                animationDelay: '0.3s',
                 minHeight: '400px',
                 backgroundImage: `url(${eventImages[currentImageIndex]})`,
                 backgroundSize: '100% 100%',
