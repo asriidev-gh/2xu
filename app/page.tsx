@@ -236,22 +236,15 @@ export default function Home() {
                 animationDelay: '0.3s',
                 minHeight: '400px',
                 backgroundImage: `url(${eventImages[currentImageIndex]})`,
-                backgroundSize: '100% 100%',
+                backgroundSize: 'cover',
                 backgroundPosition: 'center center',
                 backgroundRepeat: 'no-repeat',
                 width: '100%',
                 height: '100%',
-                transition: 'background-size 1.5s ease-in-out, background-image 0.5s ease-in-out'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundSize = '110% 110%';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundSize = '100% 100%';
+                backgroundColor: 'transparent',
+                transition: 'background-image 0.5s ease-in-out'
               }}
             >
-              {/* Black vertical stripe on right */}
-              <div className="absolute right-0 top-0 bottom-0 w-8 bg-black z-30 pointer-events-none"></div>
               
               {/* Shiny overlay effect - appears periodically */}
               <div 
