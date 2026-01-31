@@ -35,11 +35,11 @@ export default function Footer() {
             <div className="lg:col-span-1">
               <Link href="/" className="inline-block mb-4">
                 <Image
-                  src="/images/2xu-logo.avif"
-                  alt="2XU Logo"
-                  width={120}
-                  height={40}
-                  className="h-10 w-auto brightness-0 invert"
+                  src="/images/oneofakindasia-logo.png"
+                  alt="One of a Kind Asia Logo"
+                  width={90}
+                  height={90}
+                  className="object-contain"
                   priority
                 />
               </Link>
@@ -181,7 +181,7 @@ export default function Footer() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   <span className="text-gray-400 font-sweet-sans text-sm">
-                    January 26, 2026
+                    May 17th, 2026
                   </span>
                 </li>
                 <li className="flex items-start">
@@ -210,7 +210,7 @@ export default function Footer() {
         <div className="border-t border-white/10 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-gray-400 text-sm font-sweet-sans text-center md:text-left">
-              © {currentYear} 2XU Speed Run: Asia Series. All rights reserved.
+              © {currentYear} One of a kind Asia - 2XU Speed Run: Asia Series. All rights reserved.
             </p>
             <a 
               href="mailto:asriidev@gmail.com?subject=Contact%20Admin%20-%202XU%20Speed%20Run%20Asia%20Series" 

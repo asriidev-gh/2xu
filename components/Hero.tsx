@@ -147,9 +147,17 @@ export default function Hero() {
             <div className="text-xl sm:text-2xl text-white font-sweet-sans">
               AYALA TRIANGLE, MAKATI<br/>
               <p>
-                  JAN <span className='text-yellow-500'>26th</span> 2026
+                May <span className='text-yellow-500'>17th</span> 2026
+              </p>
+              <hr className="border-white/40 my-3 w-full" />
+              <p className="text-gray-300 font-sweet-sans">
+                Limited to <b>2000</b> athletes only<br/>
               </p>
             </div>
+            
+          </div>
+          <div className="text-xl sm:text-lg text-white font-sweet-sans animate-fade-in" style={{ animationDelay: '0.9s' }}>
+            Exclusive Pre-registration for first <b>200</b> <br/>to register on Feb 6th
           </div>
 
           {/* CTA Buttons */}

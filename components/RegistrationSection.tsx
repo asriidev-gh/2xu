@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import Swal from 'sweetalert2';
 
 export default function RegistrationSection() {
@@ -298,6 +299,39 @@ export default function RegistrationSection() {
                   <label htmlFor="promotional" className="ml-3 text-sm text-gray-700 font-sweet-sans cursor-pointer">
                     I would like to receive promotional emails and updates about upcoming events
                   </label>
+                </div>
+
+                {/* Payment Instructions */}
+                <div className="rounded-xl border-2 border-orange-200 bg-orange-50/80 p-6 space-y-4">
+                  <h3 className="text-lg font-bold text-gray-900 font-fira-sans flex items-center gap-2">
+                    <span className="text-orange-600">Payment Instructions</span>
+                  </h3>
+                  <div className="flex flex-col sm:flex-row gap-6 items-start">
+                    <div className="flex-shrink-0 p-3 bg-white rounded-lg border border-orange-100 shadow-sm">
+                      <QRCodeSVG
+                        value="mailto:oneofakindasia@gmail.com"
+                        size={140}
+                        level="M"
+                        includeMargin={false}
+                        className="w-[140px] h-[140px]"
+                      />
+                      <p className="text-xs text-gray-500 text-center mt-2 font-sweet-sans">Sample QR</p>
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <p className="text-gray-700 font-sweet-sans">
+                        After completing your registration, please send your proof of payment to complete the process.
+                      </p>
+                      <p className="text-gray-800 font-semibold font-fira-sans">
+                        Email your proof of payment to:{' '}
+                        <a
+                          href="mailto:oneofakindasia@gmail.com"
+                          className="text-orange-600 hover:text-orange-700 underline"
+                        >
+                          oneofakindasia@gmail.com
+                        </a>
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Submit Button */}

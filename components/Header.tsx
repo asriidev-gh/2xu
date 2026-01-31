@@ -29,11 +29,11 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center">
             <Image
-              src="/images/2xu-logo.avif"
+              src="/images/oneofakindasia-logo.png"
               alt="2XU Logo"
-              width={120}
-              height={40}
-              className="h-10 w-auto"
+              width={50}
+              height={50}
+              className="w-auto h-auto"
               priority
             />
           </Link>
