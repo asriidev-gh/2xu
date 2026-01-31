@@ -309,7 +309,7 @@ export default function RegistrationSection() {
                   <div className="flex flex-col sm:flex-row gap-6 items-start">
                     <div className="flex-shrink-0 p-3 bg-white rounded-lg border border-orange-100 shadow-sm">
                       <QRCodeSVG
-                        value="mailto:oneofakindasia@gmail.com"
+                        value="mailto:1@oneofakindasia.com"
                         size={140}
                         level="M"
                         includeMargin={false}
@@ -324,10 +324,10 @@ export default function RegistrationSection() {
                       <p className="text-gray-800 font-semibold font-fira-sans">
                         Email your proof of payment to:{' '}
                         <a
-                          href="mailto:oneofakindasia@gmail.com"
+                          href="mailto:1@oneofakindasia.com"
                           className="text-orange-600 hover:text-orange-700 underline"
                         >
-                          oneofakindasia@gmail.com
+                          1@oneofakindasia.com
                         </a>
                       </p>
                     </div>

@@ -157,7 +157,7 @@ export default function Hero() {
             
           </div>
           <div className="text-xl sm:text-lg text-white font-sweet-sans animate-fade-in" style={{ animationDelay: '0.9s' }}>
-            Exclusive Pre-registration for first <b>200</b> <br/>to register on Feb 6th
+            Exclusive Pre-registration for first <b>200</b> <br/>to register on <b>Feb 6th</b>
           </div>
 
           {/* CTA Buttons */}
