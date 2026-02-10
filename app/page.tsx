@@ -9,6 +9,7 @@ import MissionVisionSection from '@/components/MissionVisionSection';
 import PartnersSection from '@/components/PartnersSection';
 import RegistrationSection from '@/components/RegistrationSection';
 import Footer from '@/components/Footer';
+import BackToRaceExperienceButton from '@/components/BackToRaceExperienceButton';
 
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -24,18 +25,20 @@ export default function Home() {
         ============================================
       */}
       <main className="min-h-screen scroll-smooth">
-      <Header />
-      <Hero />
-      <EventsSection />
-      <RaceCategoriesSection onSelectCategory={setSelectedCategory} />
-      <MissionVisionSection />
-      <PartnersSection />
-      <RegistrationSection
-        selectedCategory={selectedCategory}
-        onCategoryApplied={clearSelectedCategory}
-      />
-      <Footer />
-    </main>
+        <Header />
+        <Hero />
+        <EventsSection />
+        <RaceCategoriesSection onSelectCategory={setSelectedCategory} />
+        <MissionVisionSection />
+        <PartnersSection />
+        <RegistrationSection
+          selectedCategory={selectedCategory}
+          onCategoryApplied={clearSelectedCategory}
+        />
+        <Footer />
+        {/* Mobile-only floating back-to-race-experience button */}
+        <BackToRaceExperienceButton />
+      </main>
     </>
   );
 }
