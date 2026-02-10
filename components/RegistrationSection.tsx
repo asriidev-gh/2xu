@@ -77,7 +77,17 @@ export default function RegistrationSection() {
         body: JSON.stringify(formData),
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get('content-type');
+      let data: { success?: boolean; error?: string; message?: string } = {};
+      if (contentType?.includes('application/json')) {
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error('Invalid response from server. Please try again.');
+        }
+      } else {
+        throw new Error('Server error. Please try again later.');
+      }
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to submit registration');

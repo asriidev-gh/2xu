@@ -12,6 +12,9 @@ const firaSans = Fira_Sans({
 export const metadata: Metadata = {
   title: "Runner - Running Club & Marathon Events",
   description: "Join our running club for marathon events and sports activities",
+  icons: {
+    icon: "/images/favicon.ico",
+  },
 };
 
 export default function RootLayout({
