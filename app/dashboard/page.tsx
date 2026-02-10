@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
+import { RACE_CATEGORY_NAMES } from '@/components/RaceCategoriesSection';
 
 interface User {
   _id: string;
@@ -11,6 +12,7 @@ interface User {
   contact: string;
   gender: string;
   birthday: string;
+  raceCategory: string;
   affiliations: string;
   promotional: boolean;
   createdAt: string;
@@ -25,6 +27,7 @@ export default function DashboardPage() {
     name: '',
     email: '',
     gender: '',
+    raceCategory: '',
     club: '',
     dateFrom: '',
     dateTo: ''
@@ -200,6 +203,7 @@ export default function DashboardPage() {
       'Contact',
       'Gender',
       'Birthday',
+      'Race Experience',
       'Club/Organization',
       'Promotional Emails',
       'Registration Date'
@@ -212,6 +216,7 @@ export default function DashboardPage() {
       `"${user.contact.replace(/"/g, '""')}"`,
       `"${user.gender}"`,
       `"${user.birthday || ''}"`,
+      `"${(user.raceCategory || '').replace(/"/g, '""')}"`,
       `"${(user.affiliations || '').replace(/"/g, '""')}"`,
       user.promotional ? 'Yes' : 'No',
       `"${formatDateForCSV(user.createdAt)}"`
@@ -308,6 +313,21 @@ export default function DashboardPage() {
               </select>
             </div>
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1 font-fira-sans">Race Experience</label>
+              <select
+                value={filters.raceCategory}
+                onChange={(e) => handleFilterChange('raceCategory', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500 font-sweet-sans text-sm"
+              >
+                <option value="">All</option>
+                {RACE_CATEGORY_NAMES.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1 font-fira-sans">Club/Organization</label>
               <input
                 type="text"
@@ -375,6 +395,7 @@ export default function DashboardPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Contact</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Gender</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Birthday</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Race Experience</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Club/Organization</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Promotional</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Registered</th>
@@ -391,6 +412,7 @@ export default function DashboardPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">{user.contact}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">{user.gender}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">{user.birthday || 'N/A'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">{user.raceCategory || 'N/A'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">{user.affiliations || 'N/A'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">
                         {user.promotional ? (

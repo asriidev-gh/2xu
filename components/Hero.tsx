@@ -170,9 +170,9 @@ export default function Hero() {
             INVITATIONAL
           </motion.div>
 
-          {/* Speed Run Image — Framer Motion: slide in + ripple reveal + Marvel flash */}
+          {/* Speed Run Image — Framer Motion: slide in + ripple reveal + scan-line + Marvel flash */}
           <motion.div className="mb-5 flex justify-center relative" variants={imageBlock}>
-            <div className="relative inline-block">
+            <div className="relative inline-block overflow-hidden">
               <motion.div className="overflow-hidden" variants={rippleReveal}>
                 <Image
                   src="/images/speed_run2.png"
@@ -183,6 +183,22 @@ export default function Hero() {
                   priority
                 />
               </motion.div>
+              {/* Scan line sweep — thin bright line travels down (CodePen-style effect) */}
+              <motion.div
+                className="absolute left-0 right-0 top-0 h-0.5 pointer-events-none"
+                aria-hidden
+                initial={{ top: 0 }}
+                animate={{ top: '100%' }}
+                transition={{
+                  duration: 0.8,
+                  delay: 0.5,
+                  ease: [0.22, 1, 0.36, 1]
+                }}
+                style={{
+                  boxShadow: '0 0 12px 2px rgba(255,255,255,0.5), 0 0 24px 4px rgba(255,255,255,0.2)',
+                  background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.9), transparent)'
+                }}
+              />
               <motion.div
                 className="absolute inset-0 pointer-events-none"
                 aria-hidden

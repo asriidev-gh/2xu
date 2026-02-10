@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
     const name = searchParams.get('name') || '';
     const email = searchParams.get('email') || '';
     const gender = searchParams.get('gender') || '';
+    const raceCategory = searchParams.get('raceCategory') || '';
     const club = searchParams.get('club') || '';
     const dateFrom = searchParams.get('dateFrom') || '';
     const dateTo = searchParams.get('dateTo') || '';
@@ -48,6 +49,10 @@ export async function GET(request: NextRequest) {
 
     if (gender) {
       filter.gender = gender;
+    }
+
+    if (raceCategory) {
+      filter.raceCategory = raceCategory;
     }
 
     if (club) {
@@ -80,6 +85,7 @@ export async function GET(request: NextRequest) {
       contact: user.contact,
       gender: user.gender,
       birthday: user.birthday,
+      raceCategory: (user as { raceCategory?: string }).raceCategory || '',
       affiliations: user.affiliations || '',
       promotional: user.promotional || false,
       createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : null

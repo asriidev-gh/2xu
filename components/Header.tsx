@@ -46,6 +46,9 @@ export default function Header() {
             <a href="#events" onClick={(e) => smoothScroll(e, '#events')} className="text-gray-700 hover:text-orange-600 font-medium transition-colors font-fira-sans cursor-pointer">
               Events
             </a>
+            <a href="#race-categories" onClick={(e) => smoothScroll(e, '#race-categories')} className="text-gray-700 hover:text-orange-600 font-medium transition-colors font-fira-sans cursor-pointer">
+              Race Experience
+            </a>
             <a href="#mission-vision" onClick={(e) => smoothScroll(e, '#mission-vision')} className="text-gray-700 hover:text-orange-600 font-medium transition-colors font-fira-sans cursor-pointer">
               Mission & Vision
             </a>
@@ -104,6 +107,9 @@ export default function Header() {
             </a>
             <a href="#events" onClick={(e) => { smoothScroll(e, '#events'); setIsMenuOpen(false); }} className="block text-gray-700 hover:text-orange-600 font-medium font-fira-sans">
               Events
+            </a>
+            <a href="#race-categories" onClick={(e) => { smoothScroll(e, '#race-categories'); setIsMenuOpen(false); }} className="block text-gray-700 hover:text-orange-600 font-medium font-fira-sans">
+              Race Experience
             </a>
             <a href="#mission-vision" onClick={(e) => { smoothScroll(e, '#mission-vision'); setIsMenuOpen(false); }} className="block text-gray-700 hover:text-orange-600 font-medium font-fira-sans">
               Mission & Vision

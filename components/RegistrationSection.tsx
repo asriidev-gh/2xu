@@ -3,8 +3,14 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Swal from 'sweetalert2';
+import { RACE_CATEGORY_NAMES, RACE_CATEGORY_PRICES } from '@/components/RaceCategoriesSection';
 
-export default function RegistrationSection() {
+type RegistrationSectionProps = {
+  selectedCategory?: string;
+  onCategoryApplied?: () => void;
+};
+
+export default function RegistrationSection({ selectedCategory = '', onCategoryApplied }: RegistrationSectionProps) {
   const registrationSectionRef = useRef<HTMLElement>(null);
   const [isRegistrationVisible, setIsRegistrationVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -14,9 +20,18 @@ export default function RegistrationSection() {
     contact: '',
     gender: '',
     birthday: '',
+    raceCategory: '',
     affiliations: '',
     promotional: false
   });
+
+  // Auto-fill race category when user clicks a category card and scrolls here
+  useEffect(() => {
+    if (selectedCategory) {
+      setFormData((prev) => ({ ...prev, raceCategory: selectedCategory }));
+      onCategoryApplied?.();
+    }
+  }, [selectedCategory, onCategoryApplied]);
 
   // Trigger animations when Registration section comes into view
   useEffect(() => {
@@ -61,6 +76,13 @@ export default function RegistrationSection() {
     setFormData(prev => ({
       ...prev,
       gender: e.target.value
+    }));
+  };
+
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
     }));
   };
 
@@ -117,6 +139,7 @@ export default function RegistrationSection() {
         contact: '',
         gender: '',
         birthday: '',
+        raceCategory: '',
         affiliations: '',
         promotional: false
       });
@@ -278,6 +301,28 @@ export default function RegistrationSection() {
                   />
                 </div>
 
+                {/* Race Experience Field */}
+                <div>
+                  <label htmlFor="raceCategory" className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
+                    Race Experience <span className="text-orange-600">*</span>
+                  </label>
+                  <select
+                    id="raceCategory"
+                    name="raceCategory"
+                    value={formData.raceCategory}
+                    onChange={handleSelectChange}
+                    required
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900 bg-white"
+                  >
+                    <option value="">Select race experience</option>
+                    {RACE_CATEGORY_NAMES.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Affiliations Field (Optional) */}
                 <div>
                   <label htmlFor="affiliations" className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
@@ -316,6 +361,22 @@ export default function RegistrationSection() {
                   <h3 className="text-lg font-bold text-gray-900 font-fira-sans flex items-center gap-2">
                     <span className="text-orange-600">Payment Instructions</span>
                   </h3>
+                  {formData.raceCategory && RACE_CATEGORY_PRICES[formData.raceCategory] && (
+                    <div className="rounded-lg bg-white border border-orange-200 px-4 py-3">
+                      <p className="text-sm font-semibold text-gray-700 font-fira-sans mb-1">Amount to pay</p>
+                      <p className="text-xl font-bold text-orange-600 font-druk">
+                        {RACE_CATEGORY_PRICES[formData.raceCategory].pricePhp}
+                        <span className="text-base font-sweet-sans font-normal text-gray-600 ml-2">
+                          (approx. {RACE_CATEGORY_PRICES[formData.raceCategory].priceUsd} USD)
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                  {(!formData.raceCategory || !RACE_CATEGORY_PRICES[formData.raceCategory]) && (
+                    <p className="text-sm text-gray-600 font-sweet-sans">
+                      Select a race category above to see the amount to pay.
+                    </p>
+                  )}
                   <div className="flex flex-col sm:flex-row gap-6 items-start flex-wrap">
                     <div className="flex-shrink-0 p-3 bg-white rounded-lg border border-orange-100 shadow-sm flex flex-col items-center">
                       <Image

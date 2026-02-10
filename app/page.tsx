@@ -1,14 +1,19 @@
 'use client';
 
+import { useState, useCallback } from 'react';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import EventsSection from '@/components/EventsSection';
+import RaceCategoriesSection from '@/components/RaceCategoriesSection';
 import MissionVisionSection from '@/components/MissionVisionSection';
 import PartnersSection from '@/components/PartnersSection';
 import RegistrationSection from '@/components/RegistrationSection';
 import Footer from '@/components/Footer';
 
 export default function Home() {
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const clearSelectedCategory = useCallback(() => setSelectedCategory(''), []);
+
   return (
     <>
       {/* 
@@ -22,9 +27,13 @@ export default function Home() {
       <Header />
       <Hero />
       <EventsSection />
+      <RaceCategoriesSection onSelectCategory={setSelectedCategory} />
       <MissionVisionSection />
       <PartnersSection />
-      <RegistrationSection />
+      <RegistrationSection
+        selectedCategory={selectedCategory}
+        onCategoryApplied={clearSelectedCategory}
+      />
       <Footer />
     </main>
     </>

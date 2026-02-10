@@ -20,10 +20,10 @@ function escapeHtml(text: string): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, contact, gender, birthday, affiliations, promotional } = body;
+    const { name, email, contact, gender, birthday, raceCategory, affiliations, promotional } = body;
 
     // Validate required fields
-    if (!name || !email || !contact || !gender || !birthday) {
+    if (!name || !email || !contact || !gender || !birthday || !raceCategory) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
       contact,
       gender,
       birthday,
+      raceCategory,
       affiliations: affiliations || '',
       promotional: promotional || false,
       createdAt: new Date(),
@@ -76,6 +77,7 @@ export async function POST(request: NextRequest) {
           <p><strong>Contact:</strong> ${escapeHtml(contact)}</p>
           <p><strong>Gender:</strong> ${escapeHtml(gender)}</p>
           <p><strong>Birthday:</strong> ${escapeHtml(birthday)}</p>
+          <p><strong>Race Experience:</strong> ${escapeHtml(raceCategory)}</p>
           ${affiliations ? `<p><strong>Affiliations:</strong> ${escapeHtml(affiliations)}</p>` : ''}
           <p><strong>Promotional emails:</strong> ${promotional ? 'Yes' : 'No'}</p>
         `,
