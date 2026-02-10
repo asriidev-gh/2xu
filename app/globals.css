@@ -101,6 +101,48 @@ body {
   }
 }
 
+@keyframes slideInFromLeftFade {
+  from {
+    opacity: 0;
+    transform: translateX(-80px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Ripple reveal: soft-edge wipe left to right (running / finish-line feel) */
+@keyframes rippleRevealLTR {
+  from {
+    mask-position: 100% 0;
+    -webkit-mask-position: 100% 0;
+  }
+  to {
+    mask-position: -100% 0;
+    -webkit-mask-position: -100% 0;
+  }
+}
+
+/* Marvel-style hero flash: fades in, sweeps, then hidden so nothing stays on screen */
+@keyframes marvelFlashStreak {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(200%);
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
@@ -125,6 +167,51 @@ body {
   
   .animate-fade-out {
     animation: fadeOut 0.8s ease-out forwards;
+  }
+  
+  .animate-slide-in-from-left-fade {
+    animation: slideInFromLeftFade 0.9s ease-out forwards;
+    opacity: 0;
+  }
+  
+  .animate-ripple-reveal-ltr {
+    --mask-gradient: linear-gradient(
+      90deg,
+      black 0%,
+      black 65%,
+      transparent 100%
+    );
+    mask-image: var(--mask-gradient);
+    mask-size: 200% 100%;
+    mask-position: 100% 0;
+    mask-repeat: no-repeat;
+    -webkit-mask-image: var(--mask-gradient);
+    -webkit-mask-size: 200% 100%;
+    -webkit-mask-position: 100% 0;
+    -webkit-mask-repeat: no-repeat;
+    animation: rippleRevealLTR 1s ease-out 0.4s forwards;
+  }
+  
+  /* Marvel hero flash overlay — bright streak over content */
+  .hero-flash-streak {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      transparent 25%,
+      rgba(255, 255, 255, 0) 40%,
+      rgba(255, 255, 255, 0.85) 50%,
+      rgba(255, 255, 255, 0) 60%,
+      transparent 75%,
+      transparent 100%
+    );
+    background-size: 60% 100%;
+    background-repeat: no-repeat;
+    filter: blur(1px);
+    animation: marvelFlashStreak 0.7s ease-out 0.9s forwards;
+    opacity: 0;
   }
   
   .animate-shine {

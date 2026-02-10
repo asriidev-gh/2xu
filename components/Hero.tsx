@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 
 // Slot machine count-up component
 function CountUp({ end, suffix = '', duration = 2000, delay = 0 }: { end: number; suffix?: string; duration?: number; delay?: number }) {
@@ -87,6 +88,31 @@ export default function Hero() {
     }
   };
 
+  const container = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.12, delayChildren: 0.2 }
+    }
+  };
+
+  const easeOutExpo = [0.22, 1, 0.36, 1] as const;
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: easeOutExpo } }
+  };
+
+  const imageBlock = {
+    hidden: { opacity: 0, x: -80 },
+    visible: { opacity: 1, x: 0, transition: { duration: 0.9, ease: easeOutExpo } }
+  };
+
+  const rippleReveal = {
+    hidden: { clipPath: 'inset(0 100% 0 0)' },
+    visible: { clipPath: 'inset(0 0% 0 0)', transition: { duration: 1, delay: 0.2, ease: easeOutExpo } }
+  };
+
   return (
     <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 w-screen">
       {/* Background Video */}
@@ -115,35 +141,63 @@ export default function Hero() {
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center mt-8 md:mt-0">
-        <div className="max-w-4xl mx-auto">
+        <motion.div
+          className="max-w-4xl mx-auto"
+          variants={container}
+          initial="hidden"
+          animate="visible"
+        >
           {/* Badge */}
-          <div className="inline-flex items-center px-4 py-2 bg-orange-600/90 backdrop-blur-sm rounded-full text-white text-sm font-semibold mb-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <motion.div className="mt-5 inline-flex items-center px-4 py-2 bg-orange-600/90 backdrop-blur-sm rounded-full text-white text-sm font-semibold mb-6" variants={item}>
             <span className="w-2 h-2 bg-white rounded-full mr-2 animate-pulse"></span>
             INVITATIONAL
-          </div>
+          </motion.div>
 
-          {/* Speed Run Image */}
-          <div className="mb-10 flex justify-center animate-fade-in" style={{ animationDelay: '0.4s' }}>
-            <Image
-              src="/images/speed_run_img.png"
-              alt="Speed Run"
-              width={400}
-              height={200}
-              className="w-auto h-auto max-w-full"
-              priority
-            />
-          </div>
+          {/* Speed Run Image — Framer Motion: slide in + ripple reveal + Marvel flash */}
+          <motion.div className="mb-5 flex justify-center relative" variants={imageBlock}>
+            <div className="relative inline-block">
+              <motion.div className="overflow-hidden" variants={rippleReveal}>
+                <Image
+                  src="/images/speed_run2.png"
+                  alt="Speed Run"
+                  width={550}
+                  height={200}
+                  className="h-auto max-w-full block"
+                  priority
+                />
+              </motion.div>
+              <motion.div
+                className="absolute inset-0 pointer-events-none"
+                aria-hidden
+                initial={{ x: '-100%', opacity: 0 }}
+                animate={{
+                  x: '200%',
+                  opacity: [0, 1, 1, 0]
+                }}
+                transition={{
+                  duration: 0.7,
+                  delay: 0.9,
+                  opacity: { times: [0, 0.15, 0.9, 1] }
+                }}
+                style={{
+                  background: 'linear-gradient(90deg, transparent 0%, transparent 25%, rgba(255,255,255,0) 40%, rgba(255,255,255,0.85) 50%, rgba(255,255,255,0) 60%, transparent 75%, transparent 100%)',
+                  backgroundSize: '60% 100%',
+                  backgroundRepeat: 'no-repeat',
+                  filter: 'blur(1px)'
+                }}
+              />
+            </div>
+          </motion.div>
 
           {/* Main Heading */}
-          <h1 className="text-3xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight animate-fade-in" style={{ animationDelay: '0.6s' }}>
+          <motion.h1 className="text-3xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight" variants={item}>
             <span className="block text-yellow-500 font-druk">SAVE THE DATE</span>
-            {/* Subheading */}
             <p className="text-xl sm:text-1xl text-gray-200 mb-4 max-w-2xl mx-auto font-sweet-sans">
-                PUSH YOUR PACE, TEST YOUR LIMITS
+              PUSH YOUR PACE, TEST YOUR LIMITS
             </p>
-          </h1>
+          </motion.h1>
 
-          <div className="inline-block px-6 py-4 mb-4 border-2 border-white rounded-lg bg-white/10 backdrop-blur-sm animate-fade-in" style={{ animationDelay: '0.8s' }}>
+          <motion.div className="inline-block px-6 py-4 mb-4 border-2 border-white rounded-lg bg-white/10 backdrop-blur-sm" variants={item}>
             <div className="text-xl sm:text-2xl text-white font-sweet-sans">
               AYALA TRIANGLE, MAKATI<br/>
               <p>
@@ -154,14 +208,14 @@ export default function Hero() {
                 Limited to <b>2000</b> athletes only<br/>
               </p>
             </div>
-            
-          </div>
-          <div className="text-xl sm:text-lg text-white font-sweet-sans animate-fade-in" style={{ animationDelay: '0.9s' }}>
+          </motion.div>
+
+          <motion.div className="text-xl sm:text-lg text-white font-sweet-sans" variants={item}>
             Exclusive Pre-registration for first <b>200</b> <br/>to register on <b>Feb 6th</b>
-          </div>
+          </motion.div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col mt-4 sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: '1s' }}>
+          <motion.div className="flex flex-col mt-4 sm:flex-row items-center justify-center gap-4" variants={item}>
             <button 
               onClick={scrollToRegistration}
               className="w-full sm:w-auto bg-yellow-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-orange-700 transition-all transform hover:scale-105 shadow-lg"
@@ -174,10 +228,10 @@ export default function Hero() {
             >
               Learn More
             </button>
-          </div>
+          </motion.div>
 
           {/* Stats */}
-          <div className="mt-16 mb-12 md:mb-0 grid grid-cols-2 md:grid-cols-4 gap-8 animate-fade-in" style={{ animationDelay: '1.2s' }}>
+          <motion.div className="mt-16 mb-10 md:mb-10 grid grid-cols-2 md:grid-cols-4 gap-8" variants={item}>
             <div className="text-center">
               <div className="text-4xl font-bold text-orange-500 mb-2">
                 <CountUp end={10000} suffix="+" duration={2000} delay={1200} />
@@ -202,8 +256,8 @@ export default function Hero() {
               </div>
               <div className="text-gray-300">Awards Won</div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
 
       {/* Scroll Indicator */}
