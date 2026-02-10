@@ -2,70 +2,10 @@
 
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
-import Swal from 'sweetalert2';
 
 export default function PartnersSection() {
   const partnersSectionRef = useRef<HTMLElement>(null);
   const [isPartnersVisible, setIsPartnersVisible] = useState(false);
-
-  const handlePartnerWithUs = () => {
-    Swal.fire({
-      title: 'Partner With Us',
-      html: `
-        <p class="text-gray-600 text-left mb-4 font-sweet-sans">Tell us about your interest in partnering with 2XU Speed Run Asia Series.</p>
-        <input id="partner-name" class="swal2-input w-full mb-3" placeholder="Your name" required>
-        <input id="partner-email" class="swal2-input w-full mb-3" type="email" placeholder="Your email" required>
-        <input id="partner-company" class="swal2-input w-full mb-3" placeholder="Company (optional)">
-        <textarea id="partner-message" class="swal2-textarea w-full" placeholder="Your message" rows="4" required></textarea>
-      `,
-      showCancelButton: true,
-      confirmButtonText: 'Send inquiry',
-      cancelButtonText: 'Cancel',
-      confirmButtonColor: '#ea580c',
-      preConfirm: () => {
-        const name = (document.getElementById('partner-name') as HTMLInputElement)?.value?.trim();
-        const email = (document.getElementById('partner-email') as HTMLInputElement)?.value?.trim();
-        const company = (document.getElementById('partner-company') as HTMLInputElement)?.value?.trim();
-        const message = (document.getElementById('partner-message') as HTMLTextAreaElement)?.value?.trim();
-        if (!name || !email || !message) {
-          Swal.showValidationMessage('Please fill in name, email, and message');
-          return false;
-        }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-          Swal.showValidationMessage('Please enter a valid email address');
-          return false;
-        }
-        return { name, email, company, message };
-      },
-    }).then(async (result) => {
-      if (!result.isConfirmed || !result.value) return;
-      const payload = result.value;
-      try {
-        Swal.fire({ title: 'Sending...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
-        const res = await fetch('/api/partner-inquiry', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          if (res.status === 503) {
-            Swal.fire({
-              icon: 'warning',
-              title: 'Email not configured',
-              text: data.error || 'Partner inquiry emails are not set up yet. Please contact us directly.',
-              footer: '<a href="mailto:1@oneofakindasia.com?subject=Partner%20Inquiry%20-%202XU%20Speed%20Run">Email us</a>',
-            });
-            return;
-          }
-          throw new Error(data.error || 'Failed to send');
-        }
-        Swal.fire({ icon: 'success', title: 'Inquiry sent!', text: 'We\'ll get back to you soon.' });
-      } catch (err) {
-        Swal.fire({ icon: 'error', title: 'Could not send', text: err instanceof Error ? err.message : 'Something went wrong.' });
-      }
-    });
-  };
 
   const partners = [
     { name: 'Ayala', image: '/images/partner-ayala.png' },
@@ -170,13 +110,12 @@ export default function PartnersSection() {
           <p className="text-gray-600 mb-6 font-sweet-sans text-lg">
             Interested in becoming a partner?
           </p>
-          <button
-            type="button"
-            onClick={handlePartnerWithUs}
-            className="bg-gradient-to-r from-orange-600 to-orange-500 text-white px-8 py-3 rounded-full font-semibold hover:from-orange-700 hover:to-orange-600 transition-all transform hover:scale-105 shadow-lg font-fira-sans"
+          <a
+            href="mailto:1@oneofakindasia.com?subject=Partner%20With%20Us%20-%202XU%20Speed%20Run"
+            className="inline-block bg-gradient-to-r from-orange-600 to-orange-500 text-white px-8 py-3 rounded-full font-semibold hover:from-orange-700 hover:to-orange-600 transition-all transform hover:scale-105 shadow-lg font-fira-sans"
           >
             Partner With Us
-          </button>
+          </a>
         </div>
       </div>
     </section>
