@@ -1,21 +1,22 @@
 'use client';
 
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 
-// Slot machine count-up component
-function CountUp({ end, suffix = '', duration = 2000, delay = 0 }: { end: number; suffix?: string; duration?: number; delay?: number }) {
+// Slot machine count-up component (starts when run becomes true, e.g. when in view)
+function CountUp({ end, suffix = '', duration = 2000, delay = 0, run = true }: { end: number; suffix?: string; duration?: number; delay?: number; run?: boolean }) {
   const [count, setCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    if (!run) return;
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, delay);
 
     return () => clearTimeout(timer);
-  }, [delay]);
+  }, [run, delay]);
 
   useEffect(() => {
     if (!isVisible) return;
@@ -60,6 +61,22 @@ function CountUp({ end, suffix = '', duration = 2000, delay = 0 }: { end: number
 }
 
 export default function Hero() {
+  const [statsInView, setStatsInView] = useState(false);
+  const statsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = statsRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) setStatsInView(true);
+      },
+      { threshold: 0.2, rootMargin: '0px' }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
   const scrollToEvents = () => {
     const eventsSection = document.getElementById('events');
     if (eventsSection) {
@@ -230,29 +247,35 @@ export default function Hero() {
             </button>
           </motion.div>
 
-          {/* Stats */}
-          <motion.div className="mt-16 mb-10 md:mb-10 grid grid-cols-2 md:grid-cols-4 gap-8" variants={item}>
+          {/* Stats — animate only when scrolled into view */}
+          <motion.div
+            ref={statsRef}
+            className="mt-16 mb-10 md:mb-10 grid grid-cols-2 md:grid-cols-4 gap-8"
+            initial={{ opacity: 0, y: 24 }}
+            animate={statsInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          >
             <div className="text-center">
               <div className="text-4xl font-bold text-orange-500 mb-2">
-                <CountUp end={10000} suffix="+" duration={2000} delay={1200} />
+                <CountUp end={10000} suffix="+" duration={2000} delay={200} run={statsInView} />
               </div>
               <div className="text-gray-300">Active Runners</div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold text-orange-500 mb-2">
-                <CountUp end={50} suffix="+" duration={2000} delay={1400} />
+                <CountUp end={50} suffix="+" duration={2000} delay={400} run={statsInView} />
               </div>
               <div className="text-gray-300">Events Yearly</div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold text-orange-500 mb-2">
-                <CountUp end={15} suffix="+" duration={2000} delay={1600} />
+                <CountUp end={15} suffix="+" duration={2000} delay={600} run={statsInView} />
               </div>
               <div className="text-gray-300">Years Experience</div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold text-orange-500 mb-2">
-                <CountUp end={100} suffix="+" duration={2000} delay={1800} />
+                <CountUp end={100} suffix="+" duration={2000} delay={800} run={statsInView} />
               </div>
               <div className="text-gray-300">Awards Won</div>
             </div>

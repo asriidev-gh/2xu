@@ -27,13 +27,13 @@ export default function Header() {
       <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center shrink-0">
             <Image
               src="/images/oneofakindasia-logo.png"
               alt="2XU Logo"
               width={50}
               height={50}
-              className="w-auto h-auto"
+              className="w-auto max-h-12 md:max-h-14 object-contain object-left"
               priority
             />
           </Link>
