@@ -317,7 +317,7 @@ export default function RegistrationSection() {
                     <span className="text-orange-600">Payment Instructions</span>
                   </h3>
                   <div className="flex flex-col sm:flex-row gap-6 items-start flex-wrap">
-                    <div className="flex-shrink-0 p-3 bg-white rounded-lg border border-orange-100 shadow-sm">
+                    <div className="flex-shrink-0 p-3 bg-white rounded-lg border border-orange-100 shadow-sm flex flex-col items-center">
                       <Image
                         src="/images/payment-options/gcash.jpg"
                         alt="GCash QR Code"
@@ -326,8 +326,18 @@ export default function RegistrationSection() {
                         className="w-[180px] h-[180px] object-contain"
                       />
                       <p className="text-sm font-semibold text-gray-700 text-center mt-2 font-sweet-sans">GCash</p>
+                      <a
+                        href="/images/payment-options/gcash.jpg"
+                        download="gcash-qr.jpg"
+                        className="md:hidden mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition-colors font-fira-sans"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download QR
+                      </a>
                     </div>
-                    <div className="flex-shrink-0 p-3 bg-white rounded-lg border border-orange-100 shadow-sm">
+                    <div className="flex-shrink-0 p-3 bg-white rounded-lg border border-orange-100 shadow-sm flex flex-col items-center">
                       <Image
                         src="/images/payment-options/bank-transfer.jpg"
                         alt="Bank Transfer QR Code"
@@ -336,6 +346,16 @@ export default function RegistrationSection() {
                         className="w-[180px] h-[180px] object-contain"
                       />
                       <p className="text-sm font-semibold text-gray-700 text-center mt-2 font-sweet-sans">Gotyme Bank Transfer</p>
+                      <a
+                        href="/images/payment-options/bank-transfer.jpg"
+                        download="gotyme-bank-transfer-qr.jpg"
+                        className="md:hidden mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition-colors font-fira-sans"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download QR
+                      </a>
                     </div>
                     <div className="flex-1 min-w-[200px] space-y-2">
                       <p className="text-gray-700 font-sweet-sans">
