@@ -225,8 +225,9 @@ export default function Hero() {
           {/* Main Heading */}
           <motion.h1 className="text-3xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight" variants={item}>
             <span className="block text-yellow-500 font-druk">SAVE THE DATE</span>
-            <p className="text-xl sm:text-1xl text-gray-200 mb-4 max-w-2xl mx-auto font-sweet-sans">
-              PUSH YOUR PACE, TEST YOUR LIMITS
+            <p className="text-lg sm:text-lg text-gray-200 mb-4 max-w-2xl mx-auto font-sweet-sans">
+            MISSION STRONG <br/> Human Performance Multiplied <br/> Speed Run w/ your Squad
+
             </p>
           </motion.h1>
 
@@ -244,7 +245,7 @@ export default function Hero() {
           </motion.div>
 
           <motion.div className="text-xl sm:text-lg text-white font-sweet-sans" variants={item}>
-            Exclusive Pre-registration for first <b>200</b> <br/>to register on <b>Feb 6th</b>
+            Exclusive Pre-registration for first <b>200</b> <br/>to register on <b>Feb 15th</b>
           </motion.div>
 
           {/* CTA Buttons */}
