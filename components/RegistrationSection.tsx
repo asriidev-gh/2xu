@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import Image from 'next/image';
 import Swal from 'sweetalert2';
 
 export default function RegistrationSection() {
@@ -306,18 +306,28 @@ export default function RegistrationSection() {
                   <h3 className="text-lg font-bold text-gray-900 font-fira-sans flex items-center gap-2">
                     <span className="text-orange-600">Payment Instructions</span>
                   </h3>
-                  <div className="flex flex-col sm:flex-row gap-6 items-start">
+                  <div className="flex flex-col sm:flex-row gap-6 items-start flex-wrap">
                     <div className="flex-shrink-0 p-3 bg-white rounded-lg border border-orange-100 shadow-sm">
-                      <QRCodeSVG
-                        value="mailto:1@oneofakindasia.com"
-                        size={140}
-                        level="M"
-                        includeMargin={false}
-                        className="w-[140px] h-[140px]"
+                      <Image
+                        src="/images/payment-options/gcash.jpg"
+                        alt="GCash QR Code"
+                        width={180}
+                        height={180}
+                        className="w-[180px] h-[180px] object-contain"
                       />
-                      <p className="text-xs text-gray-500 text-center mt-2 font-sweet-sans">Sample QR</p>
+                      <p className="text-sm font-semibold text-gray-700 text-center mt-2 font-sweet-sans">GCash</p>
                     </div>
-                    <div className="flex-1 space-y-2">
+                    <div className="flex-shrink-0 p-3 bg-white rounded-lg border border-orange-100 shadow-sm">
+                      <Image
+                        src="/images/payment-options/bank-transfer.jpg"
+                        alt="Bank Transfer QR Code"
+                        width={180}
+                        height={180}
+                        className="w-[180px] h-[180px] object-contain"
+                      />
+                      <p className="text-sm font-semibold text-gray-700 text-center mt-2 font-sweet-sans">Gotyme Bank Transfer</p>
+                    </div>
+                    <div className="flex-1 min-w-[200px] space-y-2">
                       <p className="text-gray-700 font-sweet-sans">
                         After completing your registration, please send your proof of payment to complete the process.
                       </p>
