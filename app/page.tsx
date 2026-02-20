@@ -10,9 +10,11 @@ import PartnersSection from '@/components/PartnersSection';
 import RegistrationSection from '@/components/RegistrationSection';
 import Footer from '@/components/Footer';
 import BackToRaceExperienceButton from '@/components/BackToRaceExperienceButton';
+import SpeedSeriesMechanicsModal from '@/components/SpeedSeriesMechanicsModal';
 
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [isMechanicsModalOpen, setIsMechanicsModalOpen] = useState(false);
   const clearSelectedCategory = useCallback(() => setSelectedCategory(''), []);
 
   return (
@@ -27,8 +29,11 @@ export default function Home() {
       <main className="min-h-screen scroll-smooth">
         <Header />
         <Hero />
-        <EventsSection />
-        <RaceCategoriesSection onSelectCategory={setSelectedCategory} />
+        <EventsSection onOpenMechanicsModal={() => setIsMechanicsModalOpen(true)} />
+        <RaceCategoriesSection
+          onSelectCategory={setSelectedCategory}
+          onOpenRaceEventsDetails={() => setIsMechanicsModalOpen(true)}
+        />
         <MissionVisionSection />
         <PartnersSection />
         <RegistrationSection
@@ -39,6 +44,10 @@ export default function Home() {
         {/* Mobile-only floating back-to-race-experience button */}
         <BackToRaceExperienceButton />
       </main>
+      <SpeedSeriesMechanicsModal
+        isOpen={isMechanicsModalOpen}
+        onClose={() => setIsMechanicsModalOpen(false)}
+      />
     </>
   );
 }

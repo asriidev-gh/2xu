@@ -89,9 +89,10 @@ function getHighlightLabel(highlight?: RaceCategory['highlight']) {
 
 type RaceCategoriesSectionProps = {
   onSelectCategory?: (categoryName: string) => void;
+  onOpenRaceEventsDetails?: () => void;
 };
 
-export default function RaceCategoriesSection({ onSelectCategory }: RaceCategoriesSectionProps) {
+export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEventsDetails }: RaceCategoriesSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -168,10 +169,20 @@ export default function RaceCategoriesSection({ onSelectCategory }: RaceCategori
             Choose Your Race Experience
           </h2>
           <div className="w-24 h-1 bg-gradient-to-r from-orange-500 to-yellow-500 mx-auto rounded-full shadow-md mb-4" />
-          <p className="text-gray-200 max-w-2xl mx-auto font-sweet-sans text-lg">
+          <p className="text-gray-200 max-w-2xl mx-auto font-sweet-sans text-lg mb-6">
             From youth runners to patrons and teams, each category comes with exclusive 2XU race entitlements to
             power your performance on and off the course.
           </p>
+          <button
+            type="button"
+            onClick={() => onOpenRaceEventsDetails?.()}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-semibold font-fira-sans rounded-full shadow-lg hover:shadow-orange-500/30 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 focus:ring-offset-gray-900"
+          >
+            Race events details
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
         </div>
 
         {/* Categories Grid */}

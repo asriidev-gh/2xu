@@ -39,7 +39,7 @@ export default function RootLayout({
         {/* <link href="https://fonts.googleapis.com/css2?family=Sweet+Sans+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" /> */}
         {/* If self-hosting, the @font-face is already in globals.css */}
       </head>
-      <body className={`${inter.className} ${firaSans.variable}`}>{children}</body>
+      <body className={`${inter.className} ${firaSans.variable}`} suppressHydrationWarning>{children}</body>
     </html>
   );
 }

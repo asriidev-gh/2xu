@@ -2,7 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-export default function EventsSection() {
+type EventsSectionProps = {
+  onOpenMechanicsModal?: () => void;
+};
+
+export default function EventsSection({ onOpenMechanicsModal }: EventsSectionProps = {}) {
   const leftSectionRef = useRef<HTMLDivElement>(null);
   const rightSectionRef = useRef<HTMLDivElement>(null);
   const eventsSectionRef = useRef<HTMLElement>(null);
@@ -147,18 +151,30 @@ export default function EventsSection() {
               </h2>
             </div>
             
-            {/* Right Side - Summary Title */}
-            <div className={`mt-4 lg:mt-0 lg:text-right ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.3s' }}>
-              <h3 className="text-base lg:text-lg font-bold text-black mb-1 font-druk">
-                SUMMARY OF THE KEY DRIVERS
-              </h3>
-              <h3 className="text-base lg:text-lg font-bold text-gray-900 font-druk">
-                2XU ASIA RUN PROGRAM
-              </h3>
+            {/* Right Side - Summary Title + Race Event Details button */}
+            <div className={`mt-4 lg:mt-0 lg:text-right flex flex-col lg:items-end gap-3 ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.3s' }}>
+              <div>
+                <h3 className="text-base lg:text-lg font-bold text-black mb-1 font-druk">
+                  SUMMARY OF THE KEY DRIVERS
+                </h3>
+                <h3 className="text-base lg:text-lg font-bold text-gray-900 font-druk">
+                  2XU ASIA RUN PROGRAM
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => onOpenMechanicsModal?.()}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-500 text-gray-900 font-semibold text-sm font-fira-sans hover:bg-yellow-400 transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-transparent"
+              >
+                <span>Race Event Details</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
-        
+
         {/* Bottom Section - Left and Right Containers */}
         <div className="grid grid-cols-1 lg:grid-cols-3 rounded-b-lg overflow-hidden shadow-2xl" style={{ gap: 0, minHeight: '500px' }}>
           {/* Left Section - Program Details (2/3 width) */}
