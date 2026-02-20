@@ -97,17 +97,23 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
   const sectionRef = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(false);
 
+  const headerOffset = 80; // match fixed header height
+
   const scrollToRegistration = () => {
     const registrationSection = document.getElementById('registration');
     if (registrationSection) {
-      const headerOffset = 80; // match fixed header height
       const elementPosition = registrationSection.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+    }
+  };
 
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth',
-      });
+  const scrollToRaceExperience = () => {
+    const raceExperience = document.getElementById('race-experience');
+    if (raceExperience) {
+      const elementPosition = raceExperience.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
     }
   };
 
@@ -163,17 +169,33 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
         >
           <button
             type="button"
-            onClick={() => onOpenRaceEventsDetails?.()}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 rounded-full mb-4 shadow-lg hover:shadow-orange-500/30 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 focus:ring-offset-gray-900"
+            onClick={() => {
+              scrollToRaceExperience();
+              onOpenRaceEventsDetails?.();
+            }}
+            className="inline-flex items-center gap-2.5 px-5 py-3 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 rounded-full mb-4 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/40 hover:scale-105 active:scale-100 border-2 border-white/20 hover:border-white/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 focus:ring-offset-gray-900 cursor-pointer"
           >
+            <img
+              src="/images/running-man.gif"
+              alt=""
+              className="h-6 w-auto object-contain"
+              width={24}
+              height={24}
+              aria-hidden
+            />
             <span className="text-white font-semibold text-sm font-fira-sans uppercase tracking-wide">
-              Race Event Details
+              2XU Speed Run: Asia Series Race Event Details
             </span>
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+            <img
+              src="/images/hand-pointer.gif"
+              alt=""
+              className="h-8 w-auto object-contain shrink-0"
+              width={32}
+              height={32}
+              aria-hidden
+            />
           </button>
-          <h2 className="text-4xl lg:text-5xl font-bold text-white mb-4 font-druk drop-shadow-lg">
+          <h2 id="race-experience" className="text-4xl lg:text-5xl font-bold text-white mb-4 font-druk drop-shadow-lg scroll-mt-24">
             Choose Your Race Experience
           </h2>
           <div className="w-24 h-1 bg-gradient-to-r from-orange-500 to-yellow-500 mx-auto rounded-full shadow-md mb-4" />
