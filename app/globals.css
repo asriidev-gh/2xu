@@ -279,5 +279,14 @@ body {
   .animate-marquee-rtl.pause {
     animation-play-state: paused;
   }
+
+  /* Hide scrollbar for apparel drag strip */
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
