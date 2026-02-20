@@ -8,6 +8,9 @@ type SpeedSeriesMechanicsModalProps = {
 // navpanes=0 hides the sidebar/thumbnails; toolbar=0 hides the PDF viewer toolbar
 const PDF_URL = '/SpeedSeriesMechanics.pdf#navpanes=0&toolbar=0';
 
+/** Use for "open in new tab" on mobile so native viewer can scroll all pages and pinch-zoom */
+export const SPEED_SERIES_PDF_URL = '/SpeedSeriesMechanics.pdf';
+
 export default function SpeedSeriesMechanicsModal({ isOpen, onClose }: SpeedSeriesMechanicsModalProps) {
   if (!isOpen) return null;
 

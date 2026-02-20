@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import ApparelGallery from '@/components/ApparelGallery';
+import { SPEED_SERIES_PDF_URL } from '@/components/SpeedSeriesMechanicsModal';
 
 type RaceCategory = {
   name: string;
@@ -170,6 +171,11 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
           <button
             type="button"
             onClick={() => {
+              const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+              if (isMobile) {
+                window.open(SPEED_SERIES_PDF_URL, '_blank', 'noopener,noreferrer');
+                return;
+              }
               scrollToRaceExperience();
               onOpenRaceEventsDetails?.();
             }}
