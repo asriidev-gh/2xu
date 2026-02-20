@@ -112,6 +112,16 @@ body {
   }
 }
 
+/* Infinite marquee: right to left (one full track width = 50% of container) */
+@keyframes marqueeRtl {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
 /* Ripple reveal: soft-edge wipe left to right (running / finish-line feel) */
 @keyframes rippleRevealLTR {
   from {
@@ -220,6 +230,14 @@ body {
   
   .animate-pulse-glow {
     animation: pulseGlow 10s ease-in-out infinite;
+  }
+
+  /* Apparel marquee: right to left, pausable on hover */
+  .animate-marquee-rtl {
+    animation: marqueeRtl 40s linear infinite;
+  }
+  .animate-marquee-rtl.pause {
+    animation-play-state: paused;
   }
 }
 

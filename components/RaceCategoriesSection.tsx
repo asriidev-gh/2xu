@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import ApparelGallery from '@/components/ApparelGallery';
 
 type RaceCategory = {
   name: string;
@@ -160,11 +161,18 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
           }`}
           style={{ animationDelay: '0.2s' }}
         >
-          <div className="inline-block px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-500 rounded-full mb-4 shadow-lg">
+          <button
+            type="button"
+            onClick={() => onOpenRaceEventsDetails?.()}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 rounded-full mb-4 shadow-lg hover:shadow-orange-500/30 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 focus:ring-offset-gray-900"
+          >
             <span className="text-white font-semibold text-sm font-fira-sans uppercase tracking-wide">
-              Race Experience &amp; Pricing
+              Race Event Details
             </span>
-          </div>
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
           <h2 className="text-4xl lg:text-5xl font-bold text-white mb-4 font-druk drop-shadow-lg">
             Choose Your Race Experience
           </h2>
@@ -173,16 +181,6 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
             From youth runners to patrons and teams, each category comes with exclusive 2XU race entitlements to
             power your performance on and off the course.
           </p>
-          <button
-            type="button"
-            onClick={() => onOpenRaceEventsDetails?.()}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-semibold font-fira-sans rounded-full shadow-lg hover:shadow-orange-500/30 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 focus:ring-offset-gray-900"
-          >
-            Race events details
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
         </div>
 
         {/* Categories Grid */}
@@ -303,6 +301,9 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
           All pricing is indicative and may be subject to final confirmation. Race kits and entitlements are curated
           to deliver a premium 2XU experience aligned with the event&apos;s mission and partners.
         </p>
+
+        {/* Apparel gallery: marquee thumbnails, hover to pause & scale, click for modal */}
+        <ApparelGallery isVisible={isVisible} />
       </div>
     </section>
   );
