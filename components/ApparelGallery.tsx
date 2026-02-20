@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import ApparelImageModal from '@/components/ApparelImageModal';
 
@@ -17,12 +17,32 @@ type ApparelGalleryProps = {
   isVisible?: boolean;
 };
 
+const CLIP_EXTEND = 1.1; // pseudo-elements are 110% of container
+
 export default function ApparelGallery({ isVisible = true }: ApparelGalleryProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [modalImage, setModalImage] = useState<string | null>(null);
+  const borderRef = useRef<HTMLDivElement>(null);
 
   const openModal = useCallback((src: string) => setModalImage(src), []);
   const closeModal = useCallback(() => setModalImage(null), []);
+
+  useEffect(() => {
+    const el = borderRef.current;
+    if (!el) return;
+    const setClipVars = () => {
+      const w = el.offsetWidth;
+      const h = el.offsetHeight;
+      const clipW = Math.round(w * CLIP_EXTEND);
+      const clipH = Math.round(h * CLIP_EXTEND);
+      el.style.setProperty('--clip-w', `${clipW}px`);
+      el.style.setProperty('--clip-h', `${clipH}px`);
+    };
+    setClipVars();
+    const ro = new ResizeObserver(setClipVars);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   return (
     <>
@@ -30,13 +50,18 @@ export default function ApparelGallery({ isVisible = true }: ApparelGalleryProps
         className={`mt-14 mb-2 ${isVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`}
         style={{ animationDelay: '1s' }}
       >
-        {/* Contained block so apparel stands out inside the race section */}
+        {/* Wrapper for animated drawing border (clip effect) */}
         <div
-          className="relative rounded-2xl overflow-hidden shadow-[0_0_60px_20px_rgba(249,115,22,0.06),0_0_100px_40px_rgba(249,115,22,0.03)]"
-          style={{
-            background: 'linear-gradient(to bottom, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 50%, transparent 100%)',
-          }}
+          ref={borderRef}
+          className="apparel-clip-border rounded-2xl"
         >
+          {/* Contained block so apparel stands out inside the race section */}
+          <div
+            className="relative z-10 rounded-2xl overflow-hidden shadow-[0_0_60px_20px_rgba(249,115,22,0.06),0_0_100px_40px_rgba(249,115,22,0.03)]"
+            style={{
+              background: 'linear-gradient(to bottom, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 50%, transparent 100%)',
+            }}
+          >
           {/* Faded edge glow */}
           <div
             className="pointer-events-none absolute inset-0 rounded-2xl opacity-80"
@@ -100,6 +125,7 @@ export default function ApparelGallery({ isVisible = true }: ApparelGalleryProps
               <div className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-black/40 via-black/20 to-transparent z-10 rounded-l-lg" />
             </div>
           </div>
+        </div>
         </div>
       </div>
 
