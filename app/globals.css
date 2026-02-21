@@ -312,6 +312,13 @@ body {
     animation: heroFlipLines 5s ease-in-out infinite;
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    .hero-flip-animate {
+      animation: none;
+      transform: translateY(0);
+    }
+  }
+
   /* Hide scrollbar for apparel drag strip */
   .scrollbar-hide {
     scrollbar-width: none;

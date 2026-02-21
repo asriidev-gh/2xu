@@ -10,8 +10,8 @@ const firaSans = Fira_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Runner - Running Club & Marathon Events",
-  description: "Join our running club for marathon events and sports activities",
+  title: "2XU Speed Run | Asia's Fastest-Growing Urban Performance Race",
+  description: "Mission Strong. 2XU Speed Run — Built for Speed, Strength & Impact. Ayala Triangle, Makati. May 17th 2026. Register now.",
   icons: {
     icon: "/images/favicon.ico",
   },

@@ -139,6 +139,8 @@ export default function Hero() {
           loop
           muted
           playsInline
+          preload="metadata"
+          poster="/images/speed_run2.png"
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
           style={{ 
             objectFit: 'cover',
@@ -147,6 +149,7 @@ export default function Hero() {
             minWidth: '100%',
             minHeight: '100%'
           }}
+          aria-label="Background video: 2XU Speed Run"
         >
           <source src="/images/2xu_banner_vid.mp4" type="video/mp4" />
         </video>
@@ -229,7 +232,18 @@ export default function Hero() {
 
           {/* Main Heading */}
           <motion.h1 className="text-3xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight" variants={item}>
-            <span className="block text-yellow-500 font-druk">MISSION STRONG</span>
+            <span
+              className="block font-druk font-extrabold tracking-tight uppercase"
+              style={{
+                background: 'linear-gradient(135deg, #ea580c 0%, #f59e0b 50%, #fbbf24 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                filter: 'drop-shadow(0 0 14px rgba(251, 191, 36, 0.3))',
+              }}
+            >
+              MISSION STRONG
+            </span>
             {/* One-liner: smooth flip; at end instant reset to first line (no scroll up) */}
             <div className="mt-2 mb-4 max-w-2xl mx-auto h-8 sm:h-9 overflow-hidden font-sweet-sans">
               <div className="hero-flip-animate h-[400%] flex flex-col">
@@ -242,7 +256,7 @@ export default function Hero() {
           </motion.h1>
 
           <motion.div className="relative inline-block px-6 pt-6 pb-4 mb-4 border-2 border-white rounded-lg bg-white/10 backdrop-blur-sm" variants={item}>
-            <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 px-3 py-0.5 bg-[#0a0a0a] border border-white text-yellow-500 font-druk text-sm uppercase tracking-wide whitespace-nowrap">
+            <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 px-3 py-0.5 bg-gray-50 border border-white text-black font-druk text-sm font-bold uppercase tracking-wide whitespace-nowrap">
               SAVE THE DATE
             </span>
             <div className="text-xl sm:text-2xl text-white font-sweet-sans">
@@ -264,14 +278,18 @@ export default function Hero() {
           {/* CTA Buttons */}
           <motion.div className="flex flex-col mt-4 sm:flex-row items-center justify-center gap-4" variants={item}>
             <button 
+              type="button"
               onClick={scrollToRegistration}
-              className="w-full sm:w-auto bg-yellow-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-orange-700 transition-all transform hover:scale-105 shadow-lg"
+              className="w-full sm:w-auto bg-yellow-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-orange-700 transition-all transform hover:scale-105 shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              aria-label="Register for 2XU Speed Run"
             >
               Register Here
             </button>
             <button 
+              type="button"
               onClick={scrollToEvents}
-              className="w-full sm:w-auto bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-full font-bold text-lg border-2 border-white/30 hover:bg-white/20 transition-all"
+              className="w-full sm:w-auto bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-full font-bold text-lg border-2 border-white/30 hover:bg-white/20 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              aria-label="Learn more about 2XU Speed Run events"
             >
               Learn More
             </button>
