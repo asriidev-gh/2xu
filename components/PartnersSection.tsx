@@ -71,38 +71,35 @@ export default function PartnersSection() {
           </p>
         </div>
 
-        {/* Partners Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 lg:gap-8">
-          {partners.map((partner, index) => (
-            <div
-              key={partner.name}
-              className={`group relative ${isPartnersVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`}
-              style={{ animationDelay: `${0.3 + index * 0.1}s` }}
-            >
-              {/* Card with gradient glow effect */}
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-yellow-500/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
-              
-              {/* Partner Card */}
-              <div className="relative bg-white/90 backdrop-blur-sm rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-100 hover:shadow-2xl hover:border-orange-200 transition-all duration-300 h-full flex flex-col items-center justify-center min-h-[180px] group-hover:scale-105">
-                {/* Partner Logo */}
-                <div className="relative w-full h-24 flex items-center justify-center grayscale group-hover:grayscale-0 transition-all duration-300">
-                  <Image
-                    src={partner.image}
-                    alt={`${partner.name} logo`}
-                    width={120}
-                    height={80}
-                    className="object-contain max-w-full max-h-full"
-                    style={{ filter: 'brightness(0.9)' }}
-                  />
+        {/* Partners marquee: scroll left to right */}
+        <div className={`relative w-full overflow-hidden py-8 ${isPartnersVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.3s' }}>
+          <div className="flex w-max gap-6 lg:gap-8 animate-marquee-ltr items-stretch" style={{ width: 'max-content' }}>
+            {[...partners, ...partners].map((partner, i) => (
+              <div key={`${partner.name}-${i}`} className="group relative flex-shrink-0 w-[200px] lg:w-[240px] my-2">
+                {/* Card with gradient glow effect */}
+                <div className="absolute -inset-4 bg-gradient-to-br from-orange-500/10 to-yellow-500/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500" />
+                {/* Partner Card */}
+                <div className="relative bg-white/90 backdrop-blur-sm rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-100 hover:shadow-2xl hover:border-orange-200 transition-all duration-300 flex flex-col items-center justify-center min-h-[220px] group-hover:scale-105">
+                  <div className="relative w-full h-24 flex items-center justify-center grayscale group-hover:grayscale-0 transition-all duration-300">
+                    <Image
+                      src={partner.image}
+                      alt={`${partner.name} logo`}
+                      width={120}
+                      height={80}
+                      className="object-contain max-w-full max-h-full"
+                      style={{ filter: 'brightness(0.9)' }}
+                    />
+                  </div>
+                  <h3 className="mt-4 text-sm font-semibold text-gray-700 font-fira-sans text-center group-hover:text-orange-600 transition-colors">
+                    {partner.name}
+                  </h3>
                 </div>
-                
-                {/* Partner Name */}
-                <h3 className="mt-4 text-sm font-semibold text-gray-700 font-fira-sans text-center group-hover:text-orange-600 transition-colors">
-                  {partner.name}
-                </h3>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          {/* Fade edges */}
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-gray-50 via-gray-50/80 to-transparent z-10" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-gray-50 via-gray-50/80 to-transparent z-10" />
         </div>
 
         {/* Call to Action */}

@@ -171,7 +171,7 @@ export default function Hero() {
           </motion.div>
 
           {/* Speed Run Image — Framer Motion: slide in + ripple reveal + scan-line + Marvel flash */}
-          <motion.div className="mb-5 flex justify-center relative" variants={imageBlock}>
+          <motion.div className="mb-2 flex justify-center relative" variants={imageBlock}>
             <div className="relative inline-block overflow-hidden">
               <motion.div className="overflow-hidden" variants={rippleReveal}>
                 <Image
@@ -222,16 +222,29 @@ export default function Hero() {
             </div>
           </motion.div>
 
+          {/* Tagline — close to image */}
+          <motion.p className="text-sm sm:text-base text-white/90 font-fira-sans uppercase tracking-widest mt-2 mb-3" variants={item}>
+            ENGINEERED FOR SPEED. BUILT FOR MISSION.
+          </motion.p>
+
           {/* Main Heading */}
           <motion.h1 className="text-3xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight" variants={item}>
-            <span className="block text-yellow-500 font-druk">SAVE THE DATE</span>
-            <p className="text-lg sm:text-lg text-gray-200 mb-4 max-w-2xl mx-auto font-sweet-sans">
-            MISSION STRONG <br/> Human Performance Multiplied <br/> Speed Run w/ your Squad
-
-            </p>
+            <span className="block text-yellow-500 font-druk">MISSION STRONG</span>
+            {/* One-liner: cycling flip through the three lines */}
+            <div className="mt-2 mb-4 max-w-2xl mx-auto h-8 sm:h-9 overflow-hidden font-sweet-sans">
+              <div className="hero-flip-animate h-[500%] flex flex-col">
+                <span className="h-8 sm:h-9 flex items-center justify-center text-lg sm:text-xl font-normal text-white shrink-0">Asia&apos;s Fastest-Growing Urban Performance Race</span>
+                <span className="h-8 sm:h-9 flex items-center justify-center text-base sm:text-lg font-normal text-white shrink-0">Built for Speed.</span>
+                <span className="h-8 sm:h-9 flex items-center justify-center text-base sm:text-lg font-normal text-white shrink-0">Built for Strength.</span>
+                <span className="h-8 sm:h-9 flex items-center justify-center text-base sm:text-lg font-normal text-white shrink-0">Built for Impact.</span>
+              </div>
+            </div>
           </motion.h1>
 
-          <motion.div className="inline-block px-6 py-4 mb-4 border-2 border-white rounded-lg bg-white/10 backdrop-blur-sm" variants={item}>
+          <motion.div className="relative inline-block px-6 pt-6 pb-4 mb-4 border-2 border-white rounded-lg bg-white/10 backdrop-blur-sm" variants={item}>
+            <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 px-3 py-0.5 bg-[#0a0a0a] border border-white text-yellow-500 font-druk text-sm uppercase tracking-wide whitespace-nowrap">
+              SAVE THE DATE
+            </span>
             <div className="text-xl sm:text-2xl text-white font-sweet-sans">
               AYALA TRIANGLE, MAKATI<br/>
               <p>

@@ -64,7 +64,7 @@ export default function MissionVisionSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Mission Card */}
           <div className={`group relative ${isMissionVisionVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.4s' }}>
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-yellow-500/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
+            <div className="absolute -inset-4 bg-gradient-to-br from-orange-500/10 to-yellow-500/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
             <div className="relative bg-black/50 backdrop-blur-md rounded-2xl p-8 lg:p-10 shadow-2xl border border-white/30 hover:border-white/40 transition-all duration-300 h-full">
               {/* Icon/Number */}
               <div className="flex items-center mb-6">

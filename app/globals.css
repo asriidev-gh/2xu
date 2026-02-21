@@ -122,6 +122,31 @@ body {
   }
 }
 
+/* Infinite marquee: left to right (content enters from left, exits right) */
+@keyframes marqueeLtr {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* Hero flip: cycle through 5 lines (one visible at a time) */
+@keyframes heroFlipLines {
+  0% { transform: translateY(0); }
+  18% { transform: translateY(0); }
+  22% { transform: translateY(-20%); }
+  38% { transform: translateY(-20%); }
+  42% { transform: translateY(-40%); }
+  58% { transform: translateY(-40%); }
+  62% { transform: translateY(-60%); }
+  78% { transform: translateY(-60%); }
+  82% { transform: translateY(-80%); }
+  98% { transform: translateY(-80%); }
+  100% { transform: translateY(0); }
+}
+
 /* Apparel container: animated drawing border (clip path) */
 @keyframes apparelClipMe {
   0%, 100% {
@@ -278,6 +303,14 @@ body {
   }
   .animate-marquee-rtl.pause {
     animation-play-state: paused;
+  }
+
+  .animate-marquee-ltr {
+    animation: marqueeLtr 50s linear infinite;
+  }
+
+  .hero-flip-animate {
+    animation: heroFlipLines 6s ease-in-out infinite;
   }
 
   /* Hide scrollbar for apparel drag strip */
