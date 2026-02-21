@@ -230,9 +230,9 @@ export default function Hero() {
           {/* Main Heading */}
           <motion.h1 className="text-3xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight" variants={item}>
             <span className="block text-yellow-500 font-druk">MISSION STRONG</span>
-            {/* One-liner: cycling flip through the three lines */}
+            {/* One-liner: smooth flip; at end instant reset to first line (no scroll up) */}
             <div className="mt-2 mb-4 max-w-2xl mx-auto h-8 sm:h-9 overflow-hidden font-sweet-sans">
-              <div className="hero-flip-animate h-[500%] flex flex-col">
+              <div className="hero-flip-animate h-[400%] flex flex-col">
                 <span className="h-8 sm:h-9 flex items-center justify-center text-lg sm:text-xl font-normal text-white shrink-0">Asia&apos;s Fastest-Growing Urban Performance Race</span>
                 <span className="h-8 sm:h-9 flex items-center justify-center text-base sm:text-lg font-normal text-white shrink-0">Built for Speed.</span>
                 <span className="h-8 sm:h-9 flex items-center justify-center text-base sm:text-lg font-normal text-white shrink-0">Built for Strength.</span>
