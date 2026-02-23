@@ -8,11 +8,10 @@ export default function PartnersSection() {
   const [isPartnersVisible, setIsPartnersVisible] = useState(false);
 
   const partners = [
+    { name: '2XU', image: '/images/2xu-logo.avif' },
     { name: 'Ayala', image: '/images/partner-ayala.png' },
-    { name: 'Garmin', image: '/images/partner-garmin.png' },
     { name: 'Mastercard', image: '/images/partner-mastercard.png' },
     { name: 'Pocari Sweat', image: '/images/partner-pocarisweat.webp' },
-    { name: 'Union', image: '/images/partner-union.webp' },
   ];
 
   // Trigger animations when Partners section comes into view
