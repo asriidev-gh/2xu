@@ -362,7 +362,7 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
           style={{ animationDelay: '1s' }}
         >
           All pricing is indicative and may be subject to final confirmation. Race kits and entitlements are curated
-          to deliver a premium 2XU experience aligned with the event&apos;s mission and partners.
+          to deliver a Mission Strong : speed series Experience powered by 2XU.
         </p>
       </div>
     </section>
