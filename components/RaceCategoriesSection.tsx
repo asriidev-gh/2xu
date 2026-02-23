@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import ApparelGallery from '@/components/ApparelGallery';
 import { SPEED_SERIES_PDF_URL } from '@/components/SpeedSeriesMechanicsModal';
 
@@ -161,13 +162,32 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
       </div>
 
       <div className="container mx-auto max-w-6xl relative z-10">
+        {/* Apparel gallery: marquee thumbnails, hover to pause & scale, click for modal */}
+        <ApparelGallery isVisible={isVisible} />
+
         {/* Section Header */}
         <div
           className={`text-center mb-12 ${
             isVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'
           }`}
-          style={{ animationDelay: '0.2s' }}
+          style={{ animationDelay: '0.3s' }}
         >
+          <div
+            className="flex justify-center my-6 max-w-2xl mx-auto overflow-hidden rounded-2xl"
+            style={{
+              maskImage: 'radial-gradient(ellipse 100% 130% at 50% 12%, black 42%, rgba(0,0,0,0.5) 62%, transparent 88%)',
+              WebkitMaskImage: 'radial-gradient(ellipse 100% 130% at 50% 12%, black 42%, rgba(0,0,0,0.5) 62%, transparent 88%)',
+            }}
+          >
+            <Image
+              src="/images/mission_strong.jpeg"
+              alt="Mission Strong"
+              width={800}
+              height={450}
+              className="w-full rounded-2xl shadow-xl object-cover"
+              sizes="(max-width: 768px) 100vw, 800px"
+            />
+          </div>
           <button
             type="button"
             onClick={() => {
@@ -235,7 +255,7 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
                 className={`group relative h-full rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-6 lg:p-7 shadow-2xl transition-all duration-300 hover:border-orange-400/80 hover:bg-white/10 cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:ring-offset-2 focus:ring-offset-gray-900 ${
                   isVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'
                 }`}
-                style={{ animationDelay: `${0.3 + index * 0.07}s` }}
+                style={{ animationDelay: `${0.45 + index * 0.07}s` }}
               >
                 {/* Glow accent */}
                 <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br from-orange-500/15 via-transparent to-yellow-400/10" />
@@ -324,14 +344,11 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
           className={`mt-8 text-center text-xs sm:text-sm text-gray-300/80 font-sweet-sans max-w-3xl mx-auto ${
             isVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'
           }`}
-          style={{ animationDelay: '0.9s' }}
+          style={{ animationDelay: '1s' }}
         >
           All pricing is indicative and may be subject to final confirmation. Race kits and entitlements are curated
           to deliver a premium 2XU experience aligned with the event&apos;s mission and partners.
         </p>
-
-        {/* Apparel gallery: marquee thumbnails, hover to pause & scale, click for modal */}
-        <ApparelGallery isVisible={isVisible} />
       </div>
     </section>
   );

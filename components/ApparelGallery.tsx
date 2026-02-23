@@ -136,8 +136,8 @@ export default function ApparelGallery({ isVisible = true }: ApparelGalleryProps
   return (
     <>
       <div
-        className={`mt-14 mb-2 ${isVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`}
-        style={{ animationDelay: '1s' }}
+        className={`mt-6 mb-12 ${isVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`}
+        style={{ animationDelay: '0.1s' }}
       >
         {/* Wrapper for animated drawing border (clip effect) */}
         <div
