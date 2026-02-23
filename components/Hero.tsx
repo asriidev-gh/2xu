@@ -272,7 +272,7 @@ export default function Hero() {
           </motion.div>
 
           <motion.div className="text-xl sm:text-lg text-white font-sweet-sans" variants={item}>
-            Exclusive Pre-registration for first <b>200</b> <br/>to register on <b>Feb 15th</b>
+            Exclusive Pre-registration for first <b>200</b> <br/>to register on <b>Feb 28th</b>
           </motion.div>
 
           {/* CTA Buttons */}
