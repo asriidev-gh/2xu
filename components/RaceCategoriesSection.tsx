@@ -12,7 +12,7 @@ type RaceCategory = {
   priceUsd: string;
   kitValueLabel?: string;
   kitDescription: string;
-  highlight?: 'popular' | 'best-value' | 'youth' | 'community';
+  highlight?: 'popular' | 'best-value' | 'youth' | 'community' | 'team';
 };
 
 const raceCategories: RaceCategory[] = [
@@ -41,7 +41,7 @@ const raceCategories: RaceCategory[] = [
     priceUsd: '$120',
     kitValueLabel: 'Includes $200 worth of 2XU race kit',
     kitDescription: 'Built for crews, clubs, and friends who want to race, train, and celebrate together.',
-    highlight: 'best-value',
+    highlight: 'team',
   },
   {
     name: 'Athletes Category',
@@ -85,6 +85,8 @@ function getHighlightLabel(highlight?: RaceCategory['highlight']) {
       return 'For Youth';
     case 'community':
       return 'Community';
+    case 'team':
+      return 'Group of 4 runners';
     default:
       return null;
   }
@@ -210,7 +212,7 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
               aria-hidden
             />
             <span className="text-white font-semibold text-sm font-fira-sans uppercase tracking-wide">
-              2XU Speed Run: Asia Series Race Event Details
+              Mission Strong : Speed Series powered by 2XU. Race Event Details
             </span>
             <img
               src="/images/hand-pointer.gif"
@@ -252,13 +254,19 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
                     scrollToRegistration();
                   }
                 }}
-                className={`group relative h-full rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-6 lg:p-7 shadow-2xl transition-all duration-300 hover:border-orange-400/80 hover:bg-white/10 cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:ring-offset-2 focus:ring-offset-gray-900 ${
-                  isVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'
-                }`}
+                className={`group relative h-full rounded-2xl border backdrop-blur-md p-6 lg:p-7 shadow-2xl transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:ring-offset-2 focus:ring-offset-gray-900 ${
+                  category.highlight === 'team'
+                    ? 'border-orange-400/70 bg-gradient-to-br from-orange-500/20 via-white/5 to-yellow-500/15 hover:border-orange-400 hover:shadow-xl'
+                    : 'border-white/10 bg-white/5 hover:border-orange-400/80 hover:bg-white/10'
+                } ${isVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`}
                 style={{ animationDelay: `${0.45 + index * 0.07}s` }}
               >
                 {/* Glow accent */}
-                <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br from-orange-500/15 via-transparent to-yellow-400/10" />
+                <div className={`pointer-events-none absolute inset-0 rounded-2xl transition-opacity duration-300 ${
+                  category.highlight === 'team'
+                    ? 'opacity-100 bg-gradient-to-br from-orange-500/20 via-transparent to-yellow-400/15'
+                    : 'opacity-0 group-hover:opacity-100 bg-gradient-to-br from-orange-500/15 via-transparent to-yellow-400/10'
+                }`} />
 
                 <div className="relative z-10 flex flex-col h-full">
                   <div className="flex items-start justify-between mb-4">
@@ -266,18 +274,25 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
                       <h3 className="text-xl lg:text-2xl font-bold text-white font-druk">
                         {category.name}
                       </h3>
-                      <p className="mt-1 text-sm font-sweet-sans text-gray-300">
+                      <p className={`mt-1 text-sm font-sweet-sans ${category.highlight === 'team' ? 'text-orange-300 font-semibold' : 'text-gray-300'}`}>
                         {category.ageGroup}
                       </p>
                     </div>
                     {highlightLabel && (
                       <span
-                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold font-fira-sans uppercase tracking-wide ${
-                          category.highlight === 'best-value'
+                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold font-fira-sans uppercase tracking-wide shadow-md ${
+                          category.highlight === 'team'
+                            ? 'bg-gradient-to-r from-orange-500 to-orange-400 text-white ring-2 ring-orange-300/50'
+                            : category.highlight === 'best-value'
                             ? 'bg-yellow-400 text-gray-900'
                             : 'bg-orange-500 text-white'
-                        } shadow-md`}
+                        }`}
                       >
+                        {category.highlight === 'team' && (
+                          <svg className="w-3.5 h-3.5 mr-1.5 text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden>
+                            <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                          </svg>
+                        )}
                         {highlightLabel}
                       </span>
                     )}

@@ -144,7 +144,7 @@ export default function EventsSection({ onOpenMechanicsModal }: EventsSectionPro
                 PROGRAM:
               </h2>
               <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-1 font-druk leading-tight">
-                2XU SPEED RUN: ASIA SERIES
+                MISSION STRONG : SPEED SERIES POWERED BY 2XU.
               </h2>
               <h2 className="text-xl lg:text-2xl font-bold text-gray-900 font-druk leading-tight">
                 WITH ONE OF A KIND EVENT HIGHLIGHT
@@ -256,7 +256,7 @@ export default function EventsSection({ onOpenMechanicsModal }: EventsSectionPro
                       <div className={`${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.6s' }}>
                         <h4 className="text-white font-bold font-druk text-base lg:text-lg mb-2 flex items-start">
                           <span className="text-yellow-500 mr-2 font-bold text-lg">1.</span>
-                          <span>2XU Speed Run: Asia Series</span>
+                          <span>Mission Strong : Speed Series powered by 2XU</span>
                         </h4>
                         <ul className="ml-6 space-y-2">
                           <li className="flex items-start">
