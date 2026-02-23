@@ -54,6 +54,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
 
   // Trigger animations when Registration section comes into view
   useEffect(() => {
+    const sectionEl = registrationSectionRef.current;
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -70,13 +71,13 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
       }
     );
 
-    if (registrationSectionRef.current) {
-      observer.observe(registrationSectionRef.current);
+    if (sectionEl) {
+      observer.observe(sectionEl);
     }
 
     return () => {
-      if (registrationSectionRef.current) {
-        observer.unobserve(registrationSectionRef.current);
+      if (sectionEl) {
+        observer.unobserve(sectionEl);
       }
     };
   }, []);
