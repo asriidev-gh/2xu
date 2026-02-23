@@ -22,8 +22,27 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
     birthday: '',
     raceCategory: '',
     affiliations: '',
-    promotional: false
+    promotional: false,
+    teamMember1Name: '',
+    teamMember1Birthday: '',
+    teamMember1Gender: '',
+    teamMember1Contact: '',
+    teamMember2Name: '',
+    teamMember2Birthday: '',
+    teamMember2Gender: '',
+    teamMember2Contact: '',
+    teamMember3Name: '',
+    teamMember3Birthday: '',
+    teamMember3Gender: '',
+    teamMember3Contact: '',
+    teamMember4Name: '',
+    teamMember4Birthday: '',
+    teamMember4Gender: '',
+    teamMember4Contact: ''
   });
+
+  const isTeam = formData.raceCategory === 'Team Category';
+  const teamMemberKeys = ([1, 2, 3, 4] as const);
 
   // Auto-fill race category when user clicks a category card and scrolls here
   useEffect(() => {
@@ -73,10 +92,8 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
   };
 
   const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      gender: e.target.value
-    }));
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -91,12 +108,28 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
     setIsSubmitting(true);
 
     try {
+      const isTeam = formData.raceCategory === 'Team Category';
+      const payload = isTeam
+        ? {
+            email: formData.email,
+            raceCategory: formData.raceCategory,
+            affiliations: formData.affiliations,
+            promotional: formData.promotional,
+            teamMembers: teamMemberKeys.map((num) => ({
+              name: formData[`teamMember${num}Name`],
+              birthday: formData[`teamMember${num}Birthday`],
+              gender: formData[`teamMember${num}Gender`],
+              contact: formData[`teamMember${num}Contact`]
+            }))
+          }
+        : formData;
+
       const response = await fetch('/api/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const contentType = response.headers.get('content-type');
@@ -141,7 +174,23 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
         birthday: '',
         raceCategory: '',
         affiliations: '',
-        promotional: false
+        promotional: false,
+        teamMember1Name: '',
+        teamMember1Birthday: '',
+        teamMember1Gender: '',
+        teamMember1Contact: '',
+        teamMember2Name: '',
+        teamMember2Birthday: '',
+        teamMember2Gender: '',
+        teamMember2Contact: '',
+        teamMember3Name: '',
+        teamMember3Birthday: '',
+        teamMember3Gender: '',
+        teamMember3Contact: '',
+        teamMember4Name: '',
+        teamMember4Birthday: '',
+        teamMember4Gender: '',
+        teamMember4Contact: ''
       });
     } catch (error) {
       console.error('Registration error:', error);
@@ -201,107 +250,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
             {/* Form Card */}
             <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl p-8 lg:p-12 shadow-2xl border border-gray-100">
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Name Field */}
-                <div>
-                  <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
-                    Full Name <span className="text-orange-600">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900"
-                    placeholder="Enter your full name"
-                  />
-                </div>
-
-                {/* Email Field */}
-                <div>
-                  <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
-                    Email Address <span className="text-orange-600">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900"
-                    placeholder="your.email@example.com"
-                  />
-                </div>
-
-                {/* Contact Field */}
-                <div>
-                  <label htmlFor="contact" className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
-                    Contact Number <span className="text-orange-600">*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    id="contact"
-                    name="contact"
-                    value={formData.contact}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900"
-                    placeholder="+63 XXX XXX XXXX"
-                  />
-                </div>
-
-                {/* Gender Field */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3 font-fira-sans">
-                    Gender <span className="text-orange-600">*</span>
-                  </label>
-                  <div className="flex gap-6">
-                    <label className="flex items-center cursor-pointer group">
-                      <input
-                        type="radio"
-                        name="gender"
-                        value="Male"
-                        checked={formData.gender === 'Male'}
-                        onChange={handleRadioChange}
-                        required
-                        className="w-5 h-5 text-orange-600 border-gray-300 focus:ring-orange-500 focus:ring-2"
-                      />
-                      <span className="ml-2 text-gray-700 font-sweet-sans group-hover:text-orange-600 transition-colors">Male</span>
-                    </label>
-                    <label className="flex items-center cursor-pointer group">
-                      <input
-                        type="radio"
-                        name="gender"
-                        value="Female"
-                        checked={formData.gender === 'Female'}
-                        onChange={handleRadioChange}
-                        required
-                        className="w-5 h-5 text-orange-600 border-gray-300 focus:ring-orange-500 focus:ring-2"
-                      />
-                      <span className="ml-2 text-gray-700 font-sweet-sans group-hover:text-orange-600 transition-colors">Female</span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Birthday Field */}
-                <div>
-                  <label htmlFor="birthday" className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
-                    Birthday <span className="text-orange-600">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    id="birthday"
-                    name="birthday"
-                    value={formData.birthday}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900"
-                  />
-                </div>
-
-                {/* Race Experience Field */}
+                {/* Race Experience first so form adapts */}
                 <div>
                   <label htmlFor="raceCategory" className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
                     Race Experience <span className="text-orange-600">*</span>
@@ -322,6 +271,221 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                     ))}
                   </select>
                 </div>
+
+                {isTeam ? (
+                  /* ——— Team registration: one email + 4 member cards ——— */
+                  <>
+                    <div className="rounded-xl border-2 border-orange-200 bg-orange-50/50 p-4">
+                      <p className="text-sm text-gray-700 font-fira-sans mb-4">
+                        Enter team contact email and details for each of the 4 members.
+                      </p>
+                      <div>
+                        <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
+                          Team contact email <span className="text-orange-600">*</span>
+                        </label>
+                        <input
+                          type="email"
+                          id="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900"
+                          placeholder="your.email@example.com"
+                        />
+                      </div>
+                    </div>
+
+                    {teamMemberKeys.map((num) => (
+                      <div
+                        key={num}
+                        className="rounded-xl border-2 border-gray-200 bg-gray-50/80 p-5 sm:p-6 space-y-4"
+                      >
+                        <h3 className="text-base font-bold text-gray-900 font-fira-sans flex items-center gap-2">
+                          <span className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-500 text-white text-sm">
+                            {num}
+                          </span>
+                          Team Member {num}
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="sm:col-span-2">
+                            <label htmlFor={`teamMember${num}Name`} className="block text-sm font-semibold text-gray-700 mb-1 font-fira-sans">
+                              Full Name <span className="text-orange-600">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              id={`teamMember${num}Name`}
+                              name={`teamMember${num}Name`}
+                              value={formData[`teamMember${num}Name`]}
+                              onChange={handleInputChange}
+                              required
+                              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900"
+                              placeholder="Full name"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor={`teamMember${num}Birthday`} className="block text-sm font-semibold text-gray-700 mb-1 font-fira-sans">
+                              Birthday <span className="text-orange-600">*</span>
+                            </label>
+                            <input
+                              type="date"
+                              id={`teamMember${num}Birthday`}
+                              name={`teamMember${num}Birthday`}
+                              value={formData[`teamMember${num}Birthday`]}
+                              onChange={handleInputChange}
+                              required
+                              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
+                              Gender <span className="text-orange-600">*</span>
+                            </label>
+                            <div className="flex gap-4">
+                              <label className="flex items-center cursor-pointer group">
+                                <input
+                                  type="radio"
+                                  name={`teamMember${num}Gender`}
+                                  value="Male"
+                                  checked={formData[`teamMember${num}Gender`] === 'Male'}
+                                  onChange={handleRadioChange}
+                                  required
+                                  className="w-5 h-5 text-orange-600 border-gray-300 focus:ring-orange-500 focus:ring-2"
+                                />
+                                <span className="ml-2 text-gray-700 font-sweet-sans group-hover:text-orange-600 transition-colors">Male</span>
+                              </label>
+                              <label className="flex items-center cursor-pointer group">
+                                <input
+                                  type="radio"
+                                  name={`teamMember${num}Gender`}
+                                  value="Female"
+                                  checked={formData[`teamMember${num}Gender`] === 'Female'}
+                                  onChange={handleRadioChange}
+                                  required
+                                  className="w-5 h-5 text-orange-600 border-gray-300 focus:ring-orange-500 focus:ring-2"
+                                />
+                                <span className="ml-2 text-gray-700 font-sweet-sans group-hover:text-orange-600 transition-colors">Female</span>
+                              </label>
+                            </div>
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label htmlFor={`teamMember${num}Contact`} className="block text-sm font-semibold text-gray-700 mb-1 font-fira-sans">
+                              Contact Number <span className="text-orange-600">*</span>
+                            </label>
+                            <input
+                              type="tel"
+                              id={`teamMember${num}Contact`}
+                              name={`teamMember${num}Contact`}
+                              value={formData[`teamMember${num}Contact`]}
+                              onChange={handleInputChange}
+                              required
+                              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900"
+                              placeholder="+63 XXX XXX XXXX"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  /* ——— Individual registration ——— */
+                  <>
+                    <div>
+                      <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
+                        Full Name <span className="text-orange-600">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900"
+                        placeholder="Enter your full name"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
+                        Email Address <span className="text-orange-600">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900"
+                        placeholder="your.email@example.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="contact" className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
+                        Contact Number <span className="text-orange-600">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        id="contact"
+                        name="contact"
+                        value={formData.contact}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900"
+                        placeholder="+63 XXX XXX XXXX"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-3 font-fira-sans">
+                        Gender <span className="text-orange-600">*</span>
+                      </label>
+                      <div className="flex gap-6">
+                        <label className="flex items-center cursor-pointer group">
+                          <input
+                            type="radio"
+                            name="gender"
+                            value="Male"
+                            checked={formData.gender === 'Male'}
+                            onChange={handleRadioChange}
+                            required
+                            className="w-5 h-5 text-orange-600 border-gray-300 focus:ring-orange-500 focus:ring-2"
+                          />
+                          <span className="ml-2 text-gray-700 font-sweet-sans group-hover:text-orange-600 transition-colors">Male</span>
+                        </label>
+                        <label className="flex items-center cursor-pointer group">
+                          <input
+                            type="radio"
+                            name="gender"
+                            value="Female"
+                            checked={formData.gender === 'Female'}
+                            onChange={handleRadioChange}
+                            required
+                            className="w-5 h-5 text-orange-600 border-gray-300 focus:ring-orange-500 focus:ring-2"
+                          />
+                          <span className="ml-2 text-gray-700 font-sweet-sans group-hover:text-orange-600 transition-colors">Female</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="birthday" className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
+                        Birthday <span className="text-orange-600">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        id="birthday"
+                        name="birthday"
+                        value={formData.birthday}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900"
+                      />
+                    </div>
+                  </>
+                )}
 
                 {/* Affiliations Field (Optional, Required when Team Category) */}
                 <div>
