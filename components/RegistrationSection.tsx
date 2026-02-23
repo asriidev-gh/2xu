@@ -323,10 +323,15 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                   </select>
                 </div>
 
-                {/* Affiliations Field (Optional) */}
+                {/* Affiliations Field (Optional, Required when Team Category) */}
                 <div>
                   <label htmlFor="affiliations" className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
-                    Affiliations / Club Organization <span className="text-gray-400 text-xs">(Optional)</span>
+                    Affiliations / Club Organization / Team{' '}
+                    {formData.raceCategory === 'Team Category' ? (
+                      <span className="text-orange-600">(Required)</span>
+                    ) : (
+                      <span className="text-gray-400 text-xs">(Optional)</span>
+                    )}
                   </label>
                   <input
                     type="text"
@@ -334,6 +339,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                     name="affiliations"
                     value={formData.affiliations}
                     onChange={handleInputChange}
+                    required={formData.raceCategory === 'Team Category'}
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900"
                     placeholder="Your club or organization name"
                   />

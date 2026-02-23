@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import clientPromise from '@/lib/mongodb';
+import { sendRegistrationConfirmation } from '@/lib/sendConfirmationEmail';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,14 @@ export async function POST(request: NextRequest) {
     if (!name || !email || !contact || !gender || !birthday || !raceCategory) {
       return NextResponse.json(
         { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    // Affiliations required when race experience is Team Category
+    if (raceCategory === 'Team Category' && (!affiliations || String(affiliations).trim() === '')) {
+      return NextResponse.json(
+        { error: 'Affiliations / Club Organization / Team is required for Team Category' },
         { status: 400 }
       );
     }
@@ -57,6 +66,9 @@ export async function POST(request: NextRequest) {
       createdAt: new Date(),
       updatedAt: new Date()
     });
+
+    // Send confirmation email to registrant via SMTP (best-effort)
+    await sendRegistrationConfirmation(name, email);
 
     // Send notification email to you via Resend (best-effort; registration already saved)
     const notificationTo = process.env.NOTIFICATION_EMAIL?.trim();
