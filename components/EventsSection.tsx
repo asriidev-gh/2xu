@@ -303,27 +303,6 @@ export default function EventsSection({ onOpenMechanicsModal }: EventsSectionPro
                       </div>
                     </div>
                   </div>
-
-                  {/* Slide 3: Outcomes */}
-                  <div className="min-w-full h-full flex flex-col px-2">
-                    <div className={`mb-6 ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.4s' }}>
-                      <h3 className="text-lg lg:text-xl font-bold text-white mb-4 font-druk">OUTCOMES</h3>
-                    </div>
-                    <div className="space-y-4">
-                      <div className={`flex items-start ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.6s' }}>
-                        <span className="text-yellow-500 mr-3 mt-1 font-bold text-base flex-shrink-0">•</span>
-                        <p className="text-gray-300 font-sweet-sans text-sm lg:text-base leading-relaxed">Empower athletes in Asia with leadership skills.</p>
-                      </div>
-                      <div className={`flex items-start ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.8s' }}>
-                        <span className="text-yellow-500 mr-3 mt-1 font-bold text-base flex-shrink-0">•</span>
-                        <p className="text-gray-300 font-sweet-sans text-sm lg:text-base leading-relaxed">Develop sports leadership in Asia through One of A Kind Asia Sports and Leadership Training Academy.</p>
-                      </div>
-                      <div className={`flex items-start ${isEventsVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '1s' }}>
-                        <span className="text-yellow-500 mr-3 mt-1 font-bold text-base flex-shrink-0">•</span>
-                        <p className="text-gray-300 font-sweet-sans text-sm lg:text-base leading-relaxed">Promote 2XU Speed Run: Asia Series as a premier sports event.</p>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
 
@@ -331,7 +310,7 @@ export default function EventsSection({ onOpenMechanicsModal }: EventsSectionPro
               <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/20">
                 {/* Left Arrow */}
                 <button
-                  onClick={() => setCurrentCarouselPage((prev) => (prev === 0 ? 2 : prev - 1))}
+                  onClick={() => setCurrentCarouselPage((prev) => (prev === 0 ? 1 : prev - 1))}
                   className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Previous slide"
                 >
@@ -342,7 +321,7 @@ export default function EventsSection({ onOpenMechanicsModal }: EventsSectionPro
 
                 {/* Page Indicators */}
                 <div className="flex space-x-2">
-                  {[0, 1, 2].map((page) => (
+                  {[0, 1].map((page) => (
                     <button
                       key={page}
                       onClick={() => setCurrentCarouselPage(page)}
@@ -358,7 +337,7 @@ export default function EventsSection({ onOpenMechanicsModal }: EventsSectionPro
 
                 {/* Right Arrow */}
                 <button
-                  onClick={() => setCurrentCarouselPage((prev) => (prev === 2 ? 0 : prev + 1))}
+                  onClick={() => setCurrentCarouselPage((prev) => (prev === 1 ? 0 : prev + 1))}
                   className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Next slide"
                 >

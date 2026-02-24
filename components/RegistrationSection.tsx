@@ -10,6 +10,8 @@ type RegistrationSectionProps = {
   onCategoryApplied?: () => void;
 };
 
+const T_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+
 export default function RegistrationSection({ selectedCategory = '', onCategoryApplied }: RegistrationSectionProps) {
   const registrationSectionRef = useRef<HTMLElement>(null);
   const [isRegistrationVisible, setIsRegistrationVisible] = useState(false);
@@ -23,22 +25,27 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
     raceCategory: '',
     affiliations: '',
     promotional: false,
+    tShirtSize: '',
     teamMember1Name: '',
     teamMember1Birthday: '',
     teamMember1Gender: '',
     teamMember1Contact: '',
+    teamMember1TShirtSize: '',
     teamMember2Name: '',
     teamMember2Birthday: '',
     teamMember2Gender: '',
     teamMember2Contact: '',
+    teamMember2TShirtSize: '',
     teamMember3Name: '',
     teamMember3Birthday: '',
     teamMember3Gender: '',
     teamMember3Contact: '',
+    teamMember3TShirtSize: '',
     teamMember4Name: '',
     teamMember4Birthday: '',
     teamMember4Gender: '',
-    teamMember4Contact: ''
+    teamMember4Contact: '',
+    teamMember4TShirtSize: ''
   });
 
   const isTeam = formData.raceCategory === 'Team Category';
@@ -120,7 +127,8 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
               name: formData[`teamMember${num}Name`],
               birthday: formData[`teamMember${num}Birthday`],
               gender: formData[`teamMember${num}Gender`],
-              contact: formData[`teamMember${num}Contact`]
+              contact: formData[`teamMember${num}Contact`],
+              tShirtSize: formData[`teamMember${num}TShirtSize`]
             }))
           }
         : formData;
@@ -176,22 +184,27 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
         raceCategory: '',
         affiliations: '',
         promotional: false,
+        tShirtSize: '',
         teamMember1Name: '',
         teamMember1Birthday: '',
         teamMember1Gender: '',
         teamMember1Contact: '',
+        teamMember1TShirtSize: '',
         teamMember2Name: '',
         teamMember2Birthday: '',
         teamMember2Gender: '',
         teamMember2Contact: '',
+        teamMember2TShirtSize: '',
         teamMember3Name: '',
         teamMember3Birthday: '',
         teamMember3Gender: '',
         teamMember3Contact: '',
+        teamMember3TShirtSize: '',
         teamMember4Name: '',
         teamMember4Birthday: '',
         teamMember4Gender: '',
-        teamMember4Contact: ''
+        teamMember4Contact: '',
+        teamMember4TShirtSize: ''
       });
     } catch (error) {
       console.error('Registration error:', error);
@@ -384,6 +397,24 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                               placeholder="+63 XXX XXX XXXX"
                             />
                           </div>
+                          <div>
+                            <label htmlFor={`teamMember${num}TShirtSize`} className="block text-sm font-semibold text-gray-700 mb-1 font-fira-sans">
+                              T-shirt Size <span className="text-orange-600">*</span>
+                            </label>
+                            <select
+                              id={`teamMember${num}TShirtSize`}
+                              name={`teamMember${num}TShirtSize`}
+                              value={formData[`teamMember${num}TShirtSize`]}
+                              onChange={handleSelectChange}
+                              required
+                              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900 bg-white"
+                            >
+                              <option value="">Select size</option>
+                              {T_SHIRT_SIZES.map((size) => (
+                                <option key={size} value={size}>{size}</option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -484,6 +515,25 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                         required
                         className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900"
                       />
+                    </div>
+
+                    <div>
+                      <label htmlFor="tShirtSize" className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
+                        T-shirt Size <span className="text-orange-600">*</span>
+                      </label>
+                      <select
+                        id="tShirtSize"
+                        name="tShirtSize"
+                        value={formData.tShirtSize}
+                        onChange={handleSelectChange}
+                        required
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900 bg-white"
+                      >
+                        <option value="">Select size</option>
+                        {T_SHIRT_SIZES.map((size) => (
+                          <option key={size} value={size}>{size}</option>
+                        ))}
+                      </select>
                     </div>
                   </>
                 )}

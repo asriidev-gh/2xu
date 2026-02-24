@@ -167,7 +167,7 @@ export default function ApparelGallery({ isVisible = true }: ApparelGalleryProps
                 </span>
               </div>
               <h3 className="text-2xl sm:text-3xl font-bold text-white mb-2 font-druk drop-shadow-md">
-                2XU Apparel
+                Experience Speed w 2XU: Human Performance Multiplied
               </h3>
               <div className="w-16 h-0.5 bg-gradient-to-r from-orange-500 to-yellow-500 mx-auto rounded-full" />
             </div>

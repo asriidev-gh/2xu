@@ -246,11 +246,12 @@ export default function Hero() {
             </span>
             {/* One-liner: smooth flip; at end instant reset to first line (no scroll up) */}
             <div className="mt-2 mb-4 max-w-2xl mx-auto h-8 sm:h-9 overflow-hidden font-sweet-sans">
-              <div className="hero-flip-animate h-[400%] flex flex-col">
+              <div className="hero-flip-animate h-[500%] flex flex-col">
                 <span className="h-8 sm:h-9 flex items-center justify-center text-lg sm:text-xl font-normal text-white shrink-0">Asia&apos;s Fastest-Growing Urban Performance Race</span>
                 <span className="h-8 sm:h-9 flex items-center justify-center text-base sm:text-lg font-normal text-white shrink-0">Built for Speed.</span>
                 <span className="h-8 sm:h-9 flex items-center justify-center text-base sm:text-lg font-normal text-white shrink-0">Built for Strength.</span>
                 <span className="h-8 sm:h-9 flex items-center justify-center text-base sm:text-lg font-normal text-white shrink-0">Built for Impact.</span>
+                <span className="h-8 sm:h-9 flex items-center justify-center text-base sm:text-lg font-normal text-white shrink-0">w 2XU human performance multiplied</span>
               </div>
             </div>
           </motion.h1>

@@ -135,14 +135,16 @@ body {
 /* Hero flip: 4 lines, smooth scroll down; instant reset to first at end (no animate up) */
 @keyframes heroFlipLines {
   0% { transform: translateY(0); }
-  18% { transform: translateY(0); }
-  22% { transform: translateY(-25%); }
-  38% { transform: translateY(-25%); }
-  42% { transform: translateY(-50%); }
-  58% { transform: translateY(-50%); }
-  62% { transform: translateY(-75%); }
-  79.5% { transform: translateY(-75%); }
-  80% { transform: translateY(0); }
+  14% { transform: translateY(0); }
+  18% { transform: translateY(-20%); }
+  34% { transform: translateY(-20%); }
+  38% { transform: translateY(-40%); }
+  54% { transform: translateY(-40%); }
+  58% { transform: translateY(-60%); }
+  74% { transform: translateY(-60%); }
+  78% { transform: translateY(-80%); }
+  94% { transform: translateY(-80%); }
+  95% { transform: translateY(0); }
   100% { transform: translateY(0); }
 }
 

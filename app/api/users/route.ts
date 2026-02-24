@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get query parameters for filtering
+    // Get query parameters for filtering and pagination
     const searchParams = request.nextUrl.searchParams;
     const name = searchParams.get('name') || '';
     const email = searchParams.get('email') || '';
@@ -30,6 +30,9 @@ export async function GET(request: NextRequest) {
     const club = searchParams.get('club') || '';
     const dateFrom = searchParams.get('dateFrom') || '';
     const dateTo = searchParams.get('dateTo') || '';
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const limit = Math.min(10000, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)));
+    const skip = (page - 1) * limit;
 
     // Connect to MongoDB
     const client = await clientPromise;
@@ -71,11 +74,16 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Fetch users with filters
+    // Get total count and paginated users
+    const total = await collection.countDocuments(filter);
     const users = await collection
       .find(filter)
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .toArray();
+
+    const totalPages = Math.ceil(total / limit) || 1;
 
     // Format dates for response
     const formattedUsers = users.map(user => ({
@@ -86,13 +94,23 @@ export async function GET(request: NextRequest) {
       gender: user.gender,
       birthday: user.birthday,
       raceCategory: (user as { raceCategory?: string }).raceCategory || '',
+      tShirtSize: (user as { tShirtSize?: string }).tShirtSize || '',
       affiliations: user.affiliations || '',
       promotional: user.promotional || false,
+      teamId: (user as { teamId?: string }).teamId?.toString(),
+      teamMemberIndex: (user as { teamMemberIndex?: number }).teamMemberIndex,
       createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : null
     }));
 
     return NextResponse.json(
-      { users: formattedUsers, count: formattedUsers.length },
+      {
+        users: formattedUsers,
+        count: formattedUsers.length,
+        total,
+        page,
+        limit,
+        totalPages,
+      },
       { status: 200 }
     );
   } catch (error) {

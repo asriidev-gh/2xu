@@ -4,10 +4,12 @@ import nodemailer from 'nodemailer';
  * Sends the registration confirmation email to the participant.
  * Uses SMTP env vars: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM.
  * Best-effort; does not throw (logs and returns false on failure).
+ * @param tShirtSizeInfo - Optional: "M" for individual, or "Team T-shirt sizes: M, L, XL, S" for team.
  */
 export async function sendRegistrationConfirmation(
   participantName: string,
-  participantEmail: string
+  participantEmail: string,
+  tShirtSizeInfo?: string
 ): Promise<boolean> {
   const host = process.env.SMTP_HOST?.trim();
   const port = process.env.SMTP_PORT?.trim();
@@ -65,6 +67,7 @@ export async function sendRegistrationConfirmation(
     <p>Dear ${escapeHtml(participantName)},</p>
     <p>Thank you for registering with us.</p>
     <p>We have received your registration. However, please note that your registration will only be confirmed upon receipt of payment.</p>
+    ${tShirtSizeInfo ? `<p><strong>T-shirt size${tShirtSizeInfo.includes(',') ? 's' : ''}:</strong> ${escapeHtml(tShirtSizeInfo)}</p>` : ''}
     <p>Kindly complete your payment at your earliest convenience to secure your slot. Once payment has been verified, we will send you a confirmation email with the next details.</p>
     ${paymentSection}
     <p style="margin-top:20px;">If you have any questions or need assistance, feel free to reply to this email.</p>
@@ -75,13 +78,14 @@ export async function sendRegistrationConfirmation(
     +63 905 316 2845</p>
   `;
 
+  const textTShirtLine = tShirtSizeInfo ? `T-shirt size${tShirtSizeInfo.includes(',') ? 's' : ''}: ${tShirtSizeInfo}\n\n` : '';
   try {
     await transporter.sendMail({
       from,
       to: participantEmail,
       subject: '2XU Speed Run – Registration Received',
       html,
-      text: `Dear ${participantName},\n\nThank you for registering with us.\n\nWe have received your registration. However, please note that your registration will only be confirmed upon receipt of payment.\n\nKindly complete your payment at your earliest convenience to secure your slot. Once payment has been verified, we will send you a confirmation email with the next details.\n\nPayment: Scan the QR codes in the HTML version of this email, or visit our registration page to view GCash and Gotyme Bank Transfer options. Send proof of payment to 1@oneofakindasia.com.\n\nIf you have any questions or need assistance, feel free to reply to this email.\n\nThank you, and we look forward to having you with us.\n\nBest regards,\nTin Majadillas\nOne of a kind Asia\n+63 905 316 2845`,
+      text: `Dear ${participantName},\n\nThank you for registering with us.\n\nWe have received your registration. However, please note that your registration will only be confirmed upon receipt of payment.\n\n${textTShirtLine}Kindly complete your payment at your earliest convenience to secure your slot. Once payment has been verified, we will send you a confirmation email with the next details.\n\nPayment: Scan the QR codes in the HTML version of this email, or visit our registration page to view GCash and Gotyme Bank Transfer options. Send proof of payment to 1@oneofakindasia.com.\n\nIf you have any questions or need assistance, feel free to reply to this email.\n\nThank you, and we look forward to having you with us.\n\nBest regards,\nTin Majadillas\nOne of a kind Asia\n+63 905 316 2845`,
     });
     console.log('[sendConfirmationEmail] Confirmation email sent to', participantEmail);
     return true;

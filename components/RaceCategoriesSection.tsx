@@ -174,22 +174,6 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
           }`}
           style={{ animationDelay: '0.3s' }}
         >
-          <div
-            className="flex justify-center my-6 max-w-2xl mx-auto overflow-hidden rounded-2xl"
-            style={{
-              maskImage: 'radial-gradient(ellipse 100% 130% at 50% 12%, black 42%, rgba(0,0,0,0.5) 62%, transparent 88%)',
-              WebkitMaskImage: 'radial-gradient(ellipse 100% 130% at 50% 12%, black 42%, rgba(0,0,0,0.5) 62%, transparent 88%)',
-            }}
-          >
-            <Image
-              src="/images/mission_strong.jpeg"
-              alt="Mission Strong"
-              width={800}
-              height={450}
-              className="w-full rounded-2xl shadow-xl object-cover"
-              sizes="(max-width: 768px) 100vw, 800px"
-            />
-          </div>
           <button
             type="button"
             onClick={() => {
@@ -364,6 +348,23 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
           All pricing is indicative and may be subject to final confirmation. Race kits and entitlements are curated
           to deliver a Mission Strong : speed series Experience powered by 2XU.
         </p>
+
+        {/* Mission Strong image - end of section */}
+        <div
+          className={`mt-10 flex justify-center max-w-2xl mx-auto overflow-hidden rounded-2xl ${
+            isVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'
+          }`}
+          style={{ animationDelay: '1.1s' }}
+        >
+          <Image
+            src="/images/mission_strong.jpeg"
+            alt="Mission Strong"
+            width={800}
+            height={450}
+            className="w-full rounded-2xl shadow-xl object-cover"
+            sizes="(max-width: 768px) 100vw, 800px"
+          />
+        </div>
       </div>
     </section>
   );

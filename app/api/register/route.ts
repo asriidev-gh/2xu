@@ -22,7 +22,7 @@ function escapeHtml(text: string): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, contact, gender, birthday, raceCategory, affiliations, promotional, teamMembers } = body;
+    const { name, email, contact, gender, birthday, raceCategory, affiliations, promotional, tShirtSize, teamMembers } = body;
 
     // Validate required fields
     if (!email || !raceCategory) {
@@ -60,11 +60,24 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           );
         }
+        const memberTShirtSize = m.tShirtSize != null ? String(m.tShirtSize).trim() : '';
+        if (!memberTShirtSize) {
+          return NextResponse.json(
+            { error: `Team member ${i + 1}: T-shirt size is required` },
+            { status: 400 }
+          );
+        }
       }
     } else {
       if (!name || String(name).trim() === '' || !contact || String(contact).trim() === '' || !gender || String(gender).trim() === '' || !birthday || String(birthday).trim() === '') {
         return NextResponse.json(
           { error: 'Missing required fields' },
+          { status: 400 }
+        );
+      }
+      if (!tShirtSize || String(tShirtSize).trim() === '') {
+        return NextResponse.json(
+          { error: 'T-shirt size is required' },
           { status: 400 }
         );
       }
@@ -97,13 +110,14 @@ export async function POST(request: NextRequest) {
     if (isTeam) {
       // Insert 4 records, one per team member (each with own name, birthday, gender, contact; same email)
       const teamId = new ObjectId();
-      const members = teamMembers as Array<{ name: string; birthday: string; gender: string; contact: string }>;
-      const docs = members.map((m: { name: string; birthday: string; gender: string; contact: string }, index: number) => ({
+      const members = teamMembers as Array<{ name: string; birthday: string; gender: string; contact: string; tShirtSize: string }>;
+      const docs = members.map((m: { name: string; birthday: string; gender: string; contact: string; tShirtSize: string }, index: number) => ({
         name: String(m.name).trim(),
         email,
         contact: String(m.contact).trim(),
         gender: String(m.gender).trim(),
         birthday: String(m.birthday).trim(),
+        tShirtSize: String(m.tShirtSize || '').trim(),
         raceCategory,
         affiliations: affiliations || '',
         promotional: promotional || false,
@@ -116,7 +130,7 @@ export async function POST(request: NextRequest) {
       const insertedIds = Object.values(result.insertedIds);
 
       // Send confirmation email once to the team contact
-      await sendRegistrationConfirmation(members[0].name, email);
+      await sendRegistrationConfirmation(members[0].name, email, members.map((m) => m.tShirtSize).join(', '));
 
       const notificationTo = process.env.NOTIFICATION_EMAIL?.trim();
       if (!notificationTo) {
@@ -125,8 +139,8 @@ export async function POST(request: NextRequest) {
         console.warn('[Register] Resend skipped: RESEND_API_KEY is not set in .env.local');
       } else {
         const from = process.env.RESEND_FROM_EMAIL?.trim() || '2XU Speed Run <onboarding@resend.dev>';
-        const memberList = members.map((m: { name: string; birthday: string; gender: string; contact: string }, i: number) =>
-          `${i + 1}. ${escapeHtml(m.name)} — ${escapeHtml(m.birthday)} — ${escapeHtml(m.gender)} — ${escapeHtml(m.contact)}`
+        const memberList = members.map((m: { name: string; birthday: string; gender: string; contact: string; tShirtSize: string }, i: number) =>
+          `${i + 1}. ${escapeHtml(m.name)} — ${escapeHtml(m.birthday)} — ${escapeHtml(m.gender)} — ${escapeHtml(m.contact)} — T-shirt: ${escapeHtml(m.tShirtSize || '')}`
         ).join('<br/>');
         const { data, error } = await resend.emails.send({
           from,
@@ -167,6 +181,7 @@ export async function POST(request: NextRequest) {
       contact,
       gender,
       birthday,
+      tShirtSize: (tShirtSize != null ? String(tShirtSize).trim() : '') || '',
       raceCategory,
       affiliations: affiliations || '',
       promotional: promotional || false,
@@ -176,7 +191,7 @@ export async function POST(request: NextRequest) {
     const result = await collection.insertOne(doc);
 
     // Send confirmation email to registrant via SMTP (best-effort)
-    await sendRegistrationConfirmation(name, email);
+    await sendRegistrationConfirmation(name, email, String(tShirtSize || '').trim());
 
     // Send notification email to you via Resend (best-effort; registration already saved)
     const notificationTo = process.env.NOTIFICATION_EMAIL?.trim();
@@ -199,6 +214,7 @@ export async function POST(request: NextRequest) {
           <p><strong>Birthday:</strong> ${escapeHtml(birthday)}</p>
           <p><strong>Race Experience:</strong> ${escapeHtml(raceCategory)}</p>
           ${affiliations ? `<p><strong>Affiliations:</strong> ${escapeHtml(affiliations)}</p>` : ''}
+          <p><strong>T-shirt Size:</strong> ${escapeHtml(String(tShirtSize || ''))}</p>
           <p><strong>Promotional emails:</strong> ${promotional ? 'Yes' : 'No'}</p>
         `,
       });
