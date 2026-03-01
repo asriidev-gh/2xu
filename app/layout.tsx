@@ -10,7 +10,7 @@ const firaSans = Fira_Sans({
 });
 
 export const metadata: Metadata = {
-  title: " Mission Strong : Speed Series powered by 2XU",
+  title: "Mission Strong : Speed Series powered by 2XU",
   description: "Mission Strong. 2XU Speed Run — Built for Speed, Strength & Impact. Ayala Triangle, Makati. May 17th 2026. Register now.",
   icons: {
     icon: "/images/favicon.ico",
@@ -39,7 +39,17 @@ export default function RootLayout({
         {/* <link href="https://fonts.googleapis.com/css2?family=Sweet+Sans+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" /> */}
         {/* If self-hosting, the @font-face is already in globals.css */}
       </head>
-      <body className={`${inter.className} ${firaSans.variable}`} suppressHydrationWarning>{children}</body>
+      <body className={`${inter.className} ${firaSans.variable}`} suppressHydrationWarning>
+        {/* Tribute visible in HTML source / DevTools */}
+        <div
+          dangerouslySetInnerHTML={{
+            __html: '<!-- Web development by Andy Radam (asriidev@gmail.com) -->',
+          }}
+          aria-hidden
+          style={{ display: 'none' }}
+        />
+        {children}
+      </body>
     </html>
   );
 }

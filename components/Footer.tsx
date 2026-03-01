@@ -216,7 +216,7 @@ export default function Footer() {
               href="mailto:asriidev@gmail.com?subject=Contact%20Admin%20-%202XU%20Speed%20Run%20Asia%20Series" 
               className="text-gray-400 hover:text-orange-500 transition-colors font-sweet-sans text-sm"
             >
-              Contact Admin
+              Contact Developer
             </a>
           </div>
         </div>
