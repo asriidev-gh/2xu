@@ -258,7 +258,7 @@ export default function Hero() {
 
           <motion.div className="relative inline-block px-6 pt-6 pb-4 mb-4 border-2 border-white rounded-lg bg-white/10 backdrop-blur-sm" variants={item}>
             <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 px-3 py-0.5 bg-gray-50 border border-white text-black font-druk text-sm font-bold uppercase tracking-wide whitespace-nowrap">
-              SAVE THE DATE
+              2XU Speed Run
             </span>
             <div className="text-xl sm:text-2xl text-white font-sweet-sans">
               AYALA TRIANGLE, MAKATI<br/>
@@ -267,13 +267,13 @@ export default function Hero() {
               </p>
               <hr className="border-white/40 my-3 w-full" />
               <p className="text-gray-300 font-sweet-sans">
-                Limited to <b>2000</b> athletes only<br/>
+                Limited to <b>2000</b> runners only<br/>
               </p>
             </div>
           </motion.div>
 
           <motion.div className="text-xl sm:text-lg text-white font-sweet-sans" variants={item}>
-            Exclusive Pre-registration for first <b>200</b> <br/>to register on <b>Feb 28th</b>
+            Exclusive Pre-registration for first <b>200</b> <br/>to register on <b>March 8th</b>
           </motion.div>
 
           {/* CTA Buttons */}

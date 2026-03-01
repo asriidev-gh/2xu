@@ -65,27 +65,27 @@ export async function sendRegistrationConfirmation(
 
   const html = `
     <p>Dear ${escapeHtml(participantName)},</p>
-    <p>Thank you for registering with us.</p>
-    <p>We have received your registration. However, please note that your registration will only be confirmed upon receipt of payment.</p>
-    ${tShirtSizeInfo ? `<p><strong>T-shirt size${tShirtSizeInfo.includes(',') ? 's' : ''}:</strong> ${escapeHtml(tShirtSizeInfo)}</p>` : ''}
-    <p>Kindly complete your payment at your earliest convenience to secure your slot. Once payment has been verified, we will send you a confirmation email with the next details.</p>
+    <p>Congratulations! 🎉</p>
+    <p>Your registration for the Exclusive Speed Series Pre-Registration is officially confirmed — and you are now part of something powerful.</p>
+    <p>As one of our early VIP athletes, you will receive your exclusive VIP Race Kit during our Race Kit Pick-Up on May 8–10. Get ready to gear up, show up, and level up.</p>
+    <p>This is more than a race.<br/>This is Speed. Strength. Legacy.</p>
+    <p>Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit <a href="https://www.oneofakindasia.com">www.oneofakindasia.com</a> for official event details.</p>
     ${paymentSection}
-    <p style="margin-top:20px;">If you have any questions or need assistance, feel free to reply to this email.</p>
-    <p>Thank you, and we look forward to having you with us.</p>
-    <p>Best regards,<br/>
-    Tin Majadillas<br/>
-    One of a kind Asia<br/>
-    +63 905 316 2845</p>
+    <p>We can't wait to see you at the starting line.<br/>Let's make history.</p>
+    <p>🔥 Mission Strong<br/>⚡ Speed Series<br/>Powered by 2XU</p>
+    <p>+63 969 187 4689</p>
   `;
 
-  const textTShirtLine = tShirtSizeInfo ? `T-shirt size${tShirtSizeInfo.includes(',') ? 's' : ''}: ${tShirtSizeInfo}\n\n` : '';
+  const textPayment = baseUrl
+    ? 'Payment: Scan the QR codes in the HTML version of this email, or visit our registration page to view GCash and Gotyme Bank Transfer options. Send proof of payment to 1@oneofakindasia.com.\n\n'
+    : 'Payment: Visit our registration page to view payment options. Send proof of payment to 1@oneofakindasia.com.\n\n';
   try {
     await transporter.sendMail({
       from,
       to: participantEmail,
-      subject: '2XU Speed Run – Registration Received',
+      subject: 'Exclusive Speed Series Pre-Registration – You\'re Confirmed',
       html,
-      text: `Dear ${participantName},\n\nThank you for registering with us.\n\nWe have received your registration. However, please note that your registration will only be confirmed upon receipt of payment.\n\n${textTShirtLine}Kindly complete your payment at your earliest convenience to secure your slot. Once payment has been verified, we will send you a confirmation email with the next details.\n\nPayment: Scan the QR codes in the HTML version of this email, or visit our registration page to view GCash and Gotyme Bank Transfer options. Send proof of payment to 1@oneofakindasia.com.\n\nIf you have any questions or need assistance, feel free to reply to this email.\n\nThank you, and we look forward to having you with us.\n\nBest regards,\nTin Majadillas\nOne of a kind Asia\n+63 905 316 2845`,
+      text: `Dear ${participantName},\n\nCongratulations! 🎉\n\nYour registration for the Exclusive Speed Series Pre-Registration is officially confirmed — and you are now part of something powerful.\n\nAs one of our early VIP athletes, you will receive your exclusive VIP Race Kit during our Race Kit Pick-Up on May 8–10. Get ready to gear up, show up, and level up.\n\nThis is more than a race.\nThis is Speed. Strength. Legacy.\n\nStay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit www.oneofakindasia.com for official event details.\n\n${textPayment}We can't wait to see you at the starting line.\nLet's make history.\n\n🔥 Mission Strong\n⚡ Speed Series\nPowered by 2XU`,
     });
     console.log('[sendConfirmationEmail] Confirmation email sent to', participantEmail);
     return true;

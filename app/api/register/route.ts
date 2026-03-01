@@ -22,12 +22,18 @@ function escapeHtml(text: string): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, contact, gender, birthday, raceCategory, affiliations, promotional, tShirtSize, teamMembers } = body;
+    const { name, email, contact, gender, birthday, raceCategory, affiliations, promotional, waiverAccepted, tShirtSize, teamMembers } = body;
 
     // Validate required fields
     if (!email || !raceCategory) {
       return NextResponse.json(
         { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+    if (waiverAccepted !== true) {
+      return NextResponse.json(
+        { error: 'You must accept the Participant Digital Waiver to register.' },
         { status: 400 }
       );
     }

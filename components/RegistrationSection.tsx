@@ -25,6 +25,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
     raceCategory: '',
     affiliations: '',
     promotional: false,
+    waiverAccepted: false,
     tShirtSize: '',
     teamMember1Name: '',
     teamMember1Birthday: '',
@@ -113,6 +114,17 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!formData.waiverAccepted) {
+      await Swal.fire({
+        title: 'Waiver required',
+        text: 'Please read and accept the Participant Digital Waiver before submitting.',
+        icon: 'warning',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#ea580c',
+        customClass: { confirmButton: 'font-fira-sans' },
+      });
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -123,6 +135,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
             raceCategory: formData.raceCategory,
             affiliations: formData.affiliations,
             promotional: formData.promotional,
+            waiverAccepted: formData.waiverAccepted,
             teamMembers: teamMemberKeys.map((num) => ({
               name: formData[`teamMember${num}Name`],
               birthday: formData[`teamMember${num}Birthday`],
@@ -131,7 +144,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
               tShirtSize: formData[`teamMember${num}TShirtSize`]
             }))
           }
-        : formData;
+        : { ...formData, waiverAccepted: formData.waiverAccepted };
 
       const response = await fetch('/api/register', {
         method: 'POST',
@@ -184,6 +197,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
         raceCategory: '',
         affiliations: '',
         promotional: false,
+        waiverAccepted: false,
         tShirtSize: '',
         teamMember1Name: '',
         teamMember1Birthday: '',
@@ -399,7 +413,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                           </div>
                           <div>
                             <label htmlFor={`teamMember${num}TShirtSize`} className="block text-sm font-semibold text-gray-700 mb-1 font-fira-sans">
-                              T-shirt Size <span className="text-orange-600">*</span>
+                              Top size <span className="text-orange-600">*</span>
                             </label>
                             <select
                               id={`teamMember${num}TShirtSize`}
@@ -519,7 +533,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
 
                     <div>
                       <label htmlFor="tShirtSize" className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
-                        T-shirt Size <span className="text-orange-600">*</span>
+                        Top size <span className="text-orange-600">*</span>
                       </label>
                       <select
                         id="tShirtSize"
@@ -575,6 +589,45 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                   <label htmlFor="promotional" className="ml-3 text-sm text-gray-700 font-sweet-sans cursor-pointer">
                     I would like to receive promotional emails and updates about upcoming events
                   </label>
+                </div>
+
+                {/* Participant Digital Waiver — must accept before submit */}
+                <div className="rounded-xl border-2 border-gray-200 bg-gray-50/80 p-5 sm:p-6 space-y-4">
+                  <h3 className="text-base font-bold text-gray-900 font-fira-sans">
+                    SPEED SERIES POWERED BY 2XU — Participant Digital Waiver
+                  </h3>
+                  <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-700 font-sweet-sans leading-relaxed">
+                    <p className="mb-3">
+                      By checking this box, I confirm that I am physically prepared and voluntarily participating in
+                      Speed Series Powered by 2XU. I understand that endurance events involve inherent physical
+                      demands and risks, including the possibility of serious injury or other unforeseen medical
+                      emergencies. I willingly assume full responsibility for my participation and release the
+                      organizers, sponsors, and affiliated parties from claims arising from risks inherent to the event, to
+                      the fullest extent permitted by law.
+                    </p>
+                    <p className="mb-3">
+                      I authorize emergency medical assistance if necessary and accept responsibility for related costs.
+                      I grant permission for the use of my name, image, likeness, and race results for promotional
+                      purposes without compensation. I consent to the collection and processing of my personal data
+                      for registration, timing, communication, and publication of official results.
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <div className="flex items-center h-5 shrink-0">
+                      <input
+                        type="checkbox"
+                        id="waiverAccepted"
+                        name="waiverAccepted"
+                        checked={formData.waiverAccepted}
+                        onChange={handleInputChange}
+                        required
+                        className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500 focus:ring-2"
+                      />
+                    </div>
+                    <label htmlFor="waiverAccepted" className="ml-3 text-sm font-semibold text-gray-800 font-fira-sans cursor-pointer">
+                      I have read, understood, and agree to this Waiver and Release. <span className="text-orange-600">*</span>
+                    </label>
+                  </div>
                 </div>
 
                 {/* Payment Instructions */}
