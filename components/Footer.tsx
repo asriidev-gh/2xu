@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import packageJson from '@/package.json';
 
 const smoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
   e.preventDefault();
@@ -208,13 +209,16 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="border-t border-white/10 py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <p className="text-gray-400 text-sm font-sweet-sans text-center md:text-left">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-4">
+            <p className="text-gray-400 text-sm font-sweet-sans text-center md:text-left order-2 md:order-1">
               © {currentYear} One of a kind Asia - 2XU Speed Run: Asia Series. All rights reserved.
+            </p>
+            <p className="text-gray-500 text-xs font-sweet-sans text-center order-1 md:order-2" aria-label="Deployment version">
+              v{packageJson.version}
             </p>
             <a 
               href="mailto:asriidev@gmail.com?subject=Contact%20Admin%20-%202XU%20Speed%20Run%20Asia%20Series" 
-              className="text-gray-400 hover:text-orange-500 transition-colors font-sweet-sans text-sm"
+              className="text-gray-400 hover:text-orange-500 transition-colors font-sweet-sans text-sm order-3"
             >
               Contact Developer
             </a>
