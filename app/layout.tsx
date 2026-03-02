@@ -13,6 +13,9 @@ const siteUrl =
   process.env.NEXT_PUBLIC_APP_URL?.trim() ||
   (typeof process.env.VERCEL_URL === 'string' ? `https://${process.env.VERCEL_URL}` : 'https://www.oneofakindasia.com');
 
+// Absolute URL for link preview image (Facebook, Messenger, WhatsApp, etc.) — file must exist at public/images/speed_series.jpg
+const ogImageUrl = `${siteUrl.replace(/\/$/, '')}/images/speed_series.jpg`;
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Mission Strong : Speed Series powered by 2XU",
@@ -23,13 +26,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Mission Strong : Speed Series powered by 2XU",
     description: "Mission Strong. 2XU Speed Run — Built for Speed, Strength & Impact. Ayala Triangle, Makati. May 17th 2026. Register now.",
-    images: ["/images/mission_strong.jpeg"],
+    images: [{ url: ogImageUrl, width: 1200, height: 630, alt: "Mission Strong Speed Series powered by 2XU" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Mission Strong : Speed Series powered by 2XU",
     description: "Mission Strong. 2XU Speed Run — Built for Speed, Strength & Impact. Ayala Triangle, Makati. May 17th 2026. Register now.",
-    images: ["/images/mission_strong.jpeg"],
+    images: [ogImageUrl],
   },
 };
 
