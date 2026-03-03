@@ -7,10 +7,9 @@ import ApparelImageModal from '@/components/ApparelImageModal';
 const APPAREL_IMAGES = [
   '/images/apparel/apparel_001.jpg',
   '/images/apparel/apparel_002.jpg',
-  '/images/apparel/apparel_003.jpg',
-  '/images/apparel/apparel_004.jpg',
+  '/images/apparel/apparel_003.jpeg',
+  '/images/apparel/apparel_004.jpeg',
   '/images/apparel/apparel_005.jpg',
-  '/images/apparel/apparel_006.jpg',
 ];
 
 type ApparelGalleryProps = {
