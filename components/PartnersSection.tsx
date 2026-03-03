@@ -9,7 +9,6 @@ export default function PartnersSection() {
 
   const partners = [
     { name: '2XU', image: '/images/2xu-logo.avif' },
-    { name: 'Ayala', image: '/images/partner-ayala.png' },
     { name: 'Ayalaland', image: '/images/ayalaland.png' },
     { name: 'Make It Makati', image: '/images/makeitmakati.png' },
     { name: 'Mastercard', image: '/images/partner-mastercard.png' },
