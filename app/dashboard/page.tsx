@@ -16,6 +16,7 @@ interface User {
   raceCategory: string;
   affiliations: string;
   promotional: boolean;
+  promoCode?: string;
   tShirtSize?: string;
   teamId?: string;
   teamMemberIndex?: number;
@@ -81,6 +82,7 @@ async function exportToExcel(
       'Race Experience',
       'T-shirt Size',
       'Club/Organization',
+      'Promo Code',
       'Promotional Emails',
       'Registration Date'
     ];
@@ -94,6 +96,7 @@ async function exportToExcel(
       user.raceCategory || '',
       user.tShirtSize || '',
       user.affiliations || '',
+      user.promoCode || '',
       user.promotional ? 'Yes' : 'No',
       formatDateForExport(user.createdAt)
     ]);
@@ -151,13 +154,14 @@ export default function DashboardPage() {
     gender: '',
     raceCategory: '',
     club: '',
+    promoCode: '',
     dateFrom: '',
     dateTo: ''
   });
 
   useEffect(() => {
     setPagination((prev) => ({ ...prev, page: 1 }));
-  }, [filters.name, filters.email, filters.gender, filters.raceCategory, filters.club, filters.dateFrom, filters.dateTo]);
+  }, [filters.name, filters.email, filters.gender, filters.raceCategory, filters.club, filters.promoCode, filters.dateFrom, filters.dateTo]);
 
   useEffect(() => {
     fetchUsers();
@@ -419,6 +423,17 @@ export default function DashboardPage() {
               />
             </div>
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1 font-fira-sans">Promo Code</label>
+              <input
+                type="text"
+                value={filters.promoCode}
+                onChange={(e) => handleFilterChange('promoCode', e.target.value.toUpperCase())}
+                placeholder="Filter by promo code"
+                maxLength={6}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500 font-sweet-sans text-sm uppercase"
+              />
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1 font-fira-sans">Date From</label>
               <input
                 type="date"
@@ -497,6 +512,7 @@ export default function DashboardPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Race Experience</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">T-shirt Size</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Club/Organization</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Promo Code</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Promotional</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Registered</th>
                     {deleteUserEnabled && (
@@ -553,6 +569,7 @@ export default function DashboardPage() {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">{user.affiliations || 'N/A'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">{user.promoCode || '—'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">
                         {user.promotional ? (
                           <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Yes</span>

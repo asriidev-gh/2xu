@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
     const gender = searchParams.get('gender') || '';
     const raceCategory = searchParams.get('raceCategory') || '';
     const club = searchParams.get('club') || '';
+    const promoCode = searchParams.get('promoCode') || '';
     const dateFrom = searchParams.get('dateFrom') || '';
     const dateTo = searchParams.get('dateTo') || '';
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
@@ -60,6 +61,10 @@ export async function GET(request: NextRequest) {
 
     if (club) {
       filter.affiliations = { $regex: club, $options: 'i' };
+    }
+
+    if (promoCode) {
+      filter.promoCode = { $regex: promoCode.trim(), $options: 'i' };
     }
 
     if (dateFrom || dateTo) {
@@ -97,6 +102,7 @@ export async function GET(request: NextRequest) {
       tShirtSize: (user as { tShirtSize?: string }).tShirtSize || '',
       affiliations: user.affiliations || '',
       promotional: user.promotional || false,
+      promoCode: (user as { promoCode?: string }).promoCode || '',
       teamId: (user as { teamId?: string }).teamId?.toString(),
       teamMemberIndex: (user as { teamMemberIndex?: number }).teamMemberIndex,
       createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : null

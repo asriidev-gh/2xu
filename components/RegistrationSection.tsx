@@ -27,6 +27,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
     promotional: false,
     waiverAccepted: false,
     tShirtSize: '',
+    promoCode: '',
     teamMember1Name: '',
     teamMember1Birthday: '',
     teamMember1Gender: '',
@@ -48,6 +49,9 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
     teamMember4Contact: '',
     teamMember4TShirtSize: ''
   });
+
+  const [promoCodeValid, setPromoCodeValid] = useState<boolean | null>(null);
+  const promoValidateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isTeam = formData.raceCategory === 'Team Category';
   const teamMemberKeys = ([1, 2, 3, 4] as const);
@@ -90,14 +94,56 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (promoValidateTimeoutRef.current) {
+        clearTimeout(promoValidateTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
     
+    if (name === 'promoCode') {
+      const upper = value.toUpperCase().slice(0, 6);
+      setFormData(prev => ({ ...prev, promoCode: upper }));
+      setPromoCodeValid(null);
+      if (promoValidateTimeoutRef.current) {
+        clearTimeout(promoValidateTimeoutRef.current);
+        promoValidateTimeoutRef.current = null;
+      }
+      const trimmed = upper.trim();
+      if (trimmed.length === 6) {
+        promoValidateTimeoutRef.current = setTimeout(() => validatePromoCode(trimmed), 500);
+      }
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  const validatePromoCode = async (code: string) => {
+    const trimmed = code.trim();
+    if (trimmed.length !== 6) {
+      setPromoCodeValid(false);
+      return;
+    }
+    try {
+      const res = await fetch('/api/validate-promo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: trimmed }),
+      });
+      const data = await res.json();
+      setPromoCodeValid(data.valid === true);
+    } catch {
+      setPromoCodeValid(false);
+    }
   };
 
   const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,6 +182,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
             affiliations: formData.affiliations,
             promotional: formData.promotional,
             waiverAccepted: formData.waiverAccepted,
+            promoCode: formData.promoCode || undefined,
             teamMembers: teamMemberKeys.map((num) => ({
               name: formData[`teamMember${num}Name`],
               birthday: formData[`teamMember${num}Birthday`],
@@ -199,6 +246,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
         promotional: false,
         waiverAccepted: false,
         tShirtSize: '',
+        promoCode: '',
         teamMember1Name: '',
         teamMember1Birthday: '',
         teamMember1Gender: '',
@@ -572,6 +620,49 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900"
                     placeholder="Your club or organization name"
                   />
+                </div>
+
+                {/* Promo Code (Optional) — validated against env; shows check when valid */}
+                <div>
+                  <label htmlFor="promoCode" className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
+                    Promo code <span className="text-gray-400 text-xs font-normal">(Optional)</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      id="promoCode"
+                      name="promoCode"
+                      value={formData.promoCode}
+                      onChange={handleInputChange}
+                      onBlur={() => {
+                        if (formData.promoCode.trim().length === 6) {
+                          validatePromoCode(formData.promoCode);
+                        } else if (formData.promoCode.trim().length > 0) {
+                          setPromoCodeValid(false);
+                        }
+                      }}
+                      disabled={promoCodeValid === true}
+                      maxLength={6}
+                      placeholder="6-character code"
+                      className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900 pr-12 ${
+                        promoCodeValid === true
+                          ? 'border-green-500 bg-green-50/50 cursor-not-allowed opacity-90'
+                          : promoCodeValid === false
+                            ? 'border-red-400 focus:border-orange-500 bg-white'
+                            : 'border-gray-300 focus:border-orange-500 bg-white'
+                      }`}
+                    />
+                    {promoCodeValid === true && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </span>
+                    )}
+                  </div>
+                  {promoCodeValid === false && (
+                    <p className="mt-1.5 text-sm text-red-600 font-sweet-sans">Promo code is not valid.</p>
+                  )}
                 </div>
 
                 {/* Promotional Checkbox */}

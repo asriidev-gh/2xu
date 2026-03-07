@@ -22,7 +22,7 @@ function escapeHtml(text: string): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, contact, gender, birthday, raceCategory, affiliations, promotional, waiverAccepted, tShirtSize, teamMembers } = body;
+    const { name, email, contact, gender, birthday, raceCategory, affiliations, promotional, waiverAccepted, tShirtSize, promoCode, teamMembers } = body;
 
     // Validate required fields
     if (!email || !raceCategory) {
@@ -127,6 +127,7 @@ export async function POST(request: NextRequest) {
         raceCategory,
         affiliations: affiliations || '',
         promotional: promotional || false,
+        promoCode: promoCode != null ? String(promoCode).trim() : '',
         teamId,
         teamMemberIndex: index + 1,
         createdAt: now,
@@ -191,6 +192,7 @@ export async function POST(request: NextRequest) {
       raceCategory,
       affiliations: affiliations || '',
       promotional: promotional || false,
+      promoCode: promoCode != null ? String(promoCode).trim() : '',
       createdAt: now,
       updatedAt: now
     };
