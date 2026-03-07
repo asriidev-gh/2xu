@@ -12,6 +12,14 @@ type RegistrationSectionProps = {
 
 const T_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
+// Promo format: SPS2XU + one or more digits (e.g. SPS2XU1, SPS2XU2)
+const PROMO_FORMAT = /^SPS2XU\d+$/i;
+const PROMO_MAX_LENGTH = 12;
+
+function isValidPromoFormat(code: string): boolean {
+  return PROMO_FORMAT.test(code.trim());
+}
+
 export default function RegistrationSection({ selectedCategory = '', onCategoryApplied }: RegistrationSectionProps) {
   const registrationSectionRef = useRef<HTMLElement>(null);
   const [isRegistrationVisible, setIsRegistrationVisible] = useState(false);
@@ -51,7 +59,6 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
   });
 
   const [promoCodeValid, setPromoCodeValid] = useState<boolean | null>(null);
-  const promoValidateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isTeam = formData.raceCategory === 'Team Category';
   const teamMemberKeys = ([1, 2, 3, 4] as const);
@@ -94,30 +101,15 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
     };
   }, []);
 
-  useEffect(() => {
-    return () => {
-      if (promoValidateTimeoutRef.current) {
-        clearTimeout(promoValidateTimeoutRef.current);
-      }
-    };
-  }, []);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
     
     if (name === 'promoCode') {
-      const upper = value.toUpperCase().slice(0, 6);
+      const upper = value.toUpperCase().slice(0, PROMO_MAX_LENGTH);
       setFormData(prev => ({ ...prev, promoCode: upper }));
-      setPromoCodeValid(null);
-      if (promoValidateTimeoutRef.current) {
-        clearTimeout(promoValidateTimeoutRef.current);
-        promoValidateTimeoutRef.current = null;
-      }
       const trimmed = upper.trim();
-      if (trimmed.length === 6) {
-        promoValidateTimeoutRef.current = setTimeout(() => validatePromoCode(trimmed), 500);
-      }
+      setPromoCodeValid(trimmed.length > 0 ? isValidPromoFormat(trimmed) : null);
       return;
     }
 
@@ -125,25 +117,6 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-  };
-
-  const validatePromoCode = async (code: string) => {
-    const trimmed = code.trim();
-    if (trimmed.length !== 6) {
-      setPromoCodeValid(false);
-      return;
-    }
-    try {
-      const res = await fetch('/api/validate-promo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: trimmed }),
-      });
-      const data = await res.json();
-      setPromoCodeValid(data.valid === true);
-    } catch {
-      setPromoCodeValid(false);
-    }
   };
 
   const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -175,6 +148,8 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
 
     try {
       const isTeam = formData.raceCategory === 'Team Category';
+      // Only save promo code when it was validated as valid; otherwise save registration without it
+      const promoToSave = promoCodeValid === true ? formData.promoCode : '';
       const payload = isTeam
         ? {
             email: formData.email,
@@ -182,7 +157,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
             affiliations: formData.affiliations,
             promotional: formData.promotional,
             waiverAccepted: formData.waiverAccepted,
-            promoCode: formData.promoCode || undefined,
+            promoCode: promoToSave || undefined,
             teamMembers: teamMemberKeys.map((num) => ({
               name: formData[`teamMember${num}Name`],
               birthday: formData[`teamMember${num}Birthday`],
@@ -191,7 +166,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
               tShirtSize: formData[`teamMember${num}TShirtSize`]
             }))
           }
-        : { ...formData, waiverAccepted: formData.waiverAccepted };
+        : { ...formData, waiverAccepted: formData.waiverAccepted, promoCode: promoToSave };
 
       const response = await fetch('/api/register', {
         method: 'POST',
@@ -202,7 +177,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
       });
 
       const contentType = response.headers.get('content-type');
-      let data: { success?: boolean; error?: string; message?: string } = {};
+      let data: { success?: boolean; error?: string; message?: string; promoCodeUsed?: boolean } = {};
       if (contentType?.includes('application/json')) {
         try {
           data = await response.json();
@@ -220,7 +195,9 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
       // Success - Show SweetAlert2
       await Swal.fire({
         title: 'Success!',
-        text: 'Registration submitted successfully! We will contact you soon.',
+        text: data.promoCodeUsed
+          ? 'Registration submitted successfully! The advocate code you entered was already used, so it was not recorded.'
+          : 'Registration submitted successfully! We will contact you soon.',
         icon: 'success',
         confirmButtonText: 'OK',
         confirmButtonColor: '#ea580c', // Orange-600 color
@@ -622,10 +599,10 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                   />
                 </div>
 
-                {/* Promo Code (Optional) — validated against env; shows check when valid */}
+                {/* Advocate Code (Optional) — format SPS2XU + number; shows check when valid */}
                 <div>
                   <label htmlFor="promoCode" className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
-                    Promo code <span className="text-gray-400 text-xs font-normal">(Optional)</span>
+                    Advocate code <span className="text-gray-400 text-xs font-normal">(Optional)</span>
                   </label>
                   <div className="relative">
                     <input
@@ -635,15 +612,12 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                       value={formData.promoCode}
                       onChange={handleInputChange}
                       onBlur={() => {
-                        if (formData.promoCode.trim().length === 6) {
-                          validatePromoCode(formData.promoCode);
-                        } else if (formData.promoCode.trim().length > 0) {
-                          setPromoCodeValid(false);
-                        }
+                        const trimmed = formData.promoCode.trim();
+                        setPromoCodeValid(trimmed.length > 0 ? isValidPromoFormat(trimmed) : null);
                       }}
                       disabled={promoCodeValid === true}
-                      maxLength={6}
-                      placeholder="6-character code"
+                      maxLength={PROMO_MAX_LENGTH}
+                      placeholder="e.g. SPS2XU1"
                       className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900 pr-12 ${
                         promoCodeValid === true
                           ? 'border-green-500 bg-green-50/50 cursor-not-allowed opacity-90'
@@ -661,7 +635,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                     )}
                   </div>
                   {promoCodeValid === false && (
-                    <p className="mt-1.5 text-sm text-red-600 font-sweet-sans">Promo code is not valid.</p>
+                    <p className="mt-1.5 text-sm text-red-600 font-sweet-sans">Advocate code must be SPS2XU followed by a number (e.g. SPS2XU1).</p>
                   )}
                 </div>
 

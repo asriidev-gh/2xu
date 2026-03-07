@@ -2,20 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-const PROMO_CODE_LENGTH = 6;
+// Format: SPS2XU + one or more digits (e.g. SPS2XU1, SPS2XU2)
+const PROMO_FORMAT = /^SPS2XU\d+$/i;
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const code = typeof body?.code === 'string' ? body.code.trim() : '';
-
-    const envCode = process.env.PROMO_CODE?.trim() ?? '';
-
-    if (!envCode || envCode.length !== PROMO_CODE_LENGTH) {
-      return NextResponse.json({ valid: false });
-    }
-
-    const valid = code.length === PROMO_CODE_LENGTH && code === envCode;
+    const code = typeof body?.code === 'string' ? body.code.trim().toUpperCase() : '';
+    const valid = PROMO_FORMAT.test(code);
     return NextResponse.json({ valid });
   } catch {
     return NextResponse.json({ valid: false }, { status: 500 });

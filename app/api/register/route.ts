@@ -113,6 +113,21 @@ export async function POST(request: NextRequest) {
 
     const now = new Date();
 
+    // Promo format: SPS2XU + one or more digits (e.g. SPS2XU1, SPS2XU2). Only save if format matches and code is not already used.
+    const PROMO_REGEX = /^SPS2XU\d+$/i;
+    const rawPromo = promoCode != null ? String(promoCode).trim().toUpperCase() : '';
+    const formatOk = PROMO_REGEX.test(rawPromo);
+    let savedPromo = '';
+    let promoCodeUsed = false;
+    if (formatOk) {
+      const existingWithPromo = await collection.findOne({ promoCode: rawPromo });
+      if (existingWithPromo) {
+        promoCodeUsed = true; // allow registration but don't save the duplicate promo
+      } else {
+        savedPromo = rawPromo;
+      }
+    }
+
     if (isTeam) {
       // Insert 4 records, one per team member (each with own name, birthday, gender, contact; same email)
       const teamId = new ObjectId();
@@ -127,7 +142,7 @@ export async function POST(request: NextRequest) {
         raceCategory,
         affiliations: affiliations || '',
         promotional: promotional || false,
-        promoCode: promoCode != null ? String(promoCode).trim() : '',
+        promoCode: savedPromo,
         teamId,
         teamMemberIndex: index + 1,
         createdAt: now,
@@ -175,7 +190,8 @@ export async function POST(request: NextRequest) {
           success: true,
           message: 'Registration successful',
           id: insertedIds[0],
-          teamIds: insertedIds
+          teamIds: insertedIds,
+          ...(promoCodeUsed && { promoCodeUsed: true }),
         },
         { status: 201 }
       );
@@ -192,7 +208,7 @@ export async function POST(request: NextRequest) {
       raceCategory,
       affiliations: affiliations || '',
       promotional: promotional || false,
-      promoCode: promoCode != null ? String(promoCode).trim() : '',
+      promoCode: savedPromo,
       createdAt: now,
       updatedAt: now
     };
@@ -237,7 +253,8 @@ export async function POST(request: NextRequest) {
       { 
         success: true, 
         message: 'Registration successful',
-        id: result.insertedId 
+        id: result.insertedId,
+        ...(promoCodeUsed && { promoCodeUsed: true }),
       },
       { status: 201 }
     );

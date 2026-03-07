@@ -82,7 +82,7 @@ async function exportToExcel(
       'Race Experience',
       'T-shirt Size',
       'Club/Organization',
-      'Promo Code',
+      'Advocate Code',
       'Promotional Emails',
       'Registration Date'
     ];
@@ -423,12 +423,12 @@ export default function DashboardPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 font-fira-sans">Promo Code</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1 font-fira-sans">Advocate Code</label>
               <input
                 type="text"
                 value={filters.promoCode}
                 onChange={(e) => handleFilterChange('promoCode', e.target.value.toUpperCase())}
-                placeholder="Filter by promo code"
+                placeholder="Filter by advocate code"
                 maxLength={6}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500 font-sweet-sans text-sm uppercase"
               />
@@ -512,7 +512,7 @@ export default function DashboardPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Race Experience</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">T-shirt Size</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Club/Organization</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Promo Code</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Advocate Code</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Promotional</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Registered</th>
                     {deleteUserEnabled && (
