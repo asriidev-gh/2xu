@@ -260,14 +260,25 @@ export default function Hero() {
             <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 px-3 py-0.5 bg-gray-50 border border-white text-black font-druk text-sm font-bold uppercase tracking-wide whitespace-nowrap">
               2XU Speed Run
             </span>
-            <div className="text-xl sm:text-2xl text-white font-sweet-sans">
-              AYALA TRIANGLE, MAKATI<br/>
-              <p>
-                May <span className='text-yellow-500'>17th</span> 2026
+            <div className="text-white font-sweet-sans">
+              <p className="text-xs sm:text-sm uppercase tracking-[0.25em] text-yellow-400 mb-1">
+                Featured Distance
+              </p>
+              <p className="text-2xl sm:text-3xl font-druk font-bold tracking-wide mb-1">
+                2KM Speed Run
+              </p>
+              <p className="text-sm sm:text-base text-gray-200 mb-3">
+                Short-distance, high-intensity course built to test pure speed.
               </p>
               <hr className="border-white/40 my-3 w-full" />
-              <p className="text-gray-300 font-sweet-sans">
-                Limited to <b>2000</b> runners only<br/>
+              <p className="text-lg sm:text-xl">
+                AYALA TRIANGLE, MAKATI<br />
+                <span>
+                  May <span className="text-yellow-500">17th</span> 2026
+                </span>
+              </p>
+              <p className="text-gray-300 font-sweet-sans mt-2">
+                Limited to <b>2000</b> runners only
               </p>
             </div>
           </motion.div>
@@ -282,9 +293,9 @@ export default function Hero() {
               type="button"
               onClick={scrollToRegistration}
               className="w-full sm:w-auto bg-yellow-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-orange-700 transition-all transform hover:scale-105 shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-              aria-label="Register for 2XU Speed Run"
+              aria-label="Register for 2KM Speed Run"
             >
-              Register Here
+              Register for 2KM Speed Run
             </button>
             <button 
               type="button"

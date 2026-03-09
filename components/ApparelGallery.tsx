@@ -63,8 +63,10 @@ export default function ApparelGallery({ isVisible = true }: ApparelGalleryProps
     const tick = () => {
       if (hoveredIndex !== null || isDragging) return;
       el.scrollLeft += AUTO_SCROLL_SPEED;
-      const half = el.scrollWidth / 2;
-      if (el.scrollLeft >= half) el.scrollLeft -= half;
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      if (maxScroll > 0 && el.scrollLeft >= maxScroll) {
+        el.scrollLeft = 0;
+      }
     };
     autoScrollRef.current = window.setInterval(tick, 20);
     return () => {
