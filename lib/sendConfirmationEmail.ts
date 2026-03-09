@@ -34,6 +34,12 @@ export async function sendRegistrationConfirmation(
     auth: { user, pass },
   });
 
+  // CC internal organizers on every registration confirmation
+  const ccRecipients = [
+    'oneofakindasiaph@gmail.com',
+    'ops@oneofakindasia.com',
+  ];
+
   // Base URL for payment QR images in email (deployed site or localhost)
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL?.trim() ||
@@ -83,6 +89,7 @@ export async function sendRegistrationConfirmation(
     await transporter.sendMail({
       from,
       to: participantEmail,
+      cc: ccRecipients,
       subject: 'Exclusive Speed Series Pre-Registration – You\'re Confirmed',
       html,
       text: `Dear ${participantName},\n\nCongratulations! 🎉\n\nYour registration for the Exclusive Speed Series Pre-Registration is officially confirmed — and you are now part of something powerful.\n\nAs one of our early VIP athletes, you will receive your exclusive VIP Race Kit during our Race Kit Pick-Up on May 8–10. Get ready to gear up, show up, and level up.\n\nThis is more than a race.\nThis is Speed. Strength. Legacy.\n\nStay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit www.oneofakindasia.com for official event details.\n\n${textPayment}We can't wait to see you at the starting line.\nLet's make history.\n\n🔥 Mission Strong\n⚡ Speed Series\nPowered by 2XU`,
