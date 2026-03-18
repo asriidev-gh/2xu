@@ -112,6 +112,15 @@ export default function Footer() {
                 </li>
                 <li>
                   <a
+                    href="#updates"
+                    onClick={(e) => smoothScroll(e, 'updates')}
+                    className="text-gray-400 hover:text-orange-500 transition-colors font-sweet-sans text-sm"
+                  >
+                    Updates
+                  </a>
+                </li>
+                <li>
+                  <a
                     href="#mission-vision"
                     onClick={(e) => smoothScroll(e, 'mission-vision')}
                     className="text-gray-400 hover:text-orange-500 transition-colors font-sweet-sans text-sm"

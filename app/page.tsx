@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import EventsSection from '@/components/EventsSection';
+import UpdatesSection from '@/components/UpdatesSection';
 import RaceCategoriesSection from '@/components/RaceCategoriesSection';
 import MissionVisionSection from '@/components/MissionVisionSection';
 import PartnersSection from '@/components/PartnersSection';
@@ -30,6 +31,7 @@ export default function Home() {
         <Header />
         <Hero />
         <EventsSection onOpenMechanicsModal={() => setIsMechanicsModalOpen(true)} />
+        <UpdatesSection />
         <RaceCategoriesSection
           onSelectCategory={setSelectedCategory}
           onOpenRaceEventsDetails={() => setIsMechanicsModalOpen(true)}

@@ -63,6 +63,8 @@ function CountUp({ end, suffix = '', duration = 2000, delay = 0, run = true }: {
 export default function Hero() {
   const [statsInView, setStatsInView] = useState(false);
   const statsRef = useRef<HTMLDivElement>(null);
+  const [heroInView, setHeroInView] = useState(false);
+  const heroRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const el = statsRef.current;
@@ -75,6 +77,25 @@ export default function Hero() {
     );
     obs.observe(el);
     return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setHeroInView(entry.isIntersecting && entry.intersectionRatio >= 0.1);
+      },
+      {
+        threshold: [0, 0.1, 0.5],
+        rootMargin: '-40px 0px -40px 0px',
+      }
+    );
+
+    observer.observe(el);
+
+    return () => observer.disconnect();
   }, []);
 
   const scrollToEvents = () => {
@@ -131,7 +152,11 @@ export default function Hero() {
   };
 
   return (
-    <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 w-screen">
+    <section
+      id="home"
+      ref={heroRef}
+      className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 w-screen"
+    >
       {/* Background Video */}
       <div className="absolute inset-0 z-0 w-full h-full overflow-hidden">
         <video
@@ -165,7 +190,7 @@ export default function Hero() {
           className="max-w-4xl mx-auto"
           variants={container}
           initial="hidden"
-          animate="visible"
+          animate={heroInView ? 'visible' : 'hidden'}
         >
           {/* Badge */}
           <motion.div className="mt-5 inline-flex items-center px-4 py-2 bg-orange-600/90 backdrop-blur-sm rounded-full text-white text-sm font-semibold mb-6" variants={item}>
@@ -284,7 +309,7 @@ export default function Hero() {
           </motion.div>
 
           <motion.div className="text-xl sm:text-lg text-white font-sweet-sans" variants={item}>
-            Exclusive Pre-registration for first <b>200</b> <br/>to register on <b>March 15th</b>
+            Exclusive Pre-registration for first <b>200</b> <br/>to register on <b>March 21th</b>
           </motion.div>
 
           {/* CTA Buttons */}
