@@ -3,8 +3,8 @@
 import { useState, useCallback } from 'react';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
+import RaceExperienceGallerySection from '@/components/RaceExperienceGallerySection';
 import EventsSection from '@/components/EventsSection';
-import UpdatesSection from '@/components/UpdatesSection';
 import RaceCategoriesSection from '@/components/RaceCategoriesSection';
 import MissionVisionSection from '@/components/MissionVisionSection';
 import PartnersSection from '@/components/PartnersSection';
@@ -29,9 +29,9 @@ export default function Home() {
       */}
       <main className="min-h-screen scroll-smooth">
         <Header />
-        <Hero />
+        <Hero onOpenRaceEventsDetails={() => setIsMechanicsModalOpen(true)} />
+        <RaceExperienceGallerySection />
         <EventsSection onOpenMechanicsModal={() => setIsMechanicsModalOpen(true)} />
-        <UpdatesSection />
         <RaceCategoriesSection
           onSelectCategory={setSelectedCategory}
           onOpenRaceEventsDetails={() => setIsMechanicsModalOpen(true)}

@@ -61,10 +61,10 @@ const raceCategories: RaceCategory[] = [
   },
   {
     name: 'Patron',
-    ageGroup: 'Ages 12 and above',
-    pricePhp: '₱2,500',
-    priceUsd: '$43',
-    kitDescription: 'For key supporters and partners who go the extra mile for the program.',
+    ageGroup: 'Ages 18',
+    pricePhp: '₱2,800',
+    priceUsd: '$47',
+    kitDescription: 'VIP all access / with the After Run Rock Concert. After Race Rock and Recovery Village',
     highlight: 'community',
   },
 ];

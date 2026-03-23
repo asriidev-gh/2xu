@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { SPEED_SERIES_PDF_URL } from '@/components/SpeedSeriesMechanicsModal';
 
 // Slot machine count-up component (starts when run becomes true, e.g. when in view)
 function CountUp({ end, suffix = '', duration = 2000, delay = 0, run = true }: { end: number; suffix?: string; duration?: number; delay?: number; run?: boolean }) {
@@ -60,7 +61,11 @@ function CountUp({ end, suffix = '', duration = 2000, delay = 0, run = true }: {
   return <span>{formatNumber(count)}{suffix}</span>;
 }
 
-export default function Hero() {
+type HeroProps = {
+  onOpenRaceEventsDetails?: () => void;
+};
+
+export default function Hero({ onOpenRaceEventsDetails }: HeroProps) {
   const [statsInView, setStatsInView] = useState(false);
   const statsRef = useRef<HTMLDivElement>(null);
   const [heroInView, setHeroInView] = useState(false);
@@ -97,20 +102,6 @@ export default function Hero() {
 
     return () => observer.disconnect();
   }, []);
-
-  const scrollToEvents = () => {
-    const eventsSection = document.getElementById('events');
-    if (eventsSection) {
-      const headerOffset = 80; // Height of fixed header
-      const elementPosition = eventsSection.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
-    }
-  };
 
   const scrollToRegistration = () => {
     const registrationSection = document.getElementById('registration');
@@ -324,7 +315,14 @@ export default function Hero() {
             </button>
             <button 
               type="button"
-              onClick={scrollToEvents}
+              onClick={() => {
+                const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+                if (isMobile) {
+                  window.open(SPEED_SERIES_PDF_URL, '_blank', 'noopener,noreferrer');
+                  return;
+                }
+                onOpenRaceEventsDetails?.();
+              }}
               className="w-full sm:w-auto bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-full font-bold text-lg border-2 border-white/30 hover:bg-white/20 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black"
               aria-label="Learn more about 2XU Speed Run events"
             >
