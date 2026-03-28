@@ -77,6 +77,26 @@ export default function PartnersSection() {
           <p className="mt-6 text-gray-600 max-w-2xl mx-auto font-sweet-sans text-lg">
             Proudly supported by industry leaders who share our passion for sports excellence
           </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+            <span className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500 font-fira-sans sm:text-base">
+              Presented by
+            </span>
+            <a
+              href="https://ph.2xu.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center rounded-md transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+              aria-label="2XU Philippines — opens in new tab"
+            >
+              <Image
+                src="/images/2xu-logo.avif"
+                alt=""
+                width={120}
+                height={40}
+                className="h-9 w-auto object-contain object-left sm:h-10"
+              />
+            </a>
+          </div>
         </div>
 
         {/* Partners marquee: scroll left to right; pause on hover so links are easy to use */}
