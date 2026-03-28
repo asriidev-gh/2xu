@@ -3,16 +3,24 @@
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
+type Partner = {
+  name: string;
+  image: string;
+  url?: string;
+};
+
 export default function PartnersSection() {
   const partnersSectionRef = useRef<HTMLElement>(null);
   const [isPartnersVisible, setIsPartnersVisible] = useState(false);
+  const [marqueePaused, setMarqueePaused] = useState(false);
 
-  const partners = [
-    { name: '2XU', image: '/images/2xu-logo.avif' },
+  const partners: Partner[] = [
+    { name: '2XU', image: '/images/2xu-logo.avif', url: 'https://ph.2xu.com/' },
     { name: 'Ayalaland', image: '/images/ayalaland.png' },
     { name: 'Make It Makati', image: '/images/makeitmakati.png' },
     { name: 'Mastercard', image: '/images/partner-mastercard.png' },
     { name: 'Pocari Sweat', image: '/images/partner-pocarisweat.webp' },
+    { name: 'Without Limits', image: '/images/partner-withoutlimits.jpg' },
   ];
 
   // Trigger animations when Partners section comes into view
@@ -71,29 +79,59 @@ export default function PartnersSection() {
           </p>
         </div>
 
-        {/* Partners marquee: scroll left to right */}
-        <div className={`relative w-full overflow-hidden py-8 ${isPartnersVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`} style={{ animationDelay: '0.3s' }}>
-          <div className="flex w-max gap-6 lg:gap-8 animate-marquee-ltr items-stretch" style={{ width: 'max-content' }}>
+        {/* Partners marquee: scroll left to right; pause on hover so links are easy to use */}
+        <div
+          className={`relative w-full overflow-hidden py-8 ${isPartnersVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`}
+          style={{ animationDelay: '0.3s' }}
+          onMouseEnter={() => setMarqueePaused(true)}
+          onMouseLeave={() => setMarqueePaused(false)}
+        >
+          <div
+            className={`flex w-max gap-6 lg:gap-8 animate-marquee-ltr items-stretch ${marqueePaused ? 'pause' : ''}`}
+            style={{ width: 'max-content' }}
+          >
             {[...partners, ...partners].map((partner, i) => (
               <div key={`${partner.name}-${i}`} className="group relative flex-shrink-0 w-[200px] lg:w-[240px] my-2">
                 {/* Card with gradient glow effect */}
-                <div className="absolute -inset-4 bg-gradient-to-br from-orange-500/10 to-yellow-500/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500" />
+                <div className="absolute -inset-4 bg-gradient-to-br from-orange-500/10 to-yellow-500/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500 pointer-events-none" />
                 {/* Partner Card */}
-                <div className="relative bg-white/90 backdrop-blur-sm rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-100 hover:shadow-2xl hover:border-orange-200 transition-all duration-300 flex flex-col items-center justify-center min-h-[220px] group-hover:scale-105">
-                  <div className="relative w-full h-24 flex items-center justify-center grayscale group-hover:grayscale-0 transition-all duration-300">
-                    <Image
-                      src={partner.image}
-                      alt={`${partner.name} logo`}
-                      width={120}
-                      height={80}
-                      className="object-contain max-w-full max-h-full"
-                      style={{ filter: 'brightness(0.9)' }}
-                    />
+                {partner.url ? (
+                  <a
+                    href={partner.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative block bg-white/90 backdrop-blur-sm rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-100 hover:shadow-2xl hover:border-orange-200 transition-all duration-300 flex flex-col items-center justify-center min-h-[220px] group-hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+                    aria-label={`Visit ${partner.name} Philippines (opens in new tab)`}
+                  >
+                    <div className="relative w-full h-24 flex items-center justify-center">
+                      <Image
+                        src={partner.image}
+                        alt=""
+                        width={120}
+                        height={80}
+                        className="object-contain max-w-full max-h-full"
+                      />
+                    </div>
+                    <h3 className="mt-4 text-sm font-semibold text-gray-700 font-fira-sans text-center group-hover:text-orange-600 transition-colors">
+                      {partner.name}
+                    </h3>
+                  </a>
+                ) : (
+                  <div className="relative bg-white/90 backdrop-blur-sm rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-100 hover:shadow-2xl hover:border-orange-200 transition-all duration-300 flex flex-col items-center justify-center min-h-[220px] group-hover:scale-105">
+                    <div className="relative w-full h-24 flex items-center justify-center">
+                      <Image
+                        src={partner.image}
+                        alt={`${partner.name} logo`}
+                        width={120}
+                        height={80}
+                        className="object-contain max-w-full max-h-full"
+                      />
+                    </div>
+                    <h3 className="mt-4 text-sm font-semibold text-gray-700 font-fira-sans text-center group-hover:text-orange-600 transition-colors">
+                      {partner.name}
+                    </h3>
                   </div>
-                  <h3 className="mt-4 text-sm font-semibold text-gray-700 font-fira-sans text-center group-hover:text-orange-600 transition-colors">
-                    {partner.name}
-                  </h3>
-                </div>
+                )}
               </div>
             ))}
           </div>

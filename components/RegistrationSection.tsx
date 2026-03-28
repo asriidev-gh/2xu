@@ -286,7 +286,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
             <span className="text-white font-semibold text-sm font-fira-sans uppercase tracking-wide">Join Us</span>
           </div>
           <h2 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-4 font-druk drop-shadow-sm">
-            Register Now
+            Secure your spots now!
           </h2>
           <div className="w-24 h-1 bg-gradient-to-r from-orange-500 to-yellow-500 mx-auto rounded-full mb-6"></div>
           <p className="text-gray-600 max-w-2xl mx-auto font-sweet-sans text-lg">

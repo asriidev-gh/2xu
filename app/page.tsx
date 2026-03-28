@@ -8,6 +8,7 @@ import EventsSection from '@/components/EventsSection';
 import RaceCategoriesSection from '@/components/RaceCategoriesSection';
 import MissionVisionSection from '@/components/MissionVisionSection';
 import PartnersSection from '@/components/PartnersSection';
+import FAQSection from '@/components/FAQSection';
 import RegistrationSection from '@/components/RegistrationSection';
 import Footer from '@/components/Footer';
 import BackToRaceExperienceButton from '@/components/BackToRaceExperienceButton';
@@ -38,6 +39,7 @@ export default function Home() {
         />
         <MissionVisionSection />
         <PartnersSection />
+        <FAQSection />
         <RegistrationSection
           selectedCategory={selectedCategory}
           onCategoryApplied={clearSelectedCategory}

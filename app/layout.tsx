@@ -19,19 +19,19 @@ const ogImageUrl = `${siteUrl.replace(/\/$/, '')}/images/speed_series.jpg`;
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Mission Strong : Speed Series powered by 2XU",
-  description: "Mission Strong. 2XU Speed Run — Built for Speed, Strength & Impact. Ayala Triangle, Makati. May 17th 2026. Register now.",
+  description: "Mission Strong. 2XU Speed Run — Built for Speed, Strength & Impact. Ayala Triangle, Makati. May 17th 2026. Secure your spots now!",
   icons: {
     icon: "/images/favicon.ico",
   },
   openGraph: {
     title: "Mission Strong : Speed Series powered by 2XU",
-    description: "Mission Strong. 2XU Speed Run — Built for Speed, Strength & Impact. Ayala Triangle, Makati. May 17th 2026. Register now.",
+    description: "Mission Strong. 2XU Speed Run — Built for Speed, Strength & Impact. Ayala Triangle, Makati. May 17th 2026. Secure your spots now!",
     images: [{ url: ogImageUrl, width: 1200, height: 630, alt: "Mission Strong Speed Series powered by 2XU" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Mission Strong : Speed Series powered by 2XU",
-    description: "Mission Strong. 2XU Speed Run — Built for Speed, Strength & Impact. Ayala Triangle, Makati. May 17th 2026. Register now.",
+    description: "Mission Strong. 2XU Speed Run — Built for Speed, Strength & Impact. Ayala Triangle, Makati. May 17th 2026. Secure your spots now!",
     images: [ogImageUrl],
   },
 };

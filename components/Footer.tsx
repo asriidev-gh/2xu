@@ -139,6 +139,15 @@ export default function Footer() {
                 </li>
                 <li>
                   <a
+                    href="#faq"
+                    onClick={(e) => smoothScroll(e, 'faq')}
+                    className="text-gray-400 hover:text-orange-500 transition-colors font-sweet-sans text-sm"
+                  >
+                    FAQ
+                  </a>
+                </li>
+                <li>
+                  <a
                     href="#registration"
                     onClick={(e) => smoothScroll(e, 'registration')}
                     className="text-gray-400 hover:text-orange-500 transition-colors font-sweet-sans text-sm"

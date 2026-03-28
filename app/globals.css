@@ -136,14 +136,12 @@ body {
 @keyframes heroFlipLines {
   0% { transform: translateY(0); }
   14% { transform: translateY(0); }
-  18% { transform: translateY(-20%); }
-  34% { transform: translateY(-20%); }
-  38% { transform: translateY(-40%); }
-  54% { transform: translateY(-40%); }
-  58% { transform: translateY(-60%); }
-  74% { transform: translateY(-60%); }
-  78% { transform: translateY(-80%); }
-  94% { transform: translateY(-80%); }
+  18% { transform: translateY(-25%); }
+  34% { transform: translateY(-25%); }
+  38% { transform: translateY(-50%); }
+  54% { transform: translateY(-50%); }
+  58% { transform: translateY(-75%); }
+  94% { transform: translateY(-75%); }
   95% { transform: translateY(0); }
   100% { transform: translateY(0); }
 }
@@ -308,6 +306,9 @@ body {
 
   .animate-marquee-ltr {
     animation: marqueeLtr 50s linear infinite;
+  }
+  .animate-marquee-ltr.pause {
+    animation-play-state: paused;
   }
 
   .hero-flip-animate {

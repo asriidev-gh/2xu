@@ -12,6 +12,8 @@ type RaceCategory = {
   priceUsd: string;
   kitValueLabel?: string;
   kitDescription: string;
+  /** Replaces the third entitlement bullet (default: jersey kit disclaimer) */
+  kitFooterNote?: string;
   highlight?: 'popular' | 'best-value' | 'youth' | 'community' | 'team';
 };
 
@@ -65,6 +67,8 @@ const raceCategories: RaceCategory[] = [
     pricePhp: '₱2,800',
     priceUsd: '$47',
     kitDescription: 'VIP all access / with the After Run Rock Concert. After Race Rock and Recovery Village',
+    kitFooterNote:
+      'Are you ready to Race/ Recover & Roll! #RaceRecoverRoll',
     highlight: 'community',
   },
 ];
@@ -320,7 +324,8 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
                     <div className="flex items-start gap-2">
                       <span className="mt-1 h-2 w-2 rounded-full bg-gray-300" />
                       <p className="text-xs text-gray-300 font-sweet-sans">
-                        Includes official 2XU jersey race kit. Final designs and contents may vary.
+                        {category.kitFooterNote ??
+                          'Includes official 2XU jersey race kit. Final designs and contents may vary.'}
                       </p>
                     </div>
                   </div>

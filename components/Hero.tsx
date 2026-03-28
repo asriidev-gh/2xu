@@ -262,12 +262,11 @@ export default function Hero({ onOpenRaceEventsDetails }: HeroProps) {
             </span>
             {/* One-liner: smooth flip; at end instant reset to first line (no scroll up) */}
             <div className="mt-2 mb-4 max-w-2xl mx-auto h-8 sm:h-9 overflow-hidden font-sweet-sans">
-              <div className="hero-flip-animate h-[500%] flex flex-col">
+              <div className="hero-flip-animate h-[400%] flex flex-col">
                 <span className="h-8 sm:h-9 flex items-center justify-center text-lg sm:text-xl font-normal text-white shrink-0">Asia&apos;s Fastest-Growing Urban Performance Race</span>
                 <span className="h-8 sm:h-9 flex items-center justify-center text-base sm:text-lg font-normal text-white shrink-0">Built for Speed.</span>
                 <span className="h-8 sm:h-9 flex items-center justify-center text-base sm:text-lg font-normal text-white shrink-0">Built for Strength.</span>
                 <span className="h-8 sm:h-9 flex items-center justify-center text-base sm:text-lg font-normal text-white shrink-0">Built for Impact.</span>
-                <span className="h-8 sm:h-9 flex items-center justify-center text-base sm:text-lg font-normal text-white shrink-0">w 2XU human performance multiplied</span>
               </div>
             </div>
           </motion.h1>
@@ -300,7 +299,7 @@ export default function Hero({ onOpenRaceEventsDetails }: HeroProps) {
           </motion.div>
 
           <motion.div className="text-xl sm:text-lg text-white font-sweet-sans" variants={item}>
-            Exclusive Pre-registration for first <b>200</b> <br/>to register on <b>March 21th</b>
+            Exclusive Pre-registration for first <b>200</b> <br/>to register on <b>March 28th</b> @ 6PM
           </motion.div>
 
           {/* CTA Buttons */}
@@ -346,21 +345,21 @@ export default function Hero({ onOpenRaceEventsDetails }: HeroProps) {
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold text-orange-500 mb-2">
-                <CountUp end={50} suffix="+" duration={2000} delay={400} run={statsInView} />
+                <CountUp end={38} suffix="+" duration={2000} delay={400} run={statsInView} />
               </div>
               <div className="text-gray-300">Events Yearly</div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold text-orange-500 mb-2">
-                <CountUp end={15} suffix="+" duration={2000} delay={600} run={statsInView} />
+                <CountUp end={26} suffix="+" duration={2000} delay={600} run={statsInView} />
               </div>
               <div className="text-gray-300">Years Experience</div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold text-orange-500 mb-2">
-                <CountUp end={100} suffix="+" duration={2000} delay={800} run={statsInView} />
+                <CountUp end={1} suffix="+" duration={2000} delay={800} run={statsInView} />
               </div>
-              <div className="text-gray-300">Awards Won</div>
+              <div className="text-gray-300">Strong advocacy</div>
             </div>
           </motion.div>
         </motion.div>

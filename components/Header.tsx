@@ -55,6 +55,9 @@ export default function Header() {
             <a href="#partners" onClick={(e) => smoothScroll(e, '#partners')} className="text-gray-700 hover:text-orange-600 font-medium transition-colors font-fira-sans cursor-pointer">
               Partners
             </a>
+            <a href="#faq" onClick={(e) => smoothScroll(e, '#faq')} className="text-gray-700 hover:text-orange-600 font-medium transition-colors font-fira-sans cursor-pointer">
+              FAQ
+            </a>
             <button 
               onClick={(e) => {
                 e.preventDefault();
@@ -116,6 +119,9 @@ export default function Header() {
             </a>
             <a href="#partners" onClick={(e) => { smoothScroll(e, '#partners'); setIsMenuOpen(false); }} className="block text-gray-700 hover:text-orange-600 font-medium font-fira-sans">
               Partners
+            </a>
+            <a href="#faq" onClick={(e) => { smoothScroll(e, '#faq'); setIsMenuOpen(false); }} className="block text-gray-700 hover:text-orange-600 font-medium font-fira-sans">
+              FAQ
             </a>
             <button 
               onClick={(e) => {
