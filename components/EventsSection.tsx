@@ -157,9 +157,9 @@ export default function EventsSection({ onOpenMechanicsModal }: EventsSectionPro
                 <h3 className="text-base lg:text-lg font-bold text-black mb-1 font-druk">
                   SUMMARY OF THE KEY DRIVERS
                 </h3>
-                <h3 className="text-base lg:text-lg font-bold text-gray-900 font-druk">
+                {/* <h3 className="text-base lg:text-lg font-bold text-gray-900 font-druk">
                   2XU ASIA RUN PROGRAM
-                </h3>
+                </h3> */}
               </div>
             </div>
           </div>

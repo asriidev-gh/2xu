@@ -345,7 +345,7 @@ export default function Hero({ onOpenRaceEventsDetails }: HeroProps) {
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold text-orange-500 mb-2">
-                <CountUp end={38} suffix="+" duration={2000} delay={400} run={statsInView} />
+                <CountUp end={26} suffix="+" duration={2000} delay={400} run={statsInView} />
               </div>
               <div className="text-gray-300">Events Yearly</div>
             </div>
@@ -357,7 +357,7 @@ export default function Hero({ onOpenRaceEventsDetails }: HeroProps) {
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold text-orange-500 mb-2">
-                <CountUp end={1} suffix="+" duration={2000} delay={800} run={statsInView} />
+                <CountUp end={1} suffix="" duration={2000} delay={800} run={statsInView} />
               </div>
               <div className="text-gray-300">Strong advocacy</div>
             </div>
