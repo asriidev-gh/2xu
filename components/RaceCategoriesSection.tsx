@@ -355,7 +355,7 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
         </p>
 
         {/* Mission Strong image - end of section */}
-        <div
+        {/* <div
           className={`mt-10 flex justify-center max-w-2xl mx-auto overflow-hidden rounded-2xl ${
             isVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'
           }`}
@@ -369,7 +369,7 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
             className="w-full rounded-2xl shadow-xl object-cover"
             sizes="(max-width: 768px) 100vw, 800px"
           />
-        </div>
+        </div> */}
       </div>
     </section>
   );

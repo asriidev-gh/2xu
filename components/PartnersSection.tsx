@@ -78,23 +78,25 @@ export default function PartnersSection() {
             Proudly supported by industry leaders who share our passion for sports excellence
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-            <span className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500 font-fira-sans sm:text-base">
+            {/* <span className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500 font-fira-sans sm:text-base">
               Presented by
-            </span>
+            </span> */}
             <a
               href="https://ph.2xu.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center rounded-md transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+              className="inline-flex items-center rounded-xl transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
               aria-label="2XU Philippines — opens in new tab"
             >
-              <Image
-                src="/images/2xu-logo.avif"
-                alt=""
-                width={120}
-                height={40}
-                className="h-9 w-auto object-contain object-left sm:h-10"
-              />
+              <span className="inline-flex items-center justify-center rounded-xl bg-black px-5 py-3 ring-1 ring-white/15 shadow-md sm:px-6 sm:py-3.5">
+                <Image
+                  src="/images/speed_run2.png"
+                  alt=""
+                  width={840}
+                  height={560}
+                  className="h-24 w-auto object-contain object-center drop-shadow sm:h-28"
+                />
+              </span>
             </a>
           </div>
         </div>
