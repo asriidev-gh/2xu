@@ -47,7 +47,7 @@ const raceCategories: RaceCategory[] = [
   },
   {
     name: 'Athletes Category',
-    ageGroup: 'Ages 12 and above',
+    ageGroup: 'Ages 16 and above',
     pricePhp: '₱1,800',
     priceUsd: '$32',
     kitDescription: 'For competitive and aspiring athletes ready to push performance with 2XU.',
