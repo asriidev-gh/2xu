@@ -21,6 +21,8 @@ export default function PartnersSection() {
     { name: 'Mastercard', image: '/images/partner-mastercard.png' },
     { name: 'Pocari Sweat', image: '/images/partner-pocarisweat.webp' },
     { name: 'Without Limits', image: '/images/partner-withoutlimits.jpg' },
+    { name: 'Seiko', image: '/images/partner-seiko.png' },
+    { name: 'Prospex', image: '/images/partner-prospex.png' },
   ];
 
   // Trigger animations when Partners section comes into view
