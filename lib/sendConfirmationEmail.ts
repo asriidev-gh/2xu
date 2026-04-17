@@ -45,6 +45,14 @@ export async function sendRegistrationConfirmation(
     process.env.NEXT_PUBLIC_APP_URL?.trim() ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
 
+  const headerBanner = baseUrl
+    ? `
+    <div style="margin:0 0 20px 0;">
+      <img src="${escapeHtml(baseUrl)}/images/2xu-event-mail-banner.jpg" alt="Speed Series — Powered by 2XU" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;" />
+    </div>
+  `
+    : '';
+
   const paymentSection =
     baseUrl
       ? `
@@ -70,6 +78,7 @@ export async function sendRegistrationConfirmation(
   `;
 
   const html = `
+    ${headerBanner}
     <p>Dear ${escapeHtml(participantName)},</p>
     <p>Congratulations! 🎉</p>
     <p>Your registration for the Exclusive Speed Series Pre-Registration is officially confirmed — and you are now part of something powerful.</p>
@@ -92,7 +101,7 @@ export async function sendRegistrationConfirmation(
       cc: ccRecipients,
       subject: 'Exclusive Speed Series Pre-Registration – You\'re Confirmed',
       html,
-      text: `Dear ${participantName},\n\nCongratulations! 🎉\n\nYour registration for the Exclusive Speed Series Pre-Registration is officially confirmed — and you are now part of something powerful.\n\nAs one of our early VIP athletes, you will receive your exclusive VIP Race Kit during our Race Kit Pick-Up on May 8–10. Get ready to gear up, show up, and level up.\n\nThis is more than a race.\nThis is Speed. Strength. Legacy.\n\nStay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit www.oneofakindasia.com for official event details.\n\n${textPayment}We can't wait to see you at the starting line.\nLet's make history.\n\n🔥 Mission Strong\n⚡ Speed Series\nPowered by 2XU`,
+      text: `Speed Series — Powered by 2XU\n\nDear ${participantName},\n\nCongratulations! 🎉\n\nYour registration for the Exclusive Speed Series Pre-Registration is officially confirmed — and you are now part of something powerful.\n\nAs one of our early VIP athletes, you will receive your exclusive VIP Race Kit during our Race Kit Pick-Up on May 8–10. Get ready to gear up, show up, and level up.\n\nThis is more than a race.\nThis is Speed. Strength. Legacy.\n\nStay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit www.oneofakindasia.com for official event details.\n\n${textPayment}We can't wait to see you at the starting line.\nLet's make history.\n\n🔥 Mission Strong\n⚡ Speed Series\nPowered by 2XU`,
     });
     console.log('[sendConfirmationEmail] Confirmation email sent to', participantEmail);
     return true;
