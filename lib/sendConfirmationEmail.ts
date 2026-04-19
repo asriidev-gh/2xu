@@ -3,6 +3,7 @@ import nodemailer from 'nodemailer';
 /**
  * Sends the registration confirmation email to the participant.
  * Uses SMTP env vars: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM.
+ * Optional: SMTP_SIGNOFF_NAME (defaults to "One of a Kind Asia") for "Warm regards" line.
  * Best-effort; does not throw (logs and returns false on failure).
  * @param tShirtSizeInfo - Optional: "M" for individual, or "Team T-shirt sizes: M, L, XL, S" for team.
  */
@@ -16,6 +17,8 @@ export async function sendRegistrationConfirmation(
   const user = process.env.SMTP_USER?.trim();
   const pass = process.env.SMTP_PASS?.trim();
   const from = process.env.SMTP_FROM?.trim() || 'One of a kind Asia <ops@oneofakindasia.com>';
+  const signOffName =
+    process.env.SMTP_SIGNOFF_NAME?.trim() || 'One of a Kind Asia';
 
   if (!host || !port || !user || !pass) {
     console.warn(
@@ -62,11 +65,13 @@ export async function sendRegistrationConfirmation(
       <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
         <tr>
           <td style="padding-right:16px; vertical-align:top;">
-            <p style="margin:0 0 6px 0; font-size:13px; font-weight:600; color:#374151;">GCash</p>
+            <p style="margin:0 0 4px 0; font-size:13px; font-weight:600; color:#374151;">GCash</p>
+            <p style="margin:0 0 8px 0; font-size:12px; color:#6b7280;">GCash QR Code</p>
             <img src="${escapeHtml(baseUrl)}/images/payment-options/gcash.jpg" alt="GCash QR Code" width="180" height="180" style="display:block; border-radius:8px;" />
           </td>
           <td style="vertical-align:top;">
-            <p style="margin:0 0 6px 0; font-size:13px; font-weight:600; color:#374151;">Gotyme Bank Transfer</p>
+            <p style="margin:0 0 4px 0; font-size:13px; font-weight:600; color:#374151;">Gotyme Bank Transfer</p>
+            <p style="margin:0 0 8px 0; font-size:12px; color:#6b7280;">Bank Transfer QR Code</p>
             <img src="${escapeHtml(baseUrl)}/images/payment-options/bank-transfer.jpg" alt="Bank Transfer QR Code" width="180" height="180" style="display:block; border-radius:8px;" />
           </td>
         </tr>
@@ -80,28 +85,52 @@ export async function sendRegistrationConfirmation(
   const html = `
     ${headerBanner}
     <p>Dear ${escapeHtml(participantName)},</p>
-    <p>Congratulations! 🎉</p>
-    <p>Your registration for the Exclusive Speed Series Pre-Registration is officially confirmed — and you are now part of something powerful.</p>
-    <p>As one of our early VIP athletes, you will receive your exclusive VIP Race Kit during our Race Kit Pick-Up on May 8–10. Get ready to gear up, show up, and level up.</p>
-    <p>This is more than a race.<br/>This is Speed. Strength. Legacy.</p>
+    <p>Thank you for your interest in taking part in the Speed Series powered by 2XU—the ultimate urban run performance and advocacy event. We have successfully received your registration details.</p>
+    <p>You&rsquo;re now one step closer to the starting line. To complete your registration, please proceed with your preferred payment option and send your proof of payment to Speed Series for verification.</p>
+    <p>Stay tuned for your final confirmation.</p>
     <p>Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit <a href="https://www.oneofakindasia.com">www.oneofakindasia.com</a> for official event details.</p>
     ${paymentSection}
-    <p>We can't wait to see you at the starting line.<br/>Let's make history.</p>
+    <p>We can&rsquo;t wait to see you at the starting line.<br/>Let&rsquo;s make history.</p>
     <p>🔥 Mission Strong<br/>⚡ Speed Series<br/>Powered by 2XU</p>
-    <p>+63 969 187 4689</p>
+    <p>Let&rsquo;s go.</p>
+    <p>Warm regards,<br/>${escapeHtml(signOffName)}</p>
+    <p><a href="https://www.oneofakindasia.com">www.oneofakindasia.com</a><br/><a href="https://www.oneofakindasia.com">www.oneofakindasia.com</a></p>
   `;
 
   const textPayment = baseUrl
-    ? 'Payment: Scan the QR codes in the HTML version of this email, or visit our registration page to view GCash and Gotyme Bank Transfer options. Send proof of payment to 1@oneofakindasia.com.\n\n'
+    ? 'Payment options – scan to pay. Send proof of payment to 1@oneofakindasia.com to confirm your slot. (GCash and Gotyme Bank Transfer QR codes are in the HTML version of this email.)\n\n'
     : 'Payment: Visit our registration page to view payment options. Send proof of payment to 1@oneofakindasia.com.\n\n';
+  const siteUrl = 'https://www.oneofakindasia.com';
+  const plainBody = `Dear ${participantName},
+
+Thank you for your interest in taking part in the Speed Series powered by 2XU—the ultimate urban run performance and advocacy event. We have successfully received your registration details.
+
+You're now one step closer to the starting line. To complete your registration, please proceed with your preferred payment option and send your proof of payment to Speed Series for verification.
+
+Stay tuned for your final confirmation.
+
+Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit www.oneofakindasia.com for official event details.
+
+${textPayment}We can't wait to see you at the starting line.
+Let's make history.
+
+🔥 Mission Strong
+⚡ Speed Series
+Powered by 2XU
+
+Let's go.
+
+Warm regards,
+${signOffName}
+${siteUrl}`;
   try {
     await transporter.sendMail({
       from,
       to: participantEmail,
       cc: ccRecipients,
-      subject: 'Exclusive Speed Series Pre-Registration – You\'re Confirmed',
+      subject: 'Speed Series powered by 2XU — Registration received',
       html,
-      text: `Speed Series — Powered by 2XU\n\nDear ${participantName},\n\nCongratulations! 🎉\n\nYour registration for the Exclusive Speed Series Pre-Registration is officially confirmed — and you are now part of something powerful.\n\nAs one of our early VIP athletes, you will receive your exclusive VIP Race Kit during our Race Kit Pick-Up on May 8–10. Get ready to gear up, show up, and level up.\n\nThis is more than a race.\nThis is Speed. Strength. Legacy.\n\nStay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit www.oneofakindasia.com for official event details.\n\n${textPayment}We can't wait to see you at the starting line.\nLet's make history.\n\n🔥 Mission Strong\n⚡ Speed Series\nPowered by 2XU`,
+      text: `Speed Series — Powered by 2XU\n\n${plainBody}`,
     });
     console.log('[sendConfirmationEmail] Confirmation email sent to', participantEmail);
     return true;
