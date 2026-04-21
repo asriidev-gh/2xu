@@ -152,7 +152,13 @@ export async function POST(request: NextRequest) {
       const insertedIds = Object.values(result.insertedIds);
 
       // Send confirmation email once to the team contact
-      await sendRegistrationConfirmation(members[0].name, email, members.map((m) => m.tShirtSize).join(', '));
+      const hasPromoCodeInput = rawPromo.length > 0;
+      await sendRegistrationConfirmation(
+        members[0].name,
+        email,
+        members.map((m) => m.tShirtSize).join(', '),
+        hasPromoCodeInput
+      );
 
       const notificationTo = process.env.NOTIFICATION_EMAIL?.trim();
       if (!notificationTo) {
@@ -215,7 +221,13 @@ export async function POST(request: NextRequest) {
     const result = await collection.insertOne(doc);
 
     // Send confirmation email to registrant via SMTP (best-effort)
-    await sendRegistrationConfirmation(name, email, String(tShirtSize || '').trim());
+    const hasPromoCodeInput = rawPromo.length > 0;
+    await sendRegistrationConfirmation(
+      name,
+      email,
+      String(tShirtSize || '').trim(),
+      hasPromoCodeInput
+    );
 
     // Send notification email to you via Resend (best-effort; registration already saved)
     const notificationTo = process.env.NOTIFICATION_EMAIL?.trim();

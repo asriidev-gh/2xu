@@ -10,7 +10,8 @@ import nodemailer from 'nodemailer';
 export async function sendRegistrationConfirmation(
   participantName: string,
   participantEmail: string,
-  tShirtSizeInfo?: string
+  tShirtSizeInfo?: string,
+  useLegacyTemplate = false
 ): Promise<boolean> {
   const host = process.env.SMTP_HOST?.trim();
   const port = process.env.SMTP_PORT?.trim();
@@ -82,7 +83,18 @@ export async function sendRegistrationConfirmation(
     <p style="margin-top:16px; font-size:14px; color:#6b7280;">To view payment QR codes, visit the registration page on our website.</p>
   `;
 
-  const html = `
+  const htmlLegacy = `
+    ${headerBanner}
+    <p>Dear ${escapeHtml(participantName)},</p>
+    <p>Congratulations! 🎉</p>
+    <p>Your registration for the Exclusive Speed Series Pre-Registration is officially confirmed — and you are now part of something powerful.</p>
+    <p>As one of our early VIP athletes, you will receive your exclusive VIP Race Kit during our Race Kit Pick-Up on May 8–10. Get ready to gear up, show up, and level up.</p>
+    <p>This is more than a race.<br/>This is Speed. Strength. Legacy.</p>
+    <p>Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit <a href="https://www.oneofakindasia.com">www.oneofakindasia.com</a> for official event details.</p>
+    <p>We can&rsquo;t wait to see you at the starting line.<br/>Let&rsquo;s make history.</p>
+    <p>🔥 Mission Strong<br/>⚡ Speed Series<br/>Powered by 2XU</p>
+  `;
+  const htmlNew = `
     ${headerBanner}
     <p>Dear ${escapeHtml(participantName)},</p>
     <p>Thank you for your interest in taking part in the Speed Series powered by 2XU—the ultimate urban run performance and advocacy event. We have successfully received your registration details.</p>
@@ -96,12 +108,32 @@ export async function sendRegistrationConfirmation(
     <p>Warm regards,<br/>${escapeHtml(signOffName)}</p>
     <p><a href="https://www.oneofakindasia.com">www.oneofakindasia.com</a><br/><a href="https://www.oneofakindasia.com">www.oneofakindasia.com</a></p>
   `;
+  const html = useLegacyTemplate ? htmlLegacy : htmlNew;
 
   const textPayment = baseUrl
     ? 'Payment options – scan to pay. Send proof of payment to 1@oneofakindasia.com to confirm your slot. (GCash and Gotyme Bank Transfer QR codes are in the HTML version of this email.)\n\n'
     : 'Payment: Visit our registration page to view payment options. Send proof of payment to 1@oneofakindasia.com.\n\n';
   const siteUrl = 'https://www.oneofakindasia.com';
-  const plainBody = `Dear ${participantName},
+  const plainBodyLegacy = `Dear ${participantName},
+
+Congratulations! 🎉
+
+Your registration for the Exclusive Speed Series Pre-Registration is officially confirmed — and you are now part of something powerful.
+
+As one of our early VIP athletes, you will receive your exclusive VIP Race Kit during our Race Kit Pick-Up on May 8–10. Get ready to gear up, show up, and level up.
+
+This is more than a race.
+This is Speed. Strength. Legacy.
+
+Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit www.oneofakindasia.com for official event details.
+
+We can't wait to see you at the starting line.
+Let's make history.
+
+🔥 Mission Strong
+⚡ Speed Series
+Powered by 2XU`;
+  const plainBodyNew = `Dear ${participantName},
 
 Thank you for your interest in taking part in the Speed Series powered by 2XU—the ultimate urban run performance and advocacy event. We have successfully received your registration details.
 
@@ -123,12 +155,16 @@ Let's go.
 Warm regards,
 ${signOffName}
 ${siteUrl}`;
+  const plainBody = useLegacyTemplate ? plainBodyLegacy : plainBodyNew;
+  const subject = useLegacyTemplate
+    ? 'Exclusive Speed Series Pre-Registration – You\'re Confirmed'
+    : 'Speed Series powered by 2XU — Registration received';
   try {
     await transporter.sendMail({
       from,
       to: participantEmail,
       cc: ccRecipients,
-      subject: 'Speed Series powered by 2XU — Registration received',
+      subject,
       html,
       text: `Speed Series — Powered by 2XU\n\n${plainBody}`,
     });
