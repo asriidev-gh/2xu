@@ -108,8 +108,8 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
     if (name === 'promoCode') {
       const upper = value.toUpperCase().slice(0, PROMO_MAX_LENGTH);
       setFormData(prev => ({ ...prev, promoCode: upper }));
-      const trimmed = upper.trim();
-      setPromoCodeValid(trimmed.length > 0 ? isValidPromoFormat(trimmed) : null);
+      // Validate on blur only; while typing, clear previous validation state.
+      setPromoCodeValid(null);
       return;
     }
 
