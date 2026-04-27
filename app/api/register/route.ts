@@ -113,18 +113,27 @@ export async function POST(request: NextRequest) {
 
     const now = new Date();
 
-    // Promo format: SPS2XU + one or more digits (e.g. SPS2XU1, SPS2XU2). Only save if format matches and code is not already used.
+    // Promo formats:
+    // - Advocate format: SPS2XU + digits (single-use)
+    // - Special fixed code: SPSUAAPElite
     const PROMO_REGEX = /^SPS2XU\d+$/i;
+    const SPECIAL_PROMO_CODE = 'SPSUAAPELITE';
     const rawPromo = promoCode != null ? String(promoCode).trim().toUpperCase() : '';
-    const formatOk = PROMO_REGEX.test(rawPromo);
+    const isSpecialPromoCode = rawPromo === SPECIAL_PROMO_CODE;
+    const formatOk = PROMO_REGEX.test(rawPromo) || isSpecialPromoCode;
     let savedPromo = '';
     let promoCodeUsed = false;
     if (formatOk) {
-      const existingWithPromo = await collection.findOne({ promoCode: rawPromo });
-      if (existingWithPromo) {
-        promoCodeUsed = true; // allow registration but don't save the duplicate promo
-      } else {
+      if (isSpecialPromoCode) {
+        // Special promo can be used for eligible registrants and should be saved as entered.
         savedPromo = rawPromo;
+      } else {
+        const existingWithPromo = await collection.findOne({ promoCode: rawPromo });
+        if (existingWithPromo) {
+          promoCodeUsed = true; // allow registration but don't save the duplicate promo
+        } else {
+          savedPromo = rawPromo;
+        }
       }
     }
 
@@ -153,11 +162,13 @@ export async function POST(request: NextRequest) {
 
       // Send confirmation email once to the team contact
       const hasPromoCodeInput = rawPromo.length > 0;
+      const useLegacyTemplate = hasPromoCodeInput && !isSpecialPromoCode;
       await sendRegistrationConfirmation(
         members[0].name,
         email,
         members.map((m) => m.tShirtSize).join(', '),
-        hasPromoCodeInput
+        useLegacyTemplate,
+        savedPromo
       );
 
       const notificationTo = process.env.NOTIFICATION_EMAIL?.trim();
@@ -222,11 +233,13 @@ export async function POST(request: NextRequest) {
 
     // Send confirmation email to registrant via SMTP (best-effort)
     const hasPromoCodeInput = rawPromo.length > 0;
+    const useLegacyTemplate = hasPromoCodeInput && !isSpecialPromoCode;
     await sendRegistrationConfirmation(
       name,
       email,
       String(tShirtSize || '').trim(),
-      hasPromoCodeInput
+      useLegacyTemplate,
+      savedPromo
     );
 
     // Send notification email to you via Resend (best-effort; registration already saved)

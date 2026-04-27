@@ -11,7 +11,8 @@ export async function sendRegistrationConfirmation(
   participantName: string,
   participantEmail: string,
   tShirtSizeInfo?: string,
-  useLegacyTemplate = false
+  useLegacyTemplate = false,
+  promoCode = ''
 ): Promise<boolean> {
   const host = process.env.SMTP_HOST?.trim();
   const port = process.env.SMTP_PORT?.trim();
@@ -42,6 +43,7 @@ export async function sendRegistrationConfirmation(
   const ccRecipients = [
     'oneofakindasiaph@gmail.com',
     'ops@oneofakindasia.com',
+    '1@oneofakindasia.com',
   ];
 
   // Base URL for payment QR images in email (deployed site or localhost)
@@ -82,6 +84,16 @@ export async function sendRegistrationConfirmation(
       : `
     <p style="margin-top:16px; font-size:14px; color:#6b7280;">To view payment QR codes, visit the registration page on our website.</p>
   `;
+  const normalizedPromoCode = promoCode.trim().toUpperCase();
+  const isSpecialPromoCode = normalizedPromoCode === 'SPSUAAPELITE';
+  const specialPromoPaymentHtml = isSpecialPromoCode
+    ? `
+    <div style="margin-top:16px; padding:14px; background:#ecfdf5; border-radius:8px; border:1px solid #10b981;">
+      <p style="margin:0 0 8px 0; font-weight:bold; color:#065f46;">Special Promo Applied: SPSUAAPElite</p>
+      <p style="margin:0; font-size:14px; color:#065f46;">Your payable amount is <strong>Php 995</strong>.</p>
+    </div>
+  `
+    : '';
 
   const htmlLegacy = `
     ${headerBanner}
@@ -102,6 +114,7 @@ export async function sendRegistrationConfirmation(
     <p>Stay tuned for your final confirmation.</p>
     <p>Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit <a href="https://www.oneofakindasia.com">www.oneofakindasia.com</a> for official event details.</p>
     ${paymentSection}
+    ${specialPromoPaymentHtml}
     <p>We can&rsquo;t wait to see you at the starting line.<br/>Let&rsquo;s make history.</p>
     <p>🔥 Mission Strong<br/>⚡ Speed Series<br/>Powered by 2XU</p>
     <p>Let&rsquo;s go.</p>
@@ -114,6 +127,9 @@ export async function sendRegistrationConfirmation(
     ? 'Payment options – scan to pay. Send proof of payment to 1@oneofakindasia.com to confirm your slot. (GCash and Gotyme Bank Transfer QR codes are in the HTML version of this email.)\n\n'
     : 'Payment: Visit our registration page to view payment options. Send proof of payment to 1@oneofakindasia.com.\n\n';
   const siteUrl = 'https://www.oneofakindasia.com';
+  const specialPromoPaymentText = isSpecialPromoCode
+    ? 'Special promo applied: SPSUAAPElite.\nYour payable amount is Php 995.\n\n'
+    : '';
   const plainBodyLegacy = `Dear ${participantName},
 
 Congratulations! 🎉
@@ -143,7 +159,7 @@ Stay tuned for your final confirmation.
 
 Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit www.oneofakindasia.com for official event details.
 
-${textPayment}We can't wait to see you at the starting line.
+${textPayment}${specialPromoPaymentText}We can't wait to see you at the starting line.
 Let's make history.
 
 🔥 Mission Strong

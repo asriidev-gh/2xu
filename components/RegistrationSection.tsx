@@ -12,12 +12,16 @@ type RegistrationSectionProps = {
 
 const T_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
-// Promo format: SPS2XU + one or more digits (e.g. SPS2XU1, SPS2XU2)
+// Promo formats:
+// - Advocate code: SPS2XU + one or more digits (e.g. SPS2XU1, SPS2XU2)
+// - Special code: SPSUAAPElite
 const PROMO_FORMAT = /^SPS2XU\d+$/i;
+const SPECIAL_PROMO_CODE = 'SPSUAAPELITE';
 const PROMO_MAX_LENGTH = 12;
 
 function isValidPromoFormat(code: string): boolean {
-  return PROMO_FORMAT.test(code.trim());
+  const trimmed = code.trim();
+  return PROMO_FORMAT.test(trimmed) || trimmed.toUpperCase() === SPECIAL_PROMO_CODE;
 }
 
 export default function RegistrationSection({ selectedCategory = '', onCategoryApplied }: RegistrationSectionProps) {
@@ -62,6 +66,8 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
 
   const isTeam = formData.raceCategory === 'Team Category';
   const teamMemberKeys = ([1, 2, 3, 4] as const);
+  const isSpecialPromoApplied =
+    promoCodeValid === true && formData.promoCode.trim().toUpperCase() === SPECIAL_PROMO_CODE;
 
   // Auto-fill race category when user clicks a category card and scrolls here
   useEffect(() => {
@@ -704,11 +710,16 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                     <div className="rounded-lg bg-white border border-orange-200 px-4 py-3">
                       <p className="text-sm font-semibold text-gray-700 font-fira-sans mb-1">Amount to pay</p>
                       <p className="text-xl font-bold text-orange-600 font-druk">
-                        {RACE_CATEGORY_PRICES[formData.raceCategory].pricePhp}
+                        {isSpecialPromoApplied ? '₱995' : RACE_CATEGORY_PRICES[formData.raceCategory].pricePhp}
                         <span className="text-base font-sweet-sans font-normal text-gray-600 ml-2">
-                          (approx. {RACE_CATEGORY_PRICES[formData.raceCategory].priceUsd} USD)
+                          (approx. {isSpecialPromoApplied ? '$18' : RACE_CATEGORY_PRICES[formData.raceCategory].priceUsd} USD)
                         </span>
                       </p>
+                      {isSpecialPromoApplied && (
+                        <p className="mt-1 text-xs text-green-700 font-sweet-sans">
+                          Promo code SPSUAAPElite applied.
+                        </p>
+                      )}
                     </div>
                   )}
                   {(!formData.raceCategory || !RACE_CATEGORY_PRICES[formData.raceCategory]) && (
