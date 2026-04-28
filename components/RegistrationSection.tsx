@@ -14,15 +14,10 @@ const T_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 // Promo formats:
 // - Advocate code: SPS2XU + one or more digits (e.g. SPS2XU1, SPS2XU2)
-// - Special code: SPSUAAPElite
+// - Special code: SPSUAAPElite + one or more digits (Athletes Category only)
 const PROMO_FORMAT = /^SPS2XU\d+$/i;
-const SPECIAL_PROMO_CODE = 'SPSUAAPELITE';
-const PROMO_MAX_LENGTH = 12;
-
-function isValidPromoFormat(code: string): boolean {
-  const trimmed = code.trim();
-  return PROMO_FORMAT.test(trimmed) || trimmed.toUpperCase() === SPECIAL_PROMO_CODE;
-}
+const SPECIAL_PROMO_FORMAT = /^SPSUAAPELITE\d+$/i;
+const PROMO_MAX_LENGTH = 20;
 
 export default function RegistrationSection({ selectedCategory = '', onCategoryApplied }: RegistrationSectionProps) {
   const registrationSectionRef = useRef<HTMLElement>(null);
@@ -63,19 +58,26 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
   });
 
   const [promoCodeValid, setPromoCodeValid] = useState<boolean | null>(null);
+  const [promoCodeError, setPromoCodeError] = useState('');
+  const [isCheckingPromoCode, setIsCheckingPromoCode] = useState(false);
 
   const isTeam = formData.raceCategory === 'Team Category';
   const teamMemberKeys = ([1, 2, 3, 4] as const);
   const isSpecialPromoApplied =
-    promoCodeValid === true && formData.promoCode.trim().toUpperCase() === SPECIAL_PROMO_CODE;
+    promoCodeValid === true && SPECIAL_PROMO_FORMAT.test(formData.promoCode.trim());
 
   // Auto-fill race category when user clicks a category card and scrolls here
   useEffect(() => {
     if (selectedCategory) {
       setFormData((prev) => ({ ...prev, raceCategory: selectedCategory }));
+      if (formData.promoCode.trim().length > 0) {
+        // Category change can affect promo eligibility; require re-validation on blur.
+        setPromoCodeValid(null);
+        setPromoCodeError('');
+      }
       onCategoryApplied?.();
     }
-  }, [selectedCategory, onCategoryApplied]);
+  }, [selectedCategory, onCategoryApplied, formData.promoCode]);
 
   // Trigger animations when Registration section comes into view
   useEffect(() => {
@@ -116,6 +118,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
       setFormData(prev => ({ ...prev, promoCode: upper }));
       // Validate on blur only; while typing, clear previous validation state.
       setPromoCodeValid(null);
+      setPromoCodeError('');
       return;
     }
 
@@ -125,16 +128,65 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
     }));
   };
 
+  const handlePromoBlur = async () => {
+    const trimmed = formData.promoCode.trim();
+    if (trimmed.length === 0) {
+      setPromoCodeValid(null);
+      setPromoCodeError('');
+      return;
+    }
+
+    setIsCheckingPromoCode(true);
+    try {
+      const response = await fetch('/api/register/validate-promo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          promoCode: trimmed,
+          raceCategory: formData.raceCategory,
+        }),
+      });
+
+      const contentType = response.headers.get('content-type');
+      let data: { valid?: boolean; error?: string } = {};
+      if (contentType?.includes('application/json')) {
+        data = await response.json();
+      }
+
+      if (!response.ok || data.valid !== true) {
+        setPromoCodeValid(false);
+        setPromoCodeError(data.error || 'Invalid Promo Code');
+        return;
+      }
+
+      setPromoCodeValid(true);
+      setPromoCodeError('');
+    } catch {
+      setPromoCodeValid(false);
+      setPromoCodeError('Unable to validate promo code right now. Please try again.');
+    } finally {
+      setIsCheckingPromoCode(false);
+    }
+  };
+
   const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const isRaceCategoryChange = e.target.name === 'raceCategory';
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
     }));
+    if (isRaceCategoryChange && formData.promoCode.trim().length > 0) {
+      // Re-validate promo code on blur after category changes.
+      setPromoCodeValid(null);
+      setPromoCodeError('');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -183,7 +235,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
       });
 
       const contentType = response.headers.get('content-type');
-      let data: { success?: boolean; error?: string; message?: string; promoCodeUsed?: boolean } = {};
+      let data: { success?: boolean; error?: string; message?: string } = {};
       if (contentType?.includes('application/json')) {
         try {
           data = await response.json();
@@ -201,9 +253,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
       // Success - Show SweetAlert2
       await Swal.fire({
         title: 'Success!',
-        text: data.promoCodeUsed
-          ? 'Registration submitted successfully! The advocate code you entered was already used, so it was not recorded.'
-          : 'Registration submitted successfully! We will contact you soon.',
+        text: 'Registration submitted successfully! We will contact you soon.',
         icon: 'success',
         confirmButtonText: 'OK',
         confirmButtonColor: '#ea580c', // Orange-600 color
@@ -617,16 +667,12 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                       name="promoCode"
                       value={formData.promoCode}
                       onChange={handleInputChange}
-                      onBlur={() => {
-                        const trimmed = formData.promoCode.trim();
-                        setPromoCodeValid(trimmed.length > 0 ? isValidPromoFormat(trimmed) : null);
-                      }}
-                      disabled={promoCodeValid === true}
+                      onBlur={handlePromoBlur}
                       maxLength={PROMO_MAX_LENGTH}
                       placeholder="e.g. SPS2XU1"
                       className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900 pr-12 ${
                         promoCodeValid === true
-                          ? 'border-green-500 bg-green-50/50 cursor-not-allowed opacity-90'
+                          ? 'border-green-500 bg-green-50/50'
                           : promoCodeValid === false
                             ? 'border-red-400 focus:border-orange-500 bg-white'
                             : 'border-gray-300 focus:border-orange-500 bg-white'
@@ -640,8 +686,13 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                       </span>
                     )}
                   </div>
+                  {isCheckingPromoCode && (
+                    <p className="mt-1.5 text-sm text-gray-500 font-sweet-sans">Checking promo code...</p>
+                  )}
                   {promoCodeValid === false && (
-                    <p className="mt-1.5 text-sm text-red-600 font-sweet-sans">Advocate code must be SPS2XU followed by a number (e.g. SPS2XU1).</p>
+                    <p className="mt-1.5 text-sm text-red-600 font-sweet-sans">
+                      {promoCodeError || 'Invalid Promo Code'}
+                    </p>
                   )}
                 </div>
 

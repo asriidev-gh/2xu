@@ -85,7 +85,7 @@ export async function sendRegistrationConfirmation(
     <p style="margin-top:16px; font-size:14px; color:#6b7280;">To view payment QR codes, visit the registration page on our website.</p>
   `;
   const normalizedPromoCode = promoCode.trim().toUpperCase();
-  const isSpecialPromoCode = normalizedPromoCode === 'SPSUAAPELITE';
+  const isSpecialPromoCode = /^SPSUAAPELITE\d+$/i.test(normalizedPromoCode);
   const specialPromoPaymentHtml = isSpecialPromoCode
     ? `
     <div style="margin-top:16px; padding:14px; background:#ecfdf5; border-radius:8px; border:1px solid #10b981;">
@@ -102,6 +102,7 @@ export async function sendRegistrationConfirmation(
     <p>Your registration for the Exclusive Speed Series Pre-Registration is officially confirmed — and you are now part of something powerful.</p>
     <p>As one of our early VIP athletes, you will receive your exclusive VIP Race Kit during our Race Kit Pick-Up on May 8–10. Get ready to gear up, show up, and level up.</p>
     <p>This is more than a race.<br/>This is Speed. Strength. Legacy.</p>
+    ${specialPromoPaymentHtml}
     <p>Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit <a href="https://www.oneofakindasia.com">www.oneofakindasia.com</a> for official event details.</p>
     <p>We can&rsquo;t wait to see you at the starting line.<br/>Let&rsquo;s make history.</p>
     <p>🔥 Mission Strong<br/>⚡ Speed Series<br/>Powered by 2XU</p>
@@ -141,6 +142,7 @@ As one of our early VIP athletes, you will receive your exclusive VIP Race Kit d
 This is more than a race.
 This is Speed. Strength. Legacy.
 
+${specialPromoPaymentText}
 Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit www.oneofakindasia.com for official event details.
 
 We can't wait to see you at the starting line.

@@ -115,25 +115,24 @@ export async function POST(request: NextRequest) {
 
     // Promo formats:
     // - Advocate format: SPS2XU + digits (single-use)
-    // - Special fixed code: SPSUAAPElite
+    // - Special format: SPSUAAPElite + digits (single-use, Athletes Category only)
     const PROMO_REGEX = /^SPS2XU\d+$/i;
-    const SPECIAL_PROMO_CODE = 'SPSUAAPELITE';
+    const SPECIAL_PROMO_REGEX = /^SPSUAAPELITE\d+$/i;
     const rawPromo = promoCode != null ? String(promoCode).trim().toUpperCase() : '';
-    const isSpecialPromoCode = rawPromo === SPECIAL_PROMO_CODE;
-    const formatOk = PROMO_REGEX.test(rawPromo) || isSpecialPromoCode;
+    const isSpecialPromoCode = SPECIAL_PROMO_REGEX.test(rawPromo);
+    const isAthletesCategory = String(raceCategory || '').trim().toUpperCase() === 'ATHLETES CATEGORY';
+    const isEligibleSpecialPromo = isSpecialPromoCode && isAthletesCategory;
+    const formatOk = PROMO_REGEX.test(rawPromo) || isEligibleSpecialPromo;
     let savedPromo = '';
-    let promoCodeUsed = false;
     if (formatOk) {
-      if (isSpecialPromoCode) {
-        // Special promo can be used for eligible registrants and should be saved as entered.
-        savedPromo = rawPromo;
+      const existingWithPromo = await collection.findOne({ promoCode: rawPromo });
+      if (existingWithPromo) {
+        return NextResponse.json(
+          { error: 'Promo code already used. Please use a different code.' },
+          { status: 409 }
+        );
       } else {
-        const existingWithPromo = await collection.findOne({ promoCode: rawPromo });
-        if (existingWithPromo) {
-          promoCodeUsed = true; // allow registration but don't save the duplicate promo
-        } else {
-          savedPromo = rawPromo;
-        }
+        savedPromo = rawPromo;
       }
     }
 
@@ -162,7 +161,7 @@ export async function POST(request: NextRequest) {
 
       // Send confirmation email once to the team contact
       const hasPromoCodeInput = rawPromo.length > 0;
-      const useLegacyTemplate = hasPromoCodeInput && !isSpecialPromoCode;
+      const useLegacyTemplate = hasPromoCodeInput;
       await sendRegistrationConfirmation(
         members[0].name,
         email,
@@ -208,7 +207,6 @@ export async function POST(request: NextRequest) {
           message: 'Registration successful',
           id: insertedIds[0],
           teamIds: insertedIds,
-          ...(promoCodeUsed && { promoCodeUsed: true }),
         },
         { status: 201 }
       );
@@ -233,7 +231,7 @@ export async function POST(request: NextRequest) {
 
     // Send confirmation email to registrant via SMTP (best-effort)
     const hasPromoCodeInput = rawPromo.length > 0;
-    const useLegacyTemplate = hasPromoCodeInput && !isSpecialPromoCode;
+    const useLegacyTemplate = hasPromoCodeInput;
     await sendRegistrationConfirmation(
       name,
       email,
@@ -279,7 +277,6 @@ export async function POST(request: NextRequest) {
         success: true, 
         message: 'Registration successful',
         id: result.insertedId,
-        ...(promoCodeUsed && { promoCodeUsed: true }),
       },
       { status: 201 }
     );
