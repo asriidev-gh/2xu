@@ -39,12 +39,16 @@ export async function POST(request: NextRequest) {
     }
 
     const isTeam = raceCategory === 'Team Category';
+    const isDuo = raceCategory === 'The Speed Duo - 2XU pair';
+    const isGroupCategory = isTeam || isDuo;
+    const requiredMemberCount = isTeam ? 4 : isDuo ? 2 : 0;
+    const memberLabel = isDuo ? 'Duo member' : 'Team member';
 
-    if (isTeam) {
+    if (isGroupCategory) {
       const members = Array.isArray(teamMembers) ? teamMembers : [];
-      if (members.length !== 4) {
+      if (members.length !== requiredMemberCount) {
         return NextResponse.json(
-          { error: 'Team Category requires exactly 4 team members' },
+          { error: `${raceCategory} requires exactly ${requiredMemberCount} members` },
           { status: 400 }
         );
       }
@@ -52,7 +56,7 @@ export async function POST(request: NextRequest) {
         const m = members[i];
         if (!m || typeof m !== 'object') {
           return NextResponse.json(
-            { error: `Team member ${i + 1}: invalid data` },
+            { error: `${memberLabel} ${i + 1}: invalid data` },
             { status: 400 }
           );
         }
@@ -62,14 +66,14 @@ export async function POST(request: NextRequest) {
         const memberContact = m.contact != null ? String(m.contact).trim() : '';
         if (!memberName || !memberBirthday || !memberGender || !memberContact) {
           return NextResponse.json(
-            { error: `Team member ${i + 1}: name, birthday, gender, and contact are required` },
+            { error: `${memberLabel} ${i + 1}: name, birthday, gender, and contact are required` },
             { status: 400 }
           );
         }
         const memberTShirtSize = m.tShirtSize != null ? String(m.tShirtSize).trim() : '';
         if (!memberTShirtSize) {
           return NextResponse.json(
-            { error: `Team member ${i + 1}: T-shirt size is required` },
+            { error: `${memberLabel} ${i + 1}: T-shirt size is required` },
             { status: 400 }
           );
         }
@@ -136,8 +140,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (isTeam) {
-      // Insert 4 records, one per team member (each with own name, birthday, gender, contact; same email)
+    if (isGroupCategory) {
+      // Insert one record per group member (same contact email, own personal fields)
       const teamId = new ObjectId();
       const members = teamMembers as Array<{ name: string; birthday: string; gender: string; contact: string; tShirtSize: string }>;
       const docs = members.map((m: { name: string; birthday: string; gender: string; contact: string; tShirtSize: string }, index: number) => ({
@@ -159,7 +163,7 @@ export async function POST(request: NextRequest) {
       const result = await collection.insertMany(docs);
       const insertedIds = Object.values(result.insertedIds);
 
-      // Send confirmation email once to the team contact
+      // Send confirmation email once to the group contact
       const hasPromoCodeInput = rawPromo.length > 0;
       const useLegacyTemplate = hasPromoCodeInput;
       await sendRegistrationConfirmation(
@@ -180,13 +184,14 @@ export async function POST(request: NextRequest) {
         const memberList = members.map((m: { name: string; birthday: string; gender: string; contact: string; tShirtSize: string }, i: number) =>
           `${i + 1}. ${escapeHtml(m.name)} — ${escapeHtml(m.birthday)} — ${escapeHtml(m.gender)} — ${escapeHtml(m.contact)} — T-shirt: ${escapeHtml(m.tShirtSize || '')}`
         ).join('<br/>');
+        const groupLabel = isDuo ? 'duo' : 'team';
         const { data, error } = await resend.emails.send({
           from,
           to: [notificationTo],
-          subject: `New team registration: ${escapeHtml(members.map((m: { name: string }) => m.name).join(', '))}`,
+          subject: `New ${groupLabel} registration: ${escapeHtml(members.map((m: { name: string }) => m.name).join(', '))}`,
           html: `
-            <h2>New team registration submitted (4 members)</h2>
-            <p><strong>Team members:</strong></p>
+            <h2>New ${groupLabel} registration submitted (${requiredMemberCount} members)</h2>
+            <p><strong>${isDuo ? 'Duo' : 'Team'} members:</strong></p>
             <p>${memberList}</p>
             <p><strong>Email:</strong> ${escapeHtml(email)}</p>
             <p><strong>Race Experience:</strong> ${escapeHtml(raceCategory)}</p>

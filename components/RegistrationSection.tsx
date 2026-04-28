@@ -62,7 +62,9 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
   const [isCheckingPromoCode, setIsCheckingPromoCode] = useState(false);
 
   const isTeam = formData.raceCategory === 'Team Category';
-  const teamMemberKeys = ([1, 2, 3, 4] as const);
+  const isDuo = formData.raceCategory === 'The Speed Duo - 2XU pair';
+  const isGroupCategory = isTeam || isDuo;
+  const memberKeys = (isTeam ? [1, 2, 3, 4] : isDuo ? [1, 2] : []) as Array<1 | 2 | 3 | 4>;
   const isSpecialPromoApplied =
     promoCodeValid === true && SPECIAL_PROMO_FORMAT.test(formData.promoCode.trim());
 
@@ -206,9 +208,11 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
 
     try {
       const isTeam = formData.raceCategory === 'Team Category';
+      const isDuo = formData.raceCategory === 'The Speed Duo - 2XU pair';
+      const groupMemberKeys = (isTeam ? [1, 2, 3, 4] : isDuo ? [1, 2] : []) as Array<1 | 2 | 3 | 4>;
       // Only save promo code when it was validated as valid; otherwise save registration without it
       const promoToSave = promoCodeValid === true ? formData.promoCode : '';
-      const payload = isTeam
+      const payload = groupMemberKeys.length > 0
         ? {
             email: formData.email,
             raceCategory: formData.raceCategory,
@@ -216,7 +220,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
             promotional: formData.promotional,
             waiverAccepted: formData.waiverAccepted,
             promoCode: promoToSave || undefined,
-            teamMembers: teamMemberKeys.map((num) => ({
+            teamMembers: groupMemberKeys.map((num) => ({
               name: formData[`teamMember${num}Name`],
               birthday: formData[`teamMember${num}Birthday`],
               gender: formData[`teamMember${num}Gender`],
@@ -381,16 +385,16 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                   </select>
                 </div>
 
-                {isTeam ? (
-                  /* ——— Team registration: one email + 4 member cards ——— */
+                {isGroupCategory ? (
+                  /* ——— Group registration: one email + member cards ——— */
                   <>
                     <div className="rounded-xl border-2 border-orange-200 bg-orange-50/50 p-4">
                       <p className="text-sm text-gray-700 font-fira-sans mb-4">
-                        Enter team contact email and details for each of the 4 members.
+                        Enter {isDuo ? 'duo' : 'team'} contact email and details for each of the {memberKeys.length} members.
                       </p>
                       <div>
                         <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
-                          Team contact email <span className="text-orange-600">*</span>
+                          {isDuo ? 'Duo contact email' : 'Team contact email'} <span className="text-orange-600">*</span>
                         </label>
                         <input
                           type="email"
@@ -405,7 +409,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                       </div>
                     </div>
 
-                    {teamMemberKeys.map((num) => (
+                    {memberKeys.map((num) => (
                       <div
                         key={num}
                         className="rounded-xl border-2 border-gray-200 bg-gray-50/80 p-5 sm:p-6 space-y-4"
@@ -414,7 +418,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                           <span className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-500 text-white text-sm">
                             {num}
                           </span>
-                          Team Member {num}
+                          {isDuo ? 'Duo Member' : 'Team Member'} {num}
                         </h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="sm:col-span-2">

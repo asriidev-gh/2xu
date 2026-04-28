@@ -14,7 +14,7 @@ type RaceCategory = {
   kitDescription: string;
   /** Replaces the third entitlement bullet (default: jersey kit disclaimer) */
   kitFooterNote?: string;
-  highlight?: 'popular' | 'best-value' | 'youth' | 'community' | 'team';
+  highlight?: 'popular' | 'best-value' | 'youth' | 'community' | 'team' | 'duo';
 };
 
 const raceCategories: RaceCategory[] = [
@@ -44,6 +44,14 @@ const raceCategories: RaceCategory[] = [
     kitValueLabel: 'Includes $200 worth of 2XU race kit',
     kitDescription: 'Built for crews, clubs, and friends who want to race, train, and celebrate together.',
     highlight: 'team',
+  },
+  {
+    name: 'The Speed Duo - 2XU pair',
+    ageGroup: 'Group of 2 runners',
+    pricePhp: '₱3,200',
+    priceUsd: '$56',
+    kitDescription: 'For partners who want to race together as a duo and share the 2XU race experience.',
+    highlight: 'duo',
   },
   {
     name: 'Athletes Category',
@@ -91,6 +99,8 @@ function getHighlightLabel(highlight?: RaceCategory['highlight']) {
       return 'Community';
     case 'team':
       return 'Group of 4 runners';
+    case 'duo':
+      return 'Group of 2 runners';
     default:
       return null;
   }
@@ -243,7 +253,7 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
                   }
                 }}
                 className={`group relative h-full rounded-2xl border backdrop-blur-md p-6 lg:p-7 shadow-2xl transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:ring-offset-2 focus:ring-offset-gray-900 ${
-                  category.highlight === 'team'
+                  category.highlight === 'team' || category.highlight === 'duo'
                     ? 'border-orange-400/70 bg-gradient-to-br from-orange-500/20 via-white/5 to-yellow-500/15 hover:border-orange-400 hover:shadow-xl'
                     : 'border-white/10 bg-white/5 hover:border-orange-400/80 hover:bg-white/10'
                 } ${isVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`}
@@ -251,7 +261,7 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
               >
                 {/* Glow accent */}
                 <div className={`pointer-events-none absolute inset-0 rounded-2xl transition-opacity duration-300 ${
-                  category.highlight === 'team'
+                  category.highlight === 'team' || category.highlight === 'duo'
                     ? 'opacity-100 bg-gradient-to-br from-orange-500/20 via-transparent to-yellow-400/15'
                     : 'opacity-0 group-hover:opacity-100 bg-gradient-to-br from-orange-500/15 via-transparent to-yellow-400/10'
                 }`} />
@@ -262,21 +272,21 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
                       <h3 className="text-xl lg:text-2xl font-bold text-white font-druk">
                         {category.name}
                       </h3>
-                      <p className={`mt-1 text-sm font-sweet-sans ${category.highlight === 'team' ? 'text-orange-300 font-semibold' : 'text-gray-300'}`}>
+                      <p className={`mt-1 text-sm font-sweet-sans ${category.highlight === 'team' || category.highlight === 'duo' ? 'text-orange-300 font-semibold' : 'text-gray-300'}`}>
                         {category.ageGroup}
                       </p>
                     </div>
                     {highlightLabel && (
                       <span
                         className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold font-fira-sans uppercase tracking-wide shadow-md ${
-                          category.highlight === 'team'
+                          category.highlight === 'team' || category.highlight === 'duo'
                             ? 'bg-gradient-to-r from-orange-500 to-orange-400 text-white ring-2 ring-orange-300/50'
                             : category.highlight === 'best-value'
                             ? 'bg-yellow-400 text-gray-900'
                             : 'bg-orange-500 text-white'
                         }`}
                       >
-                        {category.highlight === 'team' && (
+                        {(category.highlight === 'team' || category.highlight === 'duo') && (
                           <svg className="w-3.5 h-3.5 mr-1.5 text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden>
                             <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                           </svg>
