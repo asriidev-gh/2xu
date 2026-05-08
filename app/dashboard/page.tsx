@@ -348,8 +348,22 @@ export default function DashboardPage() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900 font-druk">User Dashboard</h1>
+          <div className="flex flex-wrap justify-between items-center gap-4">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-gray-900 font-druk">User Dashboard</h1>
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="px-3 py-1.5 rounded-md text-sm font-fira-sans bg-orange-600 text-white hover:bg-orange-700 transition-colors"
+              >
+                Users
+              </button>
+              <button
+                onClick={() => router.push('/dashboard/email-blast')}
+                className="px-3 py-1.5 rounded-md text-sm font-fira-sans border border-orange-500 text-orange-600 hover:bg-orange-50 transition-colors"
+              >
+                Email Blast
+              </button>
+            </div>
             <button
               onClick={handleLogout}
               className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-fira-sans"
