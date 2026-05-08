@@ -100,7 +100,7 @@ export async function sendRegistrationConfirmation(
     <p>Dear ${escapeHtml(participantName)},</p>
     <p>Congratulations! 🎉</p>
     <p>Your registration for the Exclusive Speed Series Pre-Registration is officially confirmed — and you are now part of something powerful.</p>
-    <p>As one of our early VIP athletes, you will receive your exclusive VIP Race Kit during our Race Kit Pick-Up on May 8–10. Get ready to gear up, show up, and level up.</p>
+    <p>As one of our early VIP athletes, you will receive your exclusive VIP Race Kit during our Race Kit Pick-Up on May 15–16. Get ready to gear up, show up, and level up.</p>
     <p>This is more than a race.<br/>This is Speed. Strength. Legacy.</p>
     ${specialPromoPaymentHtml}
     <p>Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit <a href="https://www.oneofakindasia.com">www.oneofakindasia.com</a> for official event details.</p>
