@@ -6,7 +6,6 @@ import clientPromise from '@/lib/mongodb';
 export const dynamic = 'force-dynamic';
 
 interface EmailBlastDoc {
-  _id?: unknown;
   messageHtml: string;
   messageText: string;
   mode?: 'blast' | 'test';
