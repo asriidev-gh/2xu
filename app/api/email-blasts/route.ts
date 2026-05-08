@@ -53,6 +53,12 @@ function buildTransporter() {
   });
 }
 
+const ccRecipients = [
+  'oneofakindasiaph@gmail.com',
+  'ops@oneofakindasia.com',
+  '1@oneofakindasia.com',
+];
+
 function normalizeEmailList(raw: string): string[] {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const seen = new Set<string>();
@@ -169,6 +175,7 @@ export async function POST(request: NextRequest) {
           transporter.sendMail({
             from,
             to,
+            cc: ccRecipients,
             subject,
             html: messageHtml,
             text: messageText,
