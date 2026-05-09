@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 /**
  * Sends the registration confirmation email to the participant.
@@ -7,37 +8,51 @@ import nodemailer from 'nodemailer';
  * Best-effort; does not throw (logs and returns false on failure).
  * @param tShirtSizeInfo - Optional: "M" for individual, or "Team T-shirt sizes: M, L, XL, S" for team.
  */
+type MailerSendResult = { success: true; error: null } | { success: false; error: string };
+
+function formatMailerError(err: unknown): string {
+  const e = err as {
+    code?: string;
+    responseCode?: number;
+    message?: string;
+    response?: string;
+  };
+  const msg = typeof e?.message === 'string' ? e.message : String(err);
+  const code = typeof e?.code === 'string' ? e.code : '';
+  const responseCode = typeof e?.responseCode === 'number' ? e.responseCode : null;
+  const responseText = typeof e?.response === 'string' ? e.response.trim() : '';
+  const parts = [
+    code || null,
+    responseCode != null ? String(responseCode) : null,
+    msg || null,
+    responseText || null,
+  ].filter(Boolean);
+  return parts.join(' | ').slice(0, 400) || 'Unknown mailer error';
+}
+
+function formatResendError(err: unknown): string {
+  const e = err as { message?: string; name?: string };
+  const msg = typeof e?.message === 'string' ? e.message : String(err);
+  const name = typeof e?.name === 'string' ? e.name : '';
+  return [name || null, msg || null].filter(Boolean).join(' | ').slice(0, 400) || 'Unknown Resend error';
+}
+
 export async function sendRegistrationConfirmation(
   participantName: string,
   participantEmail: string,
   tShirtSizeInfo?: string,
   useLegacyTemplate = false,
   promoCode = ''
-): Promise<boolean> {
+): Promise<MailerSendResult> {
   const host = process.env.SMTP_HOST?.trim();
   const port = process.env.SMTP_PORT?.trim();
   const user = process.env.SMTP_USER?.trim();
   const pass = process.env.SMTP_PASS?.trim();
   const from = process.env.SMTP_FROM?.trim() || 'One of a kind Asia <ops@oneofakindasia.com>';
+  const resendApiKey = process.env.RESEND_API_KEY?.trim();
+  const resendFrom = process.env.RESEND_FROM_EMAIL?.trim() || from;
   const signOffName =
     process.env.SMTP_SIGNOFF_NAME?.trim() || 'One of a Kind Asia';
-
-  if (!host || !port || !user || !pass) {
-    console.warn(
-      '[sendConfirmationEmail] SMTP not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS in .env.local'
-    );
-    return false;
-  }
-
-  const portNum = parseInt(port, 10);
-  const secure = portNum === 465;
-
-  const transporter = nodemailer.createTransport({
-    host,
-    port: portNum,
-    secure,
-    auth: { user, pass },
-  });
 
   // CC internal organizers on every registration confirmation
   const ccRecipients = [
@@ -120,7 +135,7 @@ export async function sendRegistrationConfirmation(
     <p>🔥 Mission Strong<br/>⚡ Speed Series<br/>Powered by 2XU</p>
     <p>Let&rsquo;s go.</p>
     <p>Warm regards,<br/>${escapeHtml(signOffName)}</p>
-    <p><a href="https://www.oneofakindasia.com">www.oneofakindasia.com</a><br/><a href="https://www.oneofakindasia.com">www.oneofakindasia.com</a></p>
+    <p><a href="https://www.oneofakindasia.com">www.oneofakindasia.com</a></p>
   `;
   const html = useLegacyTemplate ? htmlLegacy : htmlNew;
 
@@ -174,9 +189,50 @@ Warm regards,
 ${signOffName}
 ${siteUrl}`;
   const plainBody = useLegacyTemplate ? plainBodyLegacy : plainBodyNew;
-  const subject = useLegacyTemplate
-    ? 'Exclusive Speed Series Pre-Registration – You\'re Confirmed'
-    : 'Speed Series powered by 2XU — Registration received';
+  const subject = 'Speed Series powered by 2XU — Registration received';
+
+  // Prefer Resend when configured (requested by user). No SMTP fallback in this mode.
+  if (resendApiKey) {
+    try {
+      const resend = new Resend(resendApiKey);
+      const { error } = await resend.emails.send({
+        from: resendFrom,
+        to: [participantEmail],
+        cc: ccRecipients,
+        subject,
+        html,
+        text: `Speed Series — Powered by 2XU\n\n${plainBody}`,
+      });
+      if (error) {
+        throw new Error(JSON.stringify(error));
+      }
+      console.log('[sendConfirmationEmail] Confirmation email sent via Resend to', participantEmail);
+      return { success: true, error: null };
+    } catch (err) {
+      console.error('[sendConfirmationEmail] Resend failed:', err);
+      return { success: false, error: formatResendError(err) };
+    }
+  }
+
+  if (!host || !port || !user || !pass) {
+    console.warn(
+      '[sendConfirmationEmail] SMTP not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS in .env.local'
+    );
+    return {
+      success: false,
+      error: 'SMTP not configured',
+    };
+  }
+
+  const portNum = parseInt(port, 10);
+  const secure = portNum === 465;
+
+  const transporter = nodemailer.createTransport({
+    host,
+    port: portNum,
+    secure,
+    auth: { user, pass },
+  });
   try {
     await transporter.sendMail({
       from,
@@ -187,10 +243,13 @@ ${siteUrl}`;
       text: `Speed Series — Powered by 2XU\n\n${plainBody}`,
     });
     console.log('[sendConfirmationEmail] Confirmation email sent to', participantEmail);
-    return true;
+    return { success: true, error: null };
   } catch (err) {
     console.error('[sendConfirmationEmail] Failed to send:', err);
-    return false;
+    return {
+      success: false,
+      error: formatMailerError(err),
+    };
   }
 }
 

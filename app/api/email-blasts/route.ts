@@ -58,8 +58,8 @@ function buildTransporter() {
 
 const ccRecipients = [
   'oneofakindasiaph@gmail.com',
-  'ops@oneofakindasia.com',
-  '1@oneofakindasia.com',
+  // 'ops@oneofakindasia.com',
+  // '1@oneofakindasia.com',
 ];
 
 function normalizeEmailList(raw: string): string[] {

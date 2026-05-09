@@ -20,6 +20,9 @@ interface User {
   tShirtSize?: string;
   teamId?: string;
   teamMemberIndex?: number;
+  mailerStatus?: 'success' | 'failed' | 'pending';
+  mailerLastAttemptAt?: string | null;
+  mailerLastError?: string | null;
   createdAt: string;
 }
 
@@ -84,6 +87,7 @@ async function exportToExcel(
       'Club/Organization',
       'Advocate Code',
       'Promotional Emails',
+      'Email Status',
       'Registration Date'
     ];
 
@@ -98,6 +102,7 @@ async function exportToExcel(
       user.affiliations || '',
       user.promoCode || '',
       user.promotional ? 'Yes' : 'No',
+      user.mailerStatus || 'pending',
       formatDateForExport(user.createdAt)
     ]);
 
@@ -148,6 +153,7 @@ export default function DashboardPage() {
   const [emailBlastEnabled, setEmailBlastEnabled] = useState(false);
   const [editingTShirtSizeUserId, setEditingTShirtSizeUserId] = useState<string | null>(null);
   const [savingTShirtSizeUserId, setSavingTShirtSizeUserId] = useState<string | null>(null);
+  const [retryingMailerUserId, setRetryingMailerUserId] = useState<string | null>(null);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
   const [filters, setFilters] = useState({
     name: '',
@@ -156,13 +162,14 @@ export default function DashboardPage() {
     raceCategory: '',
     club: '',
     promoCode: '',
+    emailStatus: '',
     dateFrom: '',
     dateTo: ''
   });
 
   useEffect(() => {
     setPagination((prev) => ({ ...prev, page: 1 }));
-  }, [filters.name, filters.email, filters.gender, filters.raceCategory, filters.club, filters.promoCode, filters.dateFrom, filters.dateTo]);
+  }, [filters.name, filters.email, filters.gender, filters.raceCategory, filters.club, filters.promoCode, filters.emailStatus, filters.dateFrom, filters.dateTo]);
 
   useEffect(() => {
     fetchUsers();
@@ -345,6 +352,89 @@ export default function DashboardPage() {
     }
   };
 
+  const handleRetryMailer = async (userId: string, userName: string) => {
+    const result = await Swal.fire({
+      title: 'Retry registration email?',
+      text: `Retry confirmation email for "${userName}" now?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Retry',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#ea580c',
+      cancelButtonColor: '#6b7280',
+    });
+
+    if (!result.isConfirmed) return;
+
+    setRetryingMailerUserId(userId);
+    try {
+      const response = await fetch(`/api/users/${userId}/retry-mailer`, { method: 'POST' });
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        router.push('/login');
+        return;
+      }
+      if (!response.ok) {
+        throw new Error(
+          data.mailerLastError || data.error || 'Failed to retry registration email'
+        );
+      }
+
+      setUsers((prev) =>
+        prev.map((u) =>
+          u._id === userId
+            ? {
+                ...u,
+                mailerStatus: 'success',
+                mailerLastAttemptAt: new Date().toISOString(),
+                mailerLastError: null,
+              }
+            : u
+        )
+      );
+      await Swal.fire({
+        title: 'Retry sent',
+        text: 'Registration confirmation email was sent successfully.',
+        icon: 'success',
+        confirmButtonColor: '#ea580c',
+      });
+    } catch (error) {
+      setUsers((prev) =>
+        prev.map((u) =>
+          u._id === userId
+            ? {
+                ...u,
+                mailerStatus: 'failed',
+                mailerLastAttemptAt: new Date().toISOString(),
+                mailerLastError:
+                  error instanceof Error && error.message
+                    ? error.message
+                    : u.mailerLastError || 'Unknown mailer error',
+              }
+            : u
+        )
+      );
+      await Swal.fire({
+        title: 'Retry failed',
+        text: error instanceof Error ? error.message : 'Failed to retry registration email',
+        icon: 'error',
+        confirmButtonColor: '#ea580c',
+      });
+    } finally {
+      setRetryingMailerUserId(null);
+      fetchUsers();
+    }
+  };
+
+  const showMailerError = async (user: User) => {
+    await Swal.fire({
+      title: `Email failure: ${user.name}`,
+      text: user.mailerLastError || 'No error details were captured for this record.',
+      icon: 'info',
+      confirmButtonColor: '#ea580c',
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -452,6 +542,19 @@ export default function DashboardPage() {
               />
             </div>
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1 font-fira-sans">Email Status</label>
+              <select
+                value={filters.emailStatus}
+                onChange={(e) => handleFilterChange('emailStatus', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500 font-sweet-sans text-sm"
+              >
+                <option value="">All</option>
+                <option value="success">Success</option>
+                <option value="failed">Failed</option>
+                <option value="pending">Pending</option>
+              </select>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1 font-fira-sans">Date From</label>
               <input
                 type="date"
@@ -532,6 +635,7 @@ export default function DashboardPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Club/Organization</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Advocate Code</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Promotional</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Email Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Registered</th>
                     {deleteUserEnabled && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Actions</th>
@@ -594,6 +698,37 @@ export default function DashboardPage() {
                         ) : (
                           <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">No</span>
                         )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">
+                        <div className="flex items-center gap-2">
+                          {user.mailerStatus === 'success' ? (
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">success</span>
+                          ) : user.mailerStatus === 'failed' ? (
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">failed</span>
+                          ) : (
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">pending</span>
+                          )}
+                          {user.mailerStatus === 'failed' && (
+                            <button
+                              type="button"
+                              onClick={() => showMailerError(user)}
+                              className="px-2 py-1 text-xs font-semibold rounded-md bg-red-100 text-red-700 hover:bg-red-200"
+                              title="View failure reason"
+                            >
+                              Reason
+                            </button>
+                          )}
+                          {user.mailerStatus === 'failed' && (
+                            <button
+                              type="button"
+                              onClick={() => handleRetryMailer(user._id, user.name)}
+                              disabled={retryingMailerUserId === user._id}
+                              className="px-2 py-1 text-xs font-semibold rounded-md bg-orange-100 text-orange-700 hover:bg-orange-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {retryingMailerUserId === user._id ? 'Retrying...' : 'Retry'}
+                            </button>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">{formatDate(user.createdAt)}</td>
                       {deleteUserEnabled && (

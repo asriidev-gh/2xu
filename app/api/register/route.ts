@@ -155,6 +155,9 @@ export async function POST(request: NextRequest) {
         affiliations: affiliations || '',
         promotional: promotional || false,
         promoCode: savedPromo,
+        mailerStatus: 'pending',
+        mailerLastAttemptAt: null,
+        mailerLastError: null,
         teamId,
         teamMemberIndex: index + 1,
         createdAt: now,
@@ -166,12 +169,23 @@ export async function POST(request: NextRequest) {
       // Send confirmation email once to the group contact
       const hasPromoCodeInput = rawPromo.length > 0;
       const useLegacyTemplate = hasPromoCodeInput;
-      await sendRegistrationConfirmation(
+      const mailResult = await sendRegistrationConfirmation(
         members[0].name,
         email,
         members.map((m) => m.tShirtSize).join(', '),
         useLegacyTemplate,
         savedPromo
+      );
+      await collection.updateMany(
+        { _id: { $in: insertedIds } },
+        {
+          $set: {
+            mailerStatus: mailResult.success ? 'success' : 'failed',
+            mailerLastAttemptAt: new Date(),
+            mailerLastError: mailResult.success ? null : mailResult.error,
+            updatedAt: new Date(),
+          },
+        }
       );
 
       const notificationTo = process.env.NOTIFICATION_EMAIL?.trim();
@@ -229,6 +243,9 @@ export async function POST(request: NextRequest) {
       affiliations: affiliations || '',
       promotional: promotional || false,
       promoCode: savedPromo,
+      mailerStatus: 'pending',
+      mailerLastAttemptAt: null,
+      mailerLastError: null,
       createdAt: now,
       updatedAt: now
     };
@@ -237,12 +254,23 @@ export async function POST(request: NextRequest) {
     // Send confirmation email to registrant via SMTP (best-effort)
     const hasPromoCodeInput = rawPromo.length > 0;
     const useLegacyTemplate = hasPromoCodeInput;
-    await sendRegistrationConfirmation(
+    const mailResult = await sendRegistrationConfirmation(
       name,
       email,
       String(tShirtSize || '').trim(),
       useLegacyTemplate,
       savedPromo
+    );
+    await collection.updateOne(
+      { _id: result.insertedId },
+      {
+        $set: {
+          mailerStatus: mailResult.success ? 'success' : 'failed',
+          mailerLastAttemptAt: new Date(),
+          mailerLastError: mailResult.success ? null : mailResult.error,
+          updatedAt: new Date(),
+        },
+      }
     );
 
     // Send notification email to you via Resend (best-effort; registration already saved)

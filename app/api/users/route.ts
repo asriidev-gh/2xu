@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
     const raceCategory = searchParams.get('raceCategory') || '';
     const club = searchParams.get('club') || '';
     const promoCode = searchParams.get('promoCode') || '';
+    const emailStatus = searchParams.get('emailStatus') || '';
     const dateFrom = searchParams.get('dateFrom') || '';
     const dateTo = searchParams.get('dateTo') || '';
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
@@ -39,6 +40,25 @@ export async function GET(request: NextRequest) {
     const client = await clientPromise;
     const db = client.db('2xu');
     const collection = db.collection('users');
+
+    // Backfill legacy records that predate mailer tracking.
+    await collection.updateMany(
+      {
+        $or: [
+          { mailerStatus: { $exists: false } },
+          { mailerStatus: null },
+          { mailerStatus: '' },
+        ],
+      },
+      {
+        $set: {
+          mailerStatus: 'success',
+          mailerLastAttemptAt: null,
+          mailerLastError: null,
+          updatedAt: new Date(),
+        },
+      }
+    );
 
     // Build filter query
     const filter: any = {};
@@ -65,6 +85,20 @@ export async function GET(request: NextRequest) {
 
     if (promoCode) {
       filter.promoCode = { $regex: promoCode.trim(), $options: 'i' };
+    }
+
+    if (emailStatus && ['success', 'failed', 'pending'].includes(emailStatus)) {
+      if (emailStatus === 'pending') {
+        // Legacy users may not have mailerStatus persisted yet; treat them as pending.
+        filter.$or = [
+          { mailerStatus: 'pending' },
+          { mailerStatus: { $exists: false } },
+          { mailerStatus: null },
+          { mailerStatus: '' },
+        ];
+      } else {
+        filter.mailerStatus = emailStatus;
+      }
     }
 
     if (dateFrom || dateTo) {
@@ -103,6 +137,12 @@ export async function GET(request: NextRequest) {
       affiliations: user.affiliations || '',
       promotional: user.promotional || false,
       promoCode: (user as { promoCode?: string }).promoCode || '',
+      mailerStatus:
+        (user as { mailerStatus?: 'success' | 'failed' | 'pending' }).mailerStatus || 'pending',
+      mailerLastAttemptAt: (user as { mailerLastAttemptAt?: Date | string | null }).mailerLastAttemptAt
+        ? new Date((user as { mailerLastAttemptAt?: Date | string | null }).mailerLastAttemptAt as Date | string).toISOString()
+        : null,
+      mailerLastError: (user as { mailerLastError?: string | null }).mailerLastError || null,
       teamId: (user as { teamId?: string }).teamId?.toString(),
       teamMemberIndex: (user as { teamMemberIndex?: number }).teamMemberIndex,
       createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : null
