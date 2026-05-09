@@ -23,7 +23,8 @@ export async function GET() {
     // Return configuration
     return NextResponse.json(
       { 
-        deleteUserEnabled: process.env.DELETE_USER_ENABLED === 'true'
+        deleteUserEnabled: process.env.DELETE_USER_ENABLED === 'true',
+        emailBlastEnabled: process.env.EMAIL_BLAST_ENABLED === 'true',
       },
       { status: 200 }
     );

@@ -26,6 +26,7 @@ export default function EmailBlastPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [emailBlastEnabled, setEmailBlastEnabled] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [blasts, setBlasts] = useState<EmailBlast[]>([]);
   const [messageHtml, setMessageHtml] = useState('<p></p>');
@@ -47,8 +48,34 @@ export default function EmailBlastPage() {
   const quillFormats = ['header', 'bold', 'italic', 'underline', 'list', 'bullet', 'link'];
 
   useEffect(() => {
+    fetchConfig();
     fetchBlasts();
   }, []);
+
+  const fetchConfig = async () => {
+    try {
+      const response = await fetch('/api/users/config');
+      if (response.status === 401) {
+        router.push('/login');
+        return;
+      }
+      if (!response.ok) return;
+      const data = await response.json();
+      const enabled = data.emailBlastEnabled === true;
+      setEmailBlastEnabled(enabled);
+      if (!enabled) {
+        await Swal.fire({
+          title: 'Email blast disabled',
+          text: 'This feature is currently disabled by environment settings.',
+          icon: 'info',
+          confirmButtonColor: '#ea580c',
+        });
+        router.push('/dashboard');
+      }
+    } catch (error) {
+      console.error('Fetch config error:', error);
+    }
+  };
 
   const fetchBlasts = async () => {
     setIsLoading(true);
@@ -56,6 +83,11 @@ export default function EmailBlastPage() {
       const response = await fetch('/api/email-blasts');
       if (response.status === 401) {
         router.push('/login');
+        return;
+      }
+      if (response.status === 403) {
+        setEmailBlastEnabled(false);
+        router.push('/dashboard');
         return;
       }
       const data = await response.json();
@@ -182,12 +214,14 @@ export default function EmailBlastPage() {
               >
                 Users
               </button>
-              <button
-                onClick={() => router.push('/dashboard/email-blast')}
-                className="px-3 py-1.5 rounded-md text-sm font-fira-sans bg-orange-600 text-white hover:bg-orange-700 transition-colors"
-              >
-                Email Blast
-              </button>
+              {emailBlastEnabled && (
+                <button
+                  onClick={() => router.push('/dashboard/email-blast')}
+                  className="px-3 py-1.5 rounded-md text-sm font-fira-sans bg-orange-600 text-white hover:bg-orange-700 transition-colors"
+                >
+                  Email Blast
+                </button>
+              )}
             </div>
             <button
               onClick={handleLogout}

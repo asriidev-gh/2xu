@@ -145,6 +145,7 @@ export default function DashboardPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deleteUserEnabled, setDeleteUserEnabled] = useState(false);
+  const [emailBlastEnabled, setEmailBlastEnabled] = useState(false);
   const [editingTShirtSizeUserId, setEditingTShirtSizeUserId] = useState<string | null>(null);
   const [savingTShirtSizeUserId, setSavingTShirtSizeUserId] = useState<string | null>(null);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
@@ -174,6 +175,7 @@ export default function DashboardPage() {
       if (response.ok) {
         const data = await response.json();
         setDeleteUserEnabled(data.deleteUserEnabled || false);
+        setEmailBlastEnabled(data.emailBlastEnabled === true);
       }
     } catch (error) {
       console.error('Error fetching config:', error);
@@ -357,12 +359,14 @@ export default function DashboardPage() {
               >
                 Users
               </button>
-              <button
-                onClick={() => router.push('/dashboard/email-blast')}
-                className="px-3 py-1.5 rounded-md text-sm font-fira-sans border border-orange-500 text-orange-600 hover:bg-orange-50 transition-colors"
-              >
-                Email Blast
-              </button>
+              {emailBlastEnabled && (
+                <button
+                  onClick={() => router.push('/dashboard/email-blast')}
+                  className="px-3 py-1.5 rounded-md text-sm font-fira-sans border border-orange-500 text-orange-600 hover:bg-orange-50 transition-colors"
+                >
+                  Email Blast
+                </button>
+              )}
             </div>
             <button
               onClick={handleLogout}

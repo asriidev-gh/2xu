@@ -24,6 +24,10 @@ async function isAuthenticated() {
   return session?.value === 'authenticated';
 }
 
+function isEmailBlastEnabled() {
+  return process.env.EMAIL_BLAST_ENABLED === 'true';
+}
+
 function stripHtmlTags(html: string): string {
   return html
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
@@ -78,6 +82,9 @@ export async function GET() {
     if (!(await isAuthenticated())) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    if (!isEmailBlastEnabled()) {
+      return NextResponse.json({ error: 'Email blast is disabled' }, { status: 403 });
+    }
 
     const client = await clientPromise;
     const db = client.db('2xu');
@@ -111,6 +118,9 @@ export async function POST(request: NextRequest) {
   try {
     if (!(await isAuthenticated())) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!isEmailBlastEnabled()) {
+      return NextResponse.json({ error: 'Email blast is disabled' }, { status: 403 });
     }
 
     const body = await request.json();
