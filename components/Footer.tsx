@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import packageJson from '@/package.json';
+import DeveloperContactModal from '@/components/DeveloperContactModal';
 
 const smoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
   e.preventDefault();
@@ -20,8 +22,10 @@ const smoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) 
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const [developerContactOpen, setDeveloperContactOpen] = useState(false);
 
   return (
+    <>
     <footer className="bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white relative overflow-hidden">
       {/* Decorative background elements */}
       <div className="absolute inset-0 opacity-10">
@@ -234,16 +238,22 @@ export default function Footer() {
             <p className="text-gray-500 text-xs font-sweet-sans text-center order-1 md:order-2" aria-label="Deployment version">
               v{packageJson.version}
             </p>
-            <a 
-              href="mailto:asriidev@gmail.com?subject=Contact%20Admin%20-%202XU%20Speed%20Run%20Asia%20Series" 
-              className="text-gray-400 hover:text-orange-500 transition-colors font-sweet-sans text-sm order-3"
+            <button
+              type="button"
+              onClick={() => setDeveloperContactOpen(true)}
+              className="text-gray-400 hover:text-orange-500 transition-colors font-sweet-sans text-sm order-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded"
             >
               Contact Developer
-            </a>
+            </button>
           </div>
         </div>
       </div>
     </footer>
+    <DeveloperContactModal
+      isOpen={developerContactOpen}
+      onClose={() => setDeveloperContactOpen(false)}
+    />
+    </>
   );
 }
 
