@@ -366,8 +366,7 @@ export default function InsightsPage() {
         'Race Experience',
         'T-shirt Size',
         'Club/Organization',
-        'Advocate Code',
-        'Promotional Emails',
+        'Promo Code',
         'Team member index',
         'Registration Date',
       ];
@@ -382,7 +381,6 @@ export default function InsightsPage() {
         u.tShirtSize || '',
         u.affiliations || '',
         u.promoCode || '',
-        u.promotional ? 'Yes' : 'No',
         u.teamMemberIndex != null ? String(u.teamMemberIndex) : '',
         formatDateForExport(u.createdAt),
       ]);
@@ -557,23 +555,26 @@ export default function InsightsPage() {
                     className="font-druk font-bold text-3xl text-orange-600"
                   />
                 </p>
-                <p className="text-xs text-gray-500 font-sweet-sans mt-2">
-                  Solo registrations:{' '}
-                  <ClickableStat
-                    count={data.soloRows}
-                    label="Solo registrations"
-                    onClick={() => openDetails('Solo registrations', 'solo')}
-                    className="inline font-semibold text-gray-900 underline decoration-dotted"
-                  />
-                  . Team/duo member rows:{' '}
-                  <ClickableStat
-                    count={Math.max(0, data.totalRegistered - data.soloRows)}
-                    label="Team / duo member rows"
-                    onClick={() => openDetails('Team / duo member rows', 'team_member')}
-                    className="inline font-semibold text-gray-900 underline decoration-dotted"
-                  />
-                  .
-                </p>
+                <div className="mt-2 space-y-1 text-xs text-gray-500 font-sweet-sans">
+                  <p>
+                    Solo registrations:{' '}
+                    <ClickableStat
+                      count={data.soloRows}
+                      label="Solo registrations"
+                      onClick={() => openDetails('Solo registrations', 'solo')}
+                      className="inline font-semibold text-gray-900 underline decoration-dotted"
+                    />
+                  </p>
+                  <p>
+                    Team/duo member rows:{' '}
+                    <ClickableStat
+                      count={Math.max(0, data.totalRegistered - data.soloRows)}
+                      label="Team / duo member rows"
+                      onClick={() => openDetails('Team / duo member rows', 'team_member')}
+                      className="inline font-semibold text-gray-900 underline decoration-dotted"
+                    />
+                  </p>
+                </div>
               </div>
               <div className="bg-white rounded-lg shadow-sm p-5 border border-gray-100">
                 <p className="text-sm font-medium text-gray-500 font-fira-sans">Group registrations</p>
@@ -821,7 +822,7 @@ export default function InsightsPage() {
                         />
                         <DetailSortableTh
                           field="promoCode"
-                          label="Promo"
+                          label="Promo Code"
                           sortBy={detailSortBy}
                           sortDir={detailSortDir}
                           onSort={handleDetailSortColumn}
@@ -864,9 +865,8 @@ export default function InsightsPage() {
                           <td className="py-2 pr-3 text-gray-700 max-w-[140px] truncate" title={u.affiliations}>
                             {u.affiliations}
                           </td>
-                          <td className="py-2 pr-3 text-gray-700 whitespace-nowrap">
-                            {u.promotional ? 'Yes' : '—'}
-                            {u.promoCode ? ` · ${u.promoCode}` : ''}
+                          <td className="py-2 pr-3 text-gray-700 whitespace-nowrap max-w-[120px] truncate" title={u.promoCode || undefined}>
+                            {u.promoCode || '—'}
                           </td>
                           <td className="py-2 pr-3 text-gray-700 whitespace-nowrap">
                             {u.teamMemberIndex != null ? u.teamMemberIndex : '—'}
