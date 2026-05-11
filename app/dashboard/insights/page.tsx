@@ -169,7 +169,7 @@ function ClickableStat({
       disabled={disabled}
       title={disabled ? undefined : `View list: ${label}`}
       onClick={onClick}
-      className={`inline text-left align-baseline disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:opacity-90 transition-opacity ${className}`}
+      className={`inline-flex items-baseline justify-center rounded-md px-1.5 py-0.5 -mx-0.5 text-left align-baseline transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/60 cursor-pointer hover:bg-orange-50 hover:shadow-sm hover:ring-1 hover:ring-orange-200/70 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:shadow-none disabled:hover:ring-0 disabled:active:scale-100 ${className}`}
     >
       {count}
     </button>
@@ -200,7 +200,7 @@ function BarRow({
             type="button"
             onClick={onCountClick}
             title="View registrants"
-            className="shrink-0 font-semibold text-orange-600 hover:text-orange-700 underline decoration-dotted underline-offset-2"
+            className="shrink-0 font-semibold text-orange-600 rounded-md px-2 py-0.5 -my-0.5 transition-all duration-150 ease-out underline decoration-dotted underline-offset-2 hover:bg-orange-50 hover:text-orange-700 hover:shadow-sm hover:ring-1 hover:ring-orange-200/70 hover:decoration-solid active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/60"
           >
             {count}
           </button>
@@ -456,6 +456,9 @@ export default function InsightsPage() {
   }, [router]);
 
   const maxRace = data ? Math.max(1, ...data.byRaceCategory.map((r) => r.count)) : 1;
+  const raceExperienceTotal = data
+    ? data.byRaceCategory.reduce((sum, r) => sum + r.count, 0)
+    : 0;
   const maxGender = data ? Math.max(1, ...data.byGender.map((r) => r.count)) : 1;
   const maxClub = data ? Math.max(1, ...data.topClubs.map((r) => r.count)) : 1;
   const maxDaily = data ? Math.max(1, ...data.registrationsByDay.map((d) => d.count)) : 1;
@@ -477,12 +480,7 @@ export default function InsightsPage() {
         <div className="mb-6">
           <h2 className="text-xl font-semibold text-gray-900 font-druk">Registration insights</h2>
           <p className="text-sm text-gray-600 font-sweet-sans mt-1">
-            Snapshot across all stored registrations (not limited to the current users table page).
-          </p>
-          <p className="text-xs text-gray-500 font-sweet-sans mt-2 max-w-2xl">
-            <span className="font-medium text-gray-600">Today / This week / This month</span> use{' '}
-            <span className="font-medium">UTC</span> boundaries (same idea as the per-day drilldown), so they may
-            differ from Philippine local midnight by several hours.
+            Snapshot across all stored registrations.
           </p>
           {data?.generatedAt && (
             <p className="text-xs text-gray-400 font-sweet-sans mt-1">
@@ -609,7 +607,13 @@ export default function InsightsPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
               <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
-                <h3 className="text-lg font-semibold text-gray-900 font-druk mb-4">Race experience</h3>
+                <h3 className="text-lg font-semibold text-gray-900 font-druk mb-4">
+                  Race experience{' '}
+                  <span className="text-base font-normal text-gray-500 font-fira-sans tracking-normal">
+                    ({raceExperienceTotal} total{' '}
+                    {raceExperienceTotal === 1 ? 'registrant' : 'registrants'})
+                  </span>
+                </h3>
                 <div className="max-h-80 overflow-y-auto pr-1">
                   {data.byRaceCategory.length === 0 ? (
                     <p className="text-sm text-gray-500 font-sweet-sans">No data</p>
@@ -665,7 +669,7 @@ export default function InsightsPage() {
                             onClick={() =>
                               openDetails(`Registrations · ${d.label} (${d.date})`, 'day', d.date)
                             }
-                            className="text-[10px] text-orange-600 font-sweet-sans leading-tight text-center font-semibold hover:text-orange-700 underline decoration-dotted"
+                            className="min-w-[1.25rem] rounded px-1 py-0.5 text-[10px] text-orange-600 font-sweet-sans leading-tight text-center font-semibold transition-all duration-150 ease-out underline decoration-dotted underline-offset-2 hover:bg-orange-50 hover:text-orange-700 hover:shadow-sm hover:ring-1 hover:ring-orange-200/70 hover:decoration-solid active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/60"
                           >
                             {d.count}
                           </button>
