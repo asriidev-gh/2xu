@@ -99,7 +99,7 @@ export default function LoginPage() {
         timerProgressBar: true
       });
 
-      router.push('/dashboard');
+      router.push('/dashboard/insights');
     } catch (error) {
       console.error('Login error:', error);
       await Swal.fire({

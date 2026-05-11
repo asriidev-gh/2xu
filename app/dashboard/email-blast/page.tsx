@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Swal from 'sweetalert2';
+import DashboardAdminHeader from '@/components/DashboardAdminHeader';
 import 'react-quill/dist/quill.snow.css';
 
 type BlastRecipientRow = { email: string; name: string };
@@ -83,7 +84,7 @@ export default function EmailBlastPage() {
           icon: 'info',
           confirmButtonColor: '#ea580c',
         });
-        router.push('/dashboard');
+        router.push('/dashboard/insights');
       }
     } catch (error) {
       console.error('Fetch config error:', error);
@@ -100,7 +101,7 @@ export default function EmailBlastPage() {
       }
       if (response.status === 403) {
         setEmailBlastEnabled(false);
-        router.push('/dashboard');
+        router.push('/dashboard/insights');
         return;
       }
       const data = await response.json();
@@ -321,38 +322,10 @@ export default function EmailBlastPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-wrap justify-between items-center gap-4">
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900 font-druk">Dashboard</h1>
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="px-3 py-1.5 rounded-md text-sm font-fira-sans border border-orange-500 text-orange-600 hover:bg-orange-50 transition-colors"
-              >
-                Users
-              </button>
-              {emailBlastEnabled && (
-                <button
-                  onClick={() => router.push('/dashboard/email-blast')}
-                  className="px-3 py-1.5 rounded-md text-sm font-fira-sans bg-orange-600 text-white hover:bg-orange-700 transition-colors"
-                >
-                  Email Blast
-                </button>
-              )}
-            </div>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-fira-sans"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-gray-50 to-gray-100/90 text-gray-900">
+      <DashboardAdminHeader emailBlastEnabled={emailBlastEnabled} onLogout={handleLogout} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-12">
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6 flex flex-wrap justify-between items-center gap-4">
           <div>
             <h2 className="text-lg font-semibold text-gray-900 font-druk">Email Blast</h2>
@@ -460,7 +433,7 @@ export default function EmailBlastPage() {
             </div>
           )}
         </div>
-      </div>
+      </main>
 
       {previewBlast && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">

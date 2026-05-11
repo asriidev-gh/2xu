@@ -36,6 +36,27 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(10000, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)));
     const skip = (page - 1) * limit;
 
+    const SORT_FIELDS = new Set([
+      'name',
+      'email',
+      'contact',
+      'gender',
+      'birthday',
+      'raceCategory',
+      'tShirtSize',
+      'affiliations',
+      'promoCode',
+      'promotional',
+      'mailerStatus',
+      'createdAt',
+    ]);
+    const sortByRaw = (searchParams.get('sortBy') || 'createdAt').trim();
+    const sortDirRaw = (searchParams.get('sortDir') || 'desc').trim().toLowerCase();
+    const sortBy = SORT_FIELDS.has(sortByRaw) ? sortByRaw : 'createdAt';
+    const sortDir = sortDirRaw === 'asc' || sortDirRaw === 'desc' ? sortDirRaw : 'desc';
+    const sortOrder = sortDir === 'asc' ? 1 : -1;
+    const mongoSort: Record<string, 1 | -1> = { [sortBy]: sortOrder };
+
     // Connect to MongoDB
     const client = await clientPromise;
     const db = client.db('2xu');
@@ -80,7 +101,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (club) {
-      filter.affiliations = { $regex: club, $options: 'i' };
+      // Exact match (filter value comes from distinct-affiliations dropdown)
+      filter.affiliations = club;
     }
 
     if (promoCode) {
@@ -117,7 +139,7 @@ export async function GET(request: NextRequest) {
     const total = await collection.countDocuments(filter);
     const users = await collection
       .find(filter)
-      .sort({ createdAt: -1 })
+      .sort(mongoSort)
       .skip(skip)
       .limit(limit)
       .toArray();
