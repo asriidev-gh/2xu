@@ -5,6 +5,7 @@ import clientPromise from '@/lib/mongodb';
 import { sendRegistrationConfirmation } from '@/lib/sendConfirmationEmail';
 
 export const dynamic = 'force-dynamic';
+const MISSION_STRONG_PROMO = 'MISSIONSTRONG500';
 
 async function isAuthenticated() {
   const cookieStore = await cookies();
@@ -46,7 +47,8 @@ export async function POST(
 
     const promoCode = String((user as { promoCode?: string }).promoCode || '').trim();
     const tShirtSize = String((user as { tShirtSize?: string }).tShirtSize || '').trim();
-    const useLegacyTemplate = promoCode.length > 0;
+    const useLegacyTemplate =
+      promoCode.length > 0 && promoCode.toUpperCase() !== MISSION_STRONG_PROMO;
 
     const mailResult = await sendRegistrationConfirmation(
       name,

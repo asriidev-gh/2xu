@@ -7,6 +7,12 @@ import { sendRegistrationConfirmation } from '@/lib/sendConfirmationEmail';
 export const dynamic = 'force-dynamic';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const MISSION_STRONG_PROMO = 'MISSIONSTRONG500';
+
+function shouldUseLegacyTemplate(promoCode: string): boolean {
+  const normalizedPromo = String(promoCode || '').trim().toUpperCase();
+  return normalizedPromo.length > 0 && normalizedPromo !== MISSION_STRONG_PROMO;
+}
 
 function escapeHtml(text: string): string {
   const map: Record<string, string> = {
@@ -120,16 +126,25 @@ export async function POST(request: NextRequest) {
     // Promo formats:
     // - Advocate format: SPS2XU + digits (single-use)
     // - Special format: SPSUAAPElite + digits (single-use, Athletes Category only)
+    // - MissionStrong500 (multi-use, Youth Category / Advocate / Influencer only)
     const PROMO_REGEX = /^SPS2XU\d+$/i;
     const SPECIAL_PROMO_REGEX = /^SPSUAAPELITE\d+$/i;
+    const MISSION_STRONG_ELIGIBLE_CATEGORIES = new Set(['YOUTH CATEGORY', 'ADVOCATE / INFLUENCER']);
     const rawPromo = promoCode != null ? String(promoCode).trim().toUpperCase() : '';
     const isSpecialPromoCode = SPECIAL_PROMO_REGEX.test(rawPromo);
+    const isMissionStrongPromo = rawPromo === MISSION_STRONG_PROMO;
     const isAthletesCategory = String(raceCategory || '').trim().toUpperCase() === 'ATHLETES CATEGORY';
+    const isEligibleMissionStrongPromo =
+      isMissionStrongPromo &&
+      MISSION_STRONG_ELIGIBLE_CATEGORIES.has(String(raceCategory || '').trim().toUpperCase());
     const isEligibleSpecialPromo = isSpecialPromoCode && isAthletesCategory;
-    const formatOk = PROMO_REGEX.test(rawPromo) || isEligibleSpecialPromo;
+    const formatOk = PROMO_REGEX.test(rawPromo) || isEligibleSpecialPromo || isEligibleMissionStrongPromo;
     let savedPromo = '';
     if (formatOk) {
-      const existingWithPromo = await collection.findOne({ promoCode: rawPromo });
+      const requiresSingleUseCheck = !isMissionStrongPromo;
+      const existingWithPromo = requiresSingleUseCheck
+        ? await collection.findOne({ promoCode: rawPromo })
+        : null;
       if (existingWithPromo) {
         return NextResponse.json(
           { error: 'Promo code already used. Please use a different code.' },
@@ -167,8 +182,7 @@ export async function POST(request: NextRequest) {
       const insertedIds = Object.values(result.insertedIds);
 
       // Send confirmation email once to the group contact
-      const hasPromoCodeInput = rawPromo.length > 0;
-      const useLegacyTemplate = hasPromoCodeInput;
+      const useLegacyTemplate = shouldUseLegacyTemplate(savedPromo || rawPromo);
       const mailResult = await sendRegistrationConfirmation(
         members[0].name,
         email,
@@ -252,8 +266,7 @@ export async function POST(request: NextRequest) {
     const result = await collection.insertOne(doc);
 
     // Send confirmation email to registrant via SMTP (best-effort)
-    const hasPromoCodeInput = rawPromo.length > 0;
-    const useLegacyTemplate = hasPromoCodeInput;
+    const useLegacyTemplate = shouldUseLegacyTemplate(savedPromo || rawPromo);
     const mailResult = await sendRegistrationConfirmation(
       name,
       email,

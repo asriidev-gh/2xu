@@ -61,10 +61,12 @@ export async function sendRegistrationConfirmation(
     '1@oneofakindasia.com',
   ];
 
-  // Base URL for payment QR images in email (deployed site or localhost)
+  const siteUrl = 'https://www.oneofakindasia.com';
+  // Base URL for payment QR images in email
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
+    siteUrl;
 
   const headerBanner = baseUrl
     ? `
@@ -74,9 +76,7 @@ export async function sendRegistrationConfirmation(
   `
     : '';
 
-  const paymentSection =
-    baseUrl
-      ? `
+  const paymentSection = `
     <div style="margin-top:24px; padding:16px; background:#fef3e2; border-radius:8px; border:1px solid #f59e0b;">
       <p style="margin:0 0 12px 0; font-weight:bold; color:#1f2937;">Payment options – scan to pay</p>
       <p style="margin:0 0 16px 0; font-size:14px; color:#4b5563;">Send proof of payment to 1@oneofakindasia.com to confirm your slot.</p>
@@ -95,17 +95,24 @@ export async function sendRegistrationConfirmation(
         </tr>
       </table>
     </div>
-  `
-      : `
-    <p style="margin-top:16px; font-size:14px; color:#6b7280;">To view payment QR codes, visit the registration page on our website.</p>
   `;
   const normalizedPromoCode = promoCode.trim().toUpperCase();
   const isSpecialPromoCode = /^SPSUAAPELITE\d+$/i.test(normalizedPromoCode);
-  const specialPromoPaymentHtml = isSpecialPromoCode
+  const isMissionStrongPromoCode = normalizedPromoCode === 'MISSIONSTRONG500';
+  const promoPaymentSummary = isSpecialPromoCode
+    ? { codeLabel: normalizedPromoCode || 'SPSUAAPElite', payableAmount: '995' }
+    : isMissionStrongPromoCode
+      ? { codeLabel: 'MISSIONSTRONG500', payableAmount: '1300' }
+      : null;
+  const promoPaymentHtml = promoPaymentSummary
     ? `
     <div style="margin-top:16px; padding:14px; background:#ecfdf5; border-radius:8px; border:1px solid #10b981;">
-      <p style="margin:0 0 8px 0; font-weight:bold; color:#065f46;">Special Promo Applied: SPSUAAPElite</p>
-      <p style="margin:0; font-size:14px; color:#065f46;">Your payable amount is <strong>Php 995</strong>.</p>
+      <p style="margin:0 0 8px 0; font-weight:bold; color:#065f46;">Special Promo Applied: ${escapeHtml(
+        promoPaymentSummary.codeLabel
+      )}</p>
+      <p style="margin:0; font-size:14px; color:#065f46;">Your payable amount is <strong>Php ${escapeHtml(
+        promoPaymentSummary.payableAmount
+      )}</strong>.</p>
     </div>
   `
     : '';
@@ -117,7 +124,7 @@ export async function sendRegistrationConfirmation(
     <p>Your registration for the Exclusive Speed Series Pre-Registration is officially confirmed — and you are now part of something powerful.</p>
     <p>As one of our early VIP athletes, you will receive your exclusive VIP Race Kit during our Race Kit Pick-Up on May 15–16. Get ready to gear up, show up, and level up.</p>
     <p>This is more than a race.<br/>This is Speed. Strength. Legacy.</p>
-    ${specialPromoPaymentHtml}
+    ${promoPaymentHtml}
     <p>Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit <a href="https://www.oneofakindasia.com">www.oneofakindasia.com</a> for official event details.</p>
     <p>We can&rsquo;t wait to see you at the starting line.<br/>Let&rsquo;s make history.</p>
     <p>🔥 Mission Strong<br/>⚡ Speed Series<br/>Powered by 2XU</p>
@@ -130,7 +137,7 @@ export async function sendRegistrationConfirmation(
     <p>Stay tuned for your final confirmation.</p>
     <p>Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit <a href="https://www.oneofakindasia.com">www.oneofakindasia.com</a> for official event details.</p>
     ${paymentSection}
-    ${specialPromoPaymentHtml}
+    ${promoPaymentHtml}
     <p>We can&rsquo;t wait to see you at the starting line.<br/>Let&rsquo;s make history.</p>
     <p>🔥 Mission Strong<br/>⚡ Speed Series<br/>Powered by 2XU</p>
     <p>Let&rsquo;s go.</p>
@@ -139,12 +146,10 @@ export async function sendRegistrationConfirmation(
   `;
   const html = useLegacyTemplate ? htmlLegacy : htmlNew;
 
-  const textPayment = baseUrl
-    ? 'Payment options – scan to pay. Send proof of payment to 1@oneofakindasia.com to confirm your slot. (GCash and Gotyme Bank Transfer QR codes are in the HTML version of this email.)\n\n'
-    : 'Payment: Visit our registration page to view payment options. Send proof of payment to 1@oneofakindasia.com.\n\n';
-  const siteUrl = 'https://www.oneofakindasia.com';
-  const specialPromoPaymentText = isSpecialPromoCode
-    ? 'Special promo applied: SPSUAAPElite.\nYour payable amount is Php 995.\n\n'
+  const textPayment =
+    'Payment options – scan to pay. Send proof of payment to 1@oneofakindasia.com to confirm your slot. (GCash and Gotyme Bank Transfer QR codes are in the HTML version of this email.)\n\n';
+  const promoPaymentText = promoPaymentSummary
+    ? `Special promo applied: ${promoPaymentSummary.codeLabel}.\nYour payable amount is Php ${promoPaymentSummary.payableAmount}.\n\n`
     : '';
   const plainBodyLegacy = `Dear ${participantName},
 
@@ -157,7 +162,7 @@ As one of our early VIP athletes, you will receive your exclusive VIP Race Kit d
 This is more than a race.
 This is Speed. Strength. Legacy.
 
-${specialPromoPaymentText}
+${promoPaymentText}
 Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit www.oneofakindasia.com for official event details.
 
 We can't wait to see you at the starting line.
@@ -176,7 +181,7 @@ Stay tuned for your final confirmation.
 
 Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit www.oneofakindasia.com for official event details.
 
-${textPayment}${specialPromoPaymentText}We can't wait to see you at the starting line.
+${textPayment}${promoPaymentText}We can't wait to see you at the starting line.
 Let's make history.
 
 🔥 Mission Strong

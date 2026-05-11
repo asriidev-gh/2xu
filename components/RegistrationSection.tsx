@@ -17,6 +17,8 @@ const T_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 // - Special code: SPSUAAPElite + one or more digits (Athletes Category only)
 const PROMO_FORMAT = /^SPS2XU\d+$/i;
 const SPECIAL_PROMO_FORMAT = /^SPSUAAPELITE\d+$/i;
+const MISSION_STRONG_PROMO = 'MISSIONSTRONG500';
+const MISSION_STRONG_ELIGIBLE_CATEGORIES = new Set(['Youth Category', 'Advocate / Influencer']);
 const PROMO_MAX_LENGTH = 20;
 
 export default function RegistrationSection({ selectedCategory = '', onCategoryApplied }: RegistrationSectionProps) {
@@ -67,6 +69,24 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
   const memberKeys = (isTeam ? [1, 2, 3, 4] : isDuo ? [1, 2] : []) as Array<1 | 2 | 3 | 4>;
   const isSpecialPromoApplied =
     promoCodeValid === true && SPECIAL_PROMO_FORMAT.test(formData.promoCode.trim());
+  const isMissionStrong500Applied =
+    promoCodeValid === true &&
+    formData.promoCode.trim().toUpperCase() === MISSION_STRONG_PROMO &&
+    MISSION_STRONG_ELIGIBLE_CATEGORIES.has(formData.raceCategory);
+  const basePrice = formData.raceCategory ? RACE_CATEGORY_PRICES[formData.raceCategory] : undefined;
+  const basePhpAmount = basePrice ? parseInt(basePrice.pricePhp.replace(/[^\d]/g, ''), 10) : 0;
+  const missionStrongDiscountPhp = isMissionStrong500Applied ? 500 : 0;
+  const finalPhpAmount = isSpecialPromoApplied ? 995 : Math.max(0, basePhpAmount - missionStrongDiscountPhp);
+  const finalPricePhpDisplay =
+    isSpecialPromoApplied && basePrice
+      ? '₱995'
+      : finalPhpAmount > 0
+        ? `₱${finalPhpAmount.toLocaleString('en-PH')}`
+        : basePrice?.pricePhp || '';
+  const finalPriceUsdDisplay =
+    isSpecialPromoApplied && basePrice
+      ? '$18'
+      : basePrice?.priceUsd || '';
 
   // Auto-fill race category when user clicks a category card and scrolls here
   useEffect(() => {
@@ -765,14 +785,19 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                     <div className="rounded-lg bg-white border border-orange-200 px-4 py-3">
                       <p className="text-sm font-semibold text-gray-700 font-fira-sans mb-1">Amount to pay</p>
                       <p className="text-xl font-bold text-orange-600 font-druk">
-                        {isSpecialPromoApplied ? '₱995' : RACE_CATEGORY_PRICES[formData.raceCategory].pricePhp}
+                        {finalPricePhpDisplay}
                         <span className="text-base font-sweet-sans font-normal text-gray-600 ml-2">
-                          (approx. {isSpecialPromoApplied ? '$18' : RACE_CATEGORY_PRICES[formData.raceCategory].priceUsd} USD)
+                          (approx. {finalPriceUsdDisplay} USD)
                         </span>
                       </p>
                       {isSpecialPromoApplied && (
                         <p className="mt-1 text-xs text-green-700 font-sweet-sans">
                           Promo code SPSUAAPElite applied.
+                        </p>
+                      )}
+                      {isMissionStrong500Applied && (
+                        <p className="mt-1 text-xs text-green-700 font-sweet-sans">
+                          Promo code MissionStrong500 applied. ₱500 discount has been deducted.
                         </p>
                       )}
                     </div>
