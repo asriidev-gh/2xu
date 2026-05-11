@@ -155,6 +155,7 @@ export async function GET(request: NextRequest) {
       gender: user.gender,
       birthday: user.birthday,
       raceCategory: (user as { raceCategory?: string }).raceCategory || '',
+      patronSpeedDistance: (user as { patronSpeedDistance?: string }).patronSpeedDistance || '',
       tShirtSize: (user as { tShirtSize?: string }).tShirtSize || '',
       affiliations: user.affiliations || '',
       promotional: user.promotional || false,

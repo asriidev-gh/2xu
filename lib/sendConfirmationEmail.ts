@@ -1,5 +1,9 @@
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
+import {
+  computeRegistrationPaymentAmount,
+  formatRaceCategoryLabel,
+} from '@/lib/registrationPaymentAmount';
 
 /**
  * Sends the registration confirmation email to the participant.
@@ -42,7 +46,9 @@ export async function sendRegistrationConfirmation(
   participantEmail: string,
   tShirtSizeInfo?: string,
   useLegacyTemplate = false,
-  promoCode = ''
+  promoCode = '',
+  raceCategory = '',
+  patronSpeedDistance = ''
 ): Promise<MailerSendResult> {
   const host = process.env.SMTP_HOST?.trim();
   const port = process.env.SMTP_PORT?.trim();
@@ -96,25 +102,45 @@ export async function sendRegistrationConfirmation(
       </table>
     </div>
   `;
-  const normalizedPromoCode = promoCode.trim().toUpperCase();
-  const isSpecialPromoCode = /^SPSUAAPELITE\d+$/i.test(normalizedPromoCode);
-  const isMissionStrongPromoCode = normalizedPromoCode === 'MISSIONSTRONG500';
-  const promoPaymentSummary = isSpecialPromoCode
-    ? { codeLabel: normalizedPromoCode || 'SPSUAAPElite', payableAmount: '995' }
-    : isMissionStrongPromoCode
-      ? { codeLabel: 'MISSIONSTRONG500', payableAmount: '1300' }
-      : null;
-  const promoPaymentHtml = promoPaymentSummary
+  const paymentAmount = raceCategory
+    ? computeRegistrationPaymentAmount(raceCategory, promoCode)
+    : null;
+  const raceExperienceLabel = raceCategory
+    ? formatRaceCategoryLabel(raceCategory, patronSpeedDistance)
+    : '';
+  const amountDuePhp = paymentAmount
+    ? paymentAmount.phpAmount.toLocaleString('en-PH')
+    : '';
+  const amountDueHtml = paymentAmount
     ? `
-    <div style="margin-top:16px; padding:14px; background:#ecfdf5; border-radius:8px; border:1px solid #10b981;">
-      <p style="margin:0 0 8px 0; font-weight:bold; color:#065f46;">Special Promo Applied: ${escapeHtml(
-        promoPaymentSummary.codeLabel
-      )}</p>
-      <p style="margin:0; font-size:14px; color:#065f46;">Your payable amount is <strong>Php ${escapeHtml(
-        promoPaymentSummary.payableAmount
-      )}</strong>.</p>
+    <div style="margin-top:16px; padding:14px; background:#fffbeb; border-radius:8px; border:1px solid #fbbf24;">
+      <p style="margin:0 0 8px 0; font-weight:bold; color:#92400e;">Amount to pay</p>
+      ${
+        raceExperienceLabel
+          ? `<p style="margin:0 0 8px 0; font-size:14px; color:#374151;">Race experience: <strong>${escapeHtml(
+              raceExperienceLabel
+            )}</strong></p>`
+          : ''
+      }
+      <p style="margin:0; font-size:15px; color:#1f2937;">Please remit <strong>Php ${escapeHtml(
+        amountDuePhp
+      )}</strong> (approx. ${escapeHtml(paymentAmount.usdDisplay)} USD).</p>
+      ${
+        paymentAmount.promoCodeLabel
+          ? `<p style="margin:8px 0 0 0; font-size:14px; color:#065f46;">Promo applied: <strong>${escapeHtml(
+              paymentAmount.promoCodeLabel
+            )}</strong>.</p>`
+          : ''
+      }
     </div>
   `
+    : '';
+  const amountDueText = paymentAmount
+    ? `Amount to pay${
+        raceExperienceLabel ? ` (${raceExperienceLabel})` : ''
+      }: Php ${amountDuePhp} (approx. ${paymentAmount.usdDisplay} USD).${
+        paymentAmount.promoCodeLabel ? ` Promo applied: ${paymentAmount.promoCodeLabel}.` : ''
+      }\n\n`
     : '';
 
   const htmlLegacy = `
@@ -124,7 +150,7 @@ export async function sendRegistrationConfirmation(
     <p>Your registration for the Exclusive Speed Series Pre-Registration is officially confirmed — and you are now part of something powerful.</p>
     <p>As one of our early VIP athletes, you will receive your exclusive VIP Race Kit during our Race Kit Pick-Up on May 15–16. Get ready to gear up, show up, and level up.</p>
     <p>This is more than a race.<br/>This is Speed. Strength. Legacy.</p>
-    ${promoPaymentHtml}
+    ${amountDueHtml}
     <p>Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit <a href="https://www.oneofakindasia.com">www.oneofakindasia.com</a> for official event details.</p>
     <p>We can&rsquo;t wait to see you at the starting line.<br/>Let&rsquo;s make history.</p>
     <p>🔥 Mission Strong<br/>⚡ Speed Series<br/>Powered by 2XU</p>
@@ -134,10 +160,10 @@ export async function sendRegistrationConfirmation(
     <p>Dear ${escapeHtml(participantName)},</p>
     <p>Thank you for your interest in taking part in the Speed Series powered by 2XU—the ultimate urban run performance and advocacy event. We have successfully received your registration details.</p>
     <p>You&rsquo;re now one step closer to the starting line. To complete your registration, please proceed with your preferred payment option and send your proof of payment to Speed Series for verification.</p>
+    ${amountDueHtml}
     <p>Stay tuned for your final confirmation.</p>
     <p>Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit <a href="https://www.oneofakindasia.com">www.oneofakindasia.com</a> for official event details.</p>
     ${paymentSection}
-    ${promoPaymentHtml}
     <p>We can&rsquo;t wait to see you at the starting line.<br/>Let&rsquo;s make history.</p>
     <p>🔥 Mission Strong<br/>⚡ Speed Series<br/>Powered by 2XU</p>
     <p>Let&rsquo;s go.</p>
@@ -148,9 +174,6 @@ export async function sendRegistrationConfirmation(
 
   const textPayment =
     'Payment options – scan to pay. Send proof of payment to 1@oneofakindasia.com to confirm your slot. (GCash and Gotyme Bank Transfer QR codes are in the HTML version of this email.)\n\n';
-  const promoPaymentText = promoPaymentSummary
-    ? `Special promo applied: ${promoPaymentSummary.codeLabel}.\nYour payable amount is Php ${promoPaymentSummary.payableAmount}.\n\n`
-    : '';
   const plainBodyLegacy = `Dear ${participantName},
 
 Congratulations! 🎉
@@ -162,8 +185,7 @@ As one of our early VIP athletes, you will receive your exclusive VIP Race Kit d
 This is more than a race.
 This is Speed. Strength. Legacy.
 
-${promoPaymentText}
-Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit www.oneofakindasia.com for official event details.
+${amountDueText}Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit www.oneofakindasia.com for official event details.
 
 We can't wait to see you at the starting line.
 Let's make history.
@@ -177,11 +199,11 @@ Thank you for your interest in taking part in the Speed Series powered by 2XU—
 
 You're now one step closer to the starting line. To complete your registration, please proceed with your preferred payment option and send your proof of payment to Speed Series for verification.
 
-Stay tuned for your final confirmation.
+${amountDueText}Stay tuned for your final confirmation.
 
 Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit www.oneofakindasia.com for official event details.
 
-${textPayment}${promoPaymentText}We can't wait to see you at the starting line.
+${textPayment}We can't wait to see you at the starting line.
 Let's make history.
 
 🔥 Mission Strong

@@ -3,7 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Swal from 'sweetalert2';
-import { RACE_CATEGORY_NAMES, RACE_CATEGORY_PRICES } from '@/components/RaceCategoriesSection';
+import {
+  RACE_CATEGORY_NAMES,
+  RACE_CATEGORY_PRICES,
+  PATRON_SPEED_DISTANCES,
+} from '@/components/RaceCategoriesSection';
 
 type RegistrationSectionProps = {
   selectedCategory?: string;
@@ -32,6 +36,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
     gender: '',
     birthday: '',
     raceCategory: '',
+    patronSpeedDistance: '',
     affiliations: '',
     promotional: false,
     waiverAccepted: false,
@@ -65,6 +70,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
 
   const isTeam = formData.raceCategory === 'Team Category';
   const isDuo = formData.raceCategory === 'The Speed Duo - 2XU pair';
+  const isPatron = formData.raceCategory === 'Patron';
   const isGroupCategory = isTeam || isDuo;
   const memberKeys = (isTeam ? [1, 2, 3, 4] : isDuo ? [1, 2] : []) as Array<1 | 2 | 3 | 4>;
   const isSpecialPromoApplied =
@@ -90,16 +96,14 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
 
   // Auto-fill race category when user clicks a category card and scrolls here
   useEffect(() => {
-    if (selectedCategory) {
-      setFormData((prev) => ({ ...prev, raceCategory: selectedCategory }));
-      if (formData.promoCode.trim().length > 0) {
-        // Category change can affect promo eligibility; require re-validation on blur.
-        setPromoCodeValid(null);
-        setPromoCodeError('');
-      }
-      onCategoryApplied?.();
-    }
-  }, [selectedCategory, onCategoryApplied, formData.promoCode]);
+    if (!selectedCategory) return;
+    setFormData((prev) => ({
+      ...prev,
+      raceCategory: selectedCategory,
+      patronSpeedDistance: selectedCategory === 'Patron' ? prev.patronSpeedDistance : '',
+    }));
+    onCategoryApplied?.();
+  }, [selectedCategory, onCategoryApplied]);
 
   // Trigger animations when Registration section comes into view
   useEffect(() => {
@@ -199,16 +203,19 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
   };
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const isRaceCategoryChange = e.target.name === 'raceCategory';
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-    if (isRaceCategoryChange && formData.promoCode.trim().length > 0) {
-      // Re-validate promo code on blur after category changes.
-      setPromoCodeValid(null);
-      setPromoCodeError('');
-    }
+    const { name, value } = e.target;
+    const isRaceCategoryChange = name === 'raceCategory';
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value };
+      if (isRaceCategoryChange && value !== 'Patron') {
+        next.patronSpeedDistance = '';
+      }
+      if (isRaceCategoryChange && prev.promoCode.trim().length > 0) {
+        setPromoCodeValid(null);
+        setPromoCodeError('');
+      }
+      return next;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -299,6 +306,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
         gender: '',
         birthday: '',
         raceCategory: '',
+        patronSpeedDistance: '',
         affiliations: '',
         promotional: false,
         waiverAccepted: false,
@@ -404,6 +412,32 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                     ))}
                   </select>
                 </div>
+
+                {isPatron && (
+                  <div>
+                    <label
+                      htmlFor="patronSpeedDistance"
+                      className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans"
+                    >
+                      Speed option <span className="text-orange-600">*</span>
+                    </label>
+                    <select
+                      id="patronSpeedDistance"
+                      name="patronSpeedDistance"
+                      value={formData.patronSpeedDistance}
+                      onChange={handleSelectChange}
+                      required
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900 bg-white"
+                    >
+                      <option value="">Select distance (2KM, 5KM, 10KM, 21KM)</option>
+                      {PATRON_SPEED_DISTANCES.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 {isGroupCategory ? (
                   /* ——— Group registration: one email + member cards ——— */

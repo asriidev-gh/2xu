@@ -15,6 +15,7 @@ interface User {
   gender: string;
   birthday: string;
   raceCategory: string;
+  patronSpeedDistance?: string;
   affiliations: string;
   promotional: boolean;
   promoCode?: string;
@@ -31,6 +32,13 @@ const T_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 const dashboardFieldClass =
   'w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 shadow-sm font-sweet-sans text-sm transition-colors hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500/25 focus:border-orange-500';
+
+function formatRaceCategoryLabel(raceCategory: string, patronSpeedDistance?: string) {
+  const base = raceCategory?.trim() || '';
+  if (base !== 'Patron') return base;
+  const speed = patronSpeedDistance?.trim();
+  return speed ? `Patron (${speed})` : base;
+}
 
 function formatDateForExport(dateString: string) {
   if (!dateString) return '';
@@ -170,7 +178,7 @@ async function exportToExcel(
       user.contact,
       user.gender,
       user.birthday || '',
-      user.raceCategory || '',
+      formatRaceCategoryLabel(user.raceCategory, user.patronSpeedDistance),
       user.tShirtSize || '',
       user.affiliations || '',
       user.promoCode || '',
@@ -778,7 +786,12 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {users.map((user) => (
+                  {users.map((user) => {
+                    const raceExperience = formatRaceCategoryLabel(
+                      user.raceCategory,
+                      user.patronSpeedDistance
+                    );
+                    return (
                     <tr key={user._id} className="hover:bg-gray-50">
                       <td
                         className={`px-6 py-4 text-sm font-medium text-gray-900 font-sweet-sans ${
@@ -805,9 +818,9 @@ export default function DashboardPage() {
                         className={`px-6 py-4 text-sm text-gray-500 font-sweet-sans ${
                           showExtraTableColumns ? 'whitespace-nowrap' : 'max-w-[10rem] sm:max-w-[14rem] truncate whitespace-nowrap'
                         }`}
-                        title={user.raceCategory || undefined}
+                        title={raceExperience || undefined}
                       >
-                        {user.raceCategory || 'N/A'}
+                        {raceExperience || 'N/A'}
                       </td>
                       {showExtraTableColumns && (
                         <>
@@ -907,7 +920,8 @@ export default function DashboardPage() {
                         </td>
                       )}
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

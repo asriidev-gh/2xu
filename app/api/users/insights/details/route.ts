@@ -236,6 +236,7 @@ function formatUserDoc(user: Record<string, unknown>) {
     gender: user.gender ?? '',
     birthday: user.birthday ?? '',
     raceCategory: (user.raceCategory as string) || '',
+    patronSpeedDistance: (user.patronSpeedDistance as string) || '',
     tShirtSize: (user.tShirtSize as string) || '',
     affiliations: user.affiliations ?? '',
     promotional: Boolean(user.promotional),

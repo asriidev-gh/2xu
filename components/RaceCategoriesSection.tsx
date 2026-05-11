@@ -4,90 +4,17 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import ApparelGallery from '@/components/ApparelGallery';
 import { SPEED_SERIES_PDF_URL } from '@/components/SpeedSeriesMechanicsModal';
+import {
+  raceCategories,
+  RACE_CATEGORY_NAMES,
+  RACE_CATEGORY_PRICES,
+  PATRON_SPEED_DISTANCES,
+  type RaceCategoryDefinition,
+} from '@/lib/raceCategories';
 
-type RaceCategory = {
-  name: string;
-  ageGroup: string;
-  pricePhp: string;
-  priceUsd: string;
-  kitValueLabel?: string;
-  kitDescription: string;
-  /** Replaces the third entitlement bullet (default: jersey kit disclaimer) */
-  kitFooterNote?: string;
-  highlight?: 'popular' | 'best-value' | 'youth' | 'community' | 'team' | 'duo';
-};
+export { RACE_CATEGORY_NAMES, RACE_CATEGORY_PRICES, PATRON_SPEED_DISTANCES };
 
-const raceCategories: RaceCategory[] = [
-  {
-    name: 'Youth Category',
-    ageGroup: 'Ages 12 – 25',
-    pricePhp: '₱1,800',
-    priceUsd: '$32',
-    kitValueLabel: 'Includes $60 worth of 2XU race kit',
-    kitDescription: 'Perfect for emerging runners and student athletes stepping into the 2XU experience.',
-    highlight: 'youth',
-  },
-  {
-    name: 'Individual',
-    ageGroup: 'Ages 26 and above',
-    pricePhp: '₱1,990',
-    priceUsd: '$40',
-    kitValueLabel: 'Includes $70 worth of 2XU race kit',
-    kitDescription: 'For dedicated runners who want a complete 2XU race experience and premium kit value.',
-    highlight: 'popular',
-  },
-  {
-    name: 'Team Category',
-    ageGroup: 'Group of 4 runners',
-    pricePhp: '₱6,900',
-    priceUsd: '$120',
-    kitValueLabel: 'Includes $200 worth of 2XU race kit',
-    kitDescription: 'Built for crews, clubs, and friends who want to race, train, and celebrate together.',
-    highlight: 'team',
-  },
-  {
-    name: 'The Speed Duo - 2XU pair',
-    ageGroup: 'Group of 2 runners',
-    pricePhp: '₱3,200',
-    priceUsd: '$56',
-    kitDescription: 'For partners who want to race together as a duo and share the 2XU race experience.',
-    highlight: 'duo',
-  },
-  {
-    name: 'Athletes Category',
-    ageGroup: 'Ages 16 and above',
-    pricePhp: '₱1,800',
-    priceUsd: '$32',
-    kitDescription: 'For competitive and aspiring athletes ready to push performance with 2XU.',
-    highlight: 'community',
-  },
-  {
-    name: 'Advocate / Influencer',
-    ageGroup: 'Ages 12 and above',
-    pricePhp: '₱1,800',
-    priceUsd: '$32',
-    kitDescription: 'For community leaders, advocates, and creators who amplify the 2XU story.',
-    highlight: 'community',
-  },
-  {
-    name: 'Patron',
-    ageGroup: 'Ages 18',
-    pricePhp: '₱2,800',
-    priceUsd: '$47',
-    kitDescription: 'VIP all access / with the After Run Rock Concert. After Race Rock and Recovery Village',
-    kitFooterNote:
-      'Are you ready to Race/ Recover & Roll! #RaceRecoverRoll',
-    highlight: 'community',
-  },
-];
-
-// Shared with registration form for select options and payment amount
-export const RACE_CATEGORY_NAMES: string[] = raceCategories.map((c) => c.name);
-export const RACE_CATEGORY_PRICES: Record<string, { pricePhp: string; priceUsd: string }> = Object.fromEntries(
-  raceCategories.map((c) => [c.name, { pricePhp: c.pricePhp, priceUsd: c.priceUsd }])
-);
-
-function getHighlightLabel(highlight?: RaceCategory['highlight']) {
+function getHighlightLabel(highlight?: RaceCategoryDefinition['highlight']) {
   switch (highlight) {
     case 'popular':
       return 'Most Popular';
@@ -316,29 +243,75 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
                   </div>
 
                   {/* Entitlements */}
-                  <div className="mt-2 space-y-2">
-                    {category.kitValueLabel && (
-                      <div className="flex items-start gap-2">
-                        <span className="mt-1 h-2 w-2 rounded-full bg-yellow-400" />
-                        <p className="text-sm text-gray-100 font-sweet-sans">
-                          {category.kitValueLabel}
+                  {category.name === 'Patron' ? (
+                    <div className="mt-2 space-y-3 text-left">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-orange-300 font-fira-sans">
+                          Speed options
+                        </p>
+                        <p className="mt-1 text-sm text-gray-100 font-sweet-sans">
+                          2KM · 5KM · 10KM · 21KM
                         </p>
                       </div>
-                    )}
-                    <div className="flex items-start gap-2">
-                      <span className="mt-1 h-2 w-2 rounded-full bg-orange-500" />
-                      <p className="text-sm text-gray-200 font-sweet-sans">
-                        {category.kitDescription}
-                      </p>
+                      <div className="rounded-xl border border-orange-400/50 bg-gradient-to-br from-orange-500/20 to-black/40 p-4 shadow-inner">
+                        <p className="text-sm font-bold tracking-wide text-white font-druk mb-3">PATRONS UNLOCK</p>
+                        <ul className="space-y-2.5 text-sm text-gray-100 font-sweet-sans leading-snug">
+                          <li className="flex gap-2">
+                            <span className="shrink-0" aria-hidden>
+                              🏅
+                            </span>
+                            <span>Exclusive perks from Speed Series</span>
+                          </li>
+                          <li className="flex gap-2">
+                            <span className="shrink-0" aria-hidden>
+                              🏅
+                            </span>
+                            <span>Exclusive 2XU Gear</span>
+                          </li>
+                          <li className="flex gap-2">
+                            <span className="shrink-0" aria-hidden>
+                              🏅
+                            </span>
+                            <span>Official Timing by Prospex Seiko</span>
+                          </li>
+                          <li className="flex gap-2">
+                            <span className="shrink-0" aria-hidden>
+                              🏅
+                            </span>
+                            <span>Mission Strong Founders Club Eligibility</span>
+                          </li>
+                        </ul>
+                        <p className="mt-3 text-xs text-gray-400 font-sweet-sans border-t border-white/10 pt-3">
+                          VIP access, after-run concert, and recovery village — final entitlements subject to event
+                          confirmation.
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex items-start gap-2">
-                      <span className="mt-1 h-2 w-2 rounded-full bg-gray-300" />
-                      <p className="text-xs text-gray-300 font-sweet-sans">
-                        {category.kitFooterNote ??
-                          'Includes official 2XU jersey race kit. Final designs and contents may vary.'}
-                      </p>
+                  ) : (
+                    <div className="mt-2 space-y-2">
+                      {category.kitValueLabel && (
+                        <div className="flex items-start gap-2">
+                          <span className="mt-1 h-2 w-2 rounded-full bg-yellow-400" />
+                          <p className="text-sm text-gray-100 font-sweet-sans">
+                            {category.kitValueLabel}
+                          </p>
+                        </div>
+                      )}
+                      <div className="flex items-start gap-2">
+                        <span className="mt-1 h-2 w-2 rounded-full bg-orange-500" />
+                        <p className="text-sm text-gray-200 font-sweet-sans">
+                          {category.kitDescription}
+                        </p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="mt-1 h-2 w-2 rounded-full bg-gray-300" />
+                        <p className="text-xs text-gray-300 font-sweet-sans">
+                          {category.kitFooterNote ??
+                            'Includes official 2XU jersey race kit. Final designs and contents may vary.'}
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Subtle footer accent */}
                   <div className="mt-5 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-gray-400 font-sweet-sans">

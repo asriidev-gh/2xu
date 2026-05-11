@@ -45,6 +45,7 @@ type DetailUser = {
   gender: string;
   birthday: string;
   raceCategory: string;
+  patronSpeedDistance?: string;
   tShirtSize: string;
   affiliations: string;
   promotional: boolean;
@@ -52,6 +53,13 @@ type DetailUser = {
   teamMemberIndex?: number;
   createdAt: string | null;
 };
+
+function formatRaceCategoryLabel(raceCategory: string, patronSpeedDistance?: string) {
+  const base = raceCategory?.trim() || '';
+  if (base !== 'Patron') return base;
+  const speed = patronSpeedDistance?.trim();
+  return speed ? `Patron (${speed})` : base;
+}
 
 type DetailSortField =
   | 'name'
@@ -370,7 +378,7 @@ export default function InsightsPage() {
         u.contact,
         u.gender,
         u.birthday || '',
-        u.raceCategory || '',
+        formatRaceCategoryLabel(u.raceCategory, u.patronSpeedDistance),
         u.tShirtSize || '',
         u.affiliations || '',
         u.promoCode || '',
@@ -835,7 +843,12 @@ export default function InsightsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {detailUsers.map((u) => (
+                      {detailUsers.map((u) => {
+                        const raceExperience = formatRaceCategoryLabel(
+                          u.raceCategory,
+                          u.patronSpeedDistance
+                        );
+                        return (
                         <tr key={u._id} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="py-2 pr-3 text-gray-900 max-w-[140px] truncate" title={u.name}>
                             {u.name}
@@ -845,8 +858,8 @@ export default function InsightsPage() {
                           </td>
                           <td className="py-2 pr-3 text-gray-700 whitespace-nowrap">{u.contact}</td>
                           <td className="py-2 pr-3 text-gray-700 whitespace-nowrap">{u.gender}</td>
-                          <td className="py-2 pr-3 text-gray-700 max-w-[120px] truncate" title={u.raceCategory}>
-                            {u.raceCategory}
+                          <td className="py-2 pr-3 text-gray-700 max-w-[120px] truncate" title={raceExperience}>
+                            {raceExperience}
                           </td>
                           <td className="py-2 pr-3 text-gray-700 max-w-[140px] truncate" title={u.affiliations}>
                             {u.affiliations}
@@ -862,7 +875,8 @@ export default function InsightsPage() {
                             {u.createdAt ? new Date(u.createdAt).toLocaleString() : '—'}
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                   {!detailLoading && detailUsers.length === 0 && !detailError && (

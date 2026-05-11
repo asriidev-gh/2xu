@@ -1,57 +1,7 @@
-'use client';
-
-import { useState, useCallback } from 'react';
-import Header from '@/components/Header';
-import Hero from '@/components/Hero';
-import RaceExperienceGallerySection from '@/components/RaceExperienceGallerySection';
-import EventsSection from '@/components/EventsSection';
-import RaceCategoriesSection from '@/components/RaceCategoriesSection';
-import MissionVisionSection from '@/components/MissionVisionSection';
-import PartnersSection from '@/components/PartnersSection';
-import FAQSection from '@/components/FAQSection';
-import RegistrationSection from '@/components/RegistrationSection';
-import Footer from '@/components/Footer';
-import BackToRaceExperienceButton from '@/components/BackToRaceExperienceButton';
-import SpeedSeriesMechanicsModal from '@/components/SpeedSeriesMechanicsModal';
+import HomePageClient from '@/components/HomePageClient';
 
 export default function Home() {
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [isMechanicsModalOpen, setIsMechanicsModalOpen] = useState(false);
-  const clearSelectedCategory = useCallback(() => setSelectedCategory(''), []);
+  const promoBaguioLegEnabled = process.env.PROMO_BAGUIO_LEG === 'true';
 
-  return (
-    <>
-      {/* 
-        ============================================
-        DEVELOPED BY: Andy Radam
-        Contact: 09664665514
-        Email: asriidev@gmail.com
-        ============================================
-      */}
-      <main className="min-h-screen scroll-smooth">
-        <Header />
-        <Hero onOpenRaceEventsDetails={() => setIsMechanicsModalOpen(true)} />
-        <RaceExperienceGallerySection />
-        <EventsSection onOpenMechanicsModal={() => setIsMechanicsModalOpen(true)} />
-        <RaceCategoriesSection
-          onSelectCategory={setSelectedCategory}
-          onOpenRaceEventsDetails={() => setIsMechanicsModalOpen(true)}
-        />
-        <MissionVisionSection />
-        <PartnersSection />
-        <FAQSection />
-        <RegistrationSection
-          selectedCategory={selectedCategory}
-          onCategoryApplied={clearSelectedCategory}
-        />
-        <Footer />
-        {/* Mobile-only floating back-to-race-experience button */}
-        <BackToRaceExperienceButton />
-      </main>
-      <SpeedSeriesMechanicsModal
-        isOpen={isMechanicsModalOpen}
-        onClose={() => setIsMechanicsModalOpen(false)}
-      />
-    </>
-  );
+  return <HomePageClient promoBaguioLegEnabled={promoBaguioLegEnabled} />;
 }

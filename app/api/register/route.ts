@@ -28,7 +28,21 @@ function escapeHtml(text: string): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, contact, gender, birthday, raceCategory, affiliations, promotional, waiverAccepted, tShirtSize, promoCode, teamMembers } = body;
+    const {
+      name,
+      email,
+      contact,
+      gender,
+      birthday,
+      raceCategory,
+      affiliations,
+      promotional,
+      waiverAccepted,
+      tShirtSize,
+      promoCode,
+      teamMembers,
+      patronSpeedDistance,
+    } = body;
 
     // Validate required fields
     if (!email || !raceCategory) {
@@ -42,6 +56,21 @@ export async function POST(request: NextRequest) {
         { error: 'You must accept the Participant Digital Waiver to register.' },
         { status: 400 }
       );
+    }
+
+    const PATRON_SPEED_ALLOWED = new Set(['2KM', '5KM', '10KM', '21KM']);
+    const isPatronCategory = String(raceCategory || '').trim() === 'Patron';
+    if (isPatronCategory) {
+      const spd = patronSpeedDistance != null ? String(patronSpeedDistance).trim() : '';
+      if (!PATRON_SPEED_ALLOWED.has(spd)) {
+        return NextResponse.json(
+          {
+            error:
+              'Patron registrations require a speed option: choose 2KM, 5KM, 10KM, or 21KM.',
+          },
+          { status: 400 }
+        );
+      }
     }
 
     const isTeam = raceCategory === 'Team Category';
@@ -188,7 +217,8 @@ export async function POST(request: NextRequest) {
         email,
         members.map((m) => m.tShirtSize).join(', '),
         useLegacyTemplate,
-        savedPromo
+        savedPromo,
+        raceCategory
       );
       await collection.updateMany(
         { _id: { $in: insertedIds } },
@@ -261,8 +291,11 @@ export async function POST(request: NextRequest) {
       mailerLastAttemptAt: null,
       mailerLastError: null,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
     };
+    if (isPatronCategory) {
+      doc.patronSpeedDistance = String(patronSpeedDistance).trim();
+    }
     const result = await collection.insertOne(doc);
 
     // Send confirmation email to registrant via SMTP (best-effort)
@@ -272,7 +305,9 @@ export async function POST(request: NextRequest) {
       email,
       String(tShirtSize || '').trim(),
       useLegacyTemplate,
-      savedPromo
+      savedPromo,
+      raceCategory,
+      isPatronCategory ? String(patronSpeedDistance || '').trim() : ''
     );
     await collection.updateOne(
       { _id: result.insertedId },
@@ -306,6 +341,11 @@ export async function POST(request: NextRequest) {
           <p><strong>Gender:</strong> ${escapeHtml(gender)}</p>
           <p><strong>Birthday:</strong> ${escapeHtml(birthday)}</p>
           <p><strong>Race Experience:</strong> ${escapeHtml(raceCategory)}</p>
+          ${
+            isPatronCategory
+              ? `<p><strong>Patron speed option:</strong> ${escapeHtml(String(patronSpeedDistance || ''))}</p>`
+              : ''
+          }
           ${affiliations ? `<p><strong>Affiliations:</strong> ${escapeHtml(affiliations)}</p>` : ''}
           <p><strong>T-shirt Size:</strong> ${escapeHtml(String(tShirtSize || ''))}</p>
           <p><strong>Promotional emails:</strong> ${promotional ? 'Yes' : 'No'}</p>
