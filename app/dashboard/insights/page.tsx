@@ -20,6 +20,8 @@ type InsightsPayload = {
   byGender: { name: string; count: number }[];
   registrationsByDay: { date: string; count: number; label: string }[];
   topClubs: { name: string; count: number }[];
+  byDeviceType: { name: string; count: number }[];
+  byLocation: { name: string; count: number }[];
 };
 
 type DetailMetric =
@@ -51,6 +53,12 @@ type DetailUser = {
   promotional: boolean;
   promoCode: string;
   teamMemberIndex?: number;
+  signupContext?: {
+    ip: string;
+    locationLabel: string;
+    deviceType: string;
+    userAgent: string;
+  };
   createdAt: string | null;
 };
 
@@ -368,6 +376,9 @@ export default function InsightsPage() {
         'Club/Organization',
         'Promo Code',
         'Team member index',
+        'Signup IP',
+        'Signup location',
+        'Signup device',
         'Registration Date',
       ];
 
@@ -382,6 +393,9 @@ export default function InsightsPage() {
         u.affiliations || '',
         u.promoCode || '',
         u.teamMemberIndex != null ? String(u.teamMemberIndex) : '',
+        u.signupContext?.ip || '',
+        u.signupContext?.locationLabel || '',
+        u.signupContext?.deviceType || '',
         formatDateForExport(u.createdAt),
       ]);
 
@@ -467,6 +481,8 @@ export default function InsightsPage() {
     : 0;
   const maxGender = data ? Math.max(1, ...data.byGender.map((r) => r.count)) : 1;
   const maxClub = data ? Math.max(1, ...data.topClubs.map((r) => r.count)) : 1;
+  const maxDevice = data ? Math.max(1, ...(data.byDeviceType || []).map((r) => r.count)) : 1;
+  const maxLocation = data ? Math.max(1, ...(data.byLocation || []).map((r) => r.count)) : 1;
   const maxDaily = data ? Math.max(1, ...data.registrationsByDay.map((d) => d.count)) : 1;
 
   const handleLogout = async () => {
@@ -719,6 +735,33 @@ export default function InsightsPage() {
                 </div>
               </div>
             </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+              <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900 font-druk mb-4">Signup devices</h3>
+                <div className="max-h-80 overflow-y-auto pr-1">
+                  {(data.byDeviceType || []).length === 0 ? (
+                    <p className="text-sm text-gray-500 font-sweet-sans">No signup device data yet</p>
+                  ) : (
+                    (data.byDeviceType || []).map((r) => (
+                      <BarRow key={r.name} label={r.name} count={r.count} max={maxDevice} />
+                    ))
+                  )}
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900 font-druk mb-4">Top signup locations</h3>
+                <div className="max-h-80 overflow-y-auto pr-1">
+                  {(data.byLocation || []).length === 0 ? (
+                    <p className="text-sm text-gray-500 font-sweet-sans">No signup location data yet</p>
+                  ) : (
+                    (data.byLocation || []).map((r) => (
+                      <BarRow key={r.name} label={r.name} count={r.count} max={maxLocation} />
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
           </>
         )}
       </main>
@@ -834,6 +877,15 @@ export default function InsightsPage() {
                           sortDir={detailSortDir}
                           onSort={handleDetailSortColumn}
                         />
+                        <th className="py-2 pr-3 text-left text-xs font-medium uppercase tracking-wide font-fira-sans text-gray-500 whitespace-nowrap">
+                          IP
+                        </th>
+                        <th className="py-2 pr-3 text-left text-xs font-medium uppercase tracking-wide font-fira-sans text-gray-500 whitespace-nowrap">
+                          Location
+                        </th>
+                        <th className="py-2 pr-3 text-left text-xs font-medium uppercase tracking-wide font-fira-sans text-gray-500 whitespace-nowrap">
+                          Device
+                        </th>
                         <DetailSortableTh
                           field="createdAt"
                           label="Registered"
@@ -870,6 +922,24 @@ export default function InsightsPage() {
                           </td>
                           <td className="py-2 pr-3 text-gray-700 whitespace-nowrap">
                             {u.teamMemberIndex != null ? u.teamMemberIndex : '—'}
+                          </td>
+                          <td
+                            className="py-2 pr-3 text-gray-700 whitespace-nowrap max-w-[120px] truncate"
+                            title={u.signupContext?.ip || undefined}
+                          >
+                            {u.signupContext?.ip || '—'}
+                          </td>
+                          <td
+                            className="py-2 pr-3 text-gray-700 max-w-[160px] truncate"
+                            title={u.signupContext?.locationLabel || undefined}
+                          >
+                            {u.signupContext?.locationLabel || '—'}
+                          </td>
+                          <td
+                            className="py-2 pr-3 text-gray-700 whitespace-nowrap"
+                            title={u.signupContext?.userAgent || undefined}
+                          >
+                            {u.signupContext?.deviceType || '—'}
                           </td>
                           <td className="py-2 pr-3 text-gray-600 whitespace-nowrap text-xs">
                             {u.createdAt ? new Date(u.createdAt).toLocaleString() : '—'}

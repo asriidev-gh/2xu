@@ -45,14 +45,14 @@ export function getAffiliationMatchKeys(value: string): string[] {
 
 export function getAffiliationDisplayName(
   canonicalKey: string,
-  rawCounts: Map<string, number>
+  rawCounts: Record<string, number>
 ): string {
   const group = CANONICAL_TO_GROUP.get(canonicalKey);
   if (group) return group.displayName;
 
   let best = canonicalKey;
   let bestCount = 0;
-  for (const [raw, count] of rawCounts) {
+  for (const [raw, count] of Object.entries(rawCounts)) {
     if (count > bestCount) {
       best = raw.trim();
       bestCount = count;
@@ -85,18 +85,18 @@ export function buildClubAffiliationFilter(value: string): Record<string, unknow
 export function mergeAffiliationCounts(
   rows: { raw: string; count: number }[]
 ): { name: string; count: number }[] {
-  const merged = new Map<string, { count: number; rawCounts: Map<string, number> }>();
+  const merged: Record<string, { count: number; rawCounts: Record<string, number> }> = {};
 
   for (const row of rows) {
     const raw = String(row.raw ?? '');
     const key = normalizeAffiliationKey(raw);
-    const entry = merged.get(key) ?? { count: 0, rawCounts: new Map<string, number>() };
+    const entry = merged[key] ?? { count: 0, rawCounts: {} };
     entry.count += row.count;
-    entry.rawCounts.set(raw, (entry.rawCounts.get(raw) ?? 0) + row.count);
-    merged.set(key, entry);
+    entry.rawCounts[raw] = (entry.rawCounts[raw] ?? 0) + row.count;
+    merged[key] = entry;
   }
 
-  return [...merged.entries()]
+  return Object.entries(merged)
     .map(([key, { count, rawCounts }]) => ({
       name: getAffiliationDisplayName(key, rawCounts),
       count,

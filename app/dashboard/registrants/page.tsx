@@ -25,6 +25,12 @@ interface User {
   mailerStatus?: 'success' | 'failed' | 'pending';
   mailerLastAttemptAt?: string | null;
   mailerLastError?: string | null;
+  signupContext?: {
+    ip: string;
+    locationLabel: string;
+    deviceType: string;
+    userAgent: string;
+  };
   createdAt: string;
 }
 
@@ -169,6 +175,9 @@ async function exportToExcel(
       'Advocate Code',
       'Promotional Emails',
       'Email Status',
+      'Signup IP',
+      'Signup Location',
+      'Signup Device',
       'Registration Date'
     ];
 
@@ -184,6 +193,9 @@ async function exportToExcel(
       user.promoCode || '',
       user.promotional ? 'Yes' : 'No',
       user.mailerStatus || 'pending',
+      user.signupContext?.ip || '',
+      user.signupContext?.locationLabel || '',
+      user.signupContext?.deviceType || '',
       formatDateForExport(user.createdAt)
     ]);
 
@@ -776,6 +788,15 @@ export default function DashboardPage() {
                         />
                         <SortableTh field="promoCode" label="Advocate Code" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
                         <SortableTh field="promotional" label="Promotional" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">
+                          Signup IP
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">
+                          Signup Location
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">
+                          Signup Device
+                        </th>
                       </>
                     )}
                     <SortableTh field="mailerStatus" label="Email Status" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
@@ -871,6 +892,24 @@ export default function DashboardPage() {
                             ) : (
                               <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">No</span>
                             )}
+                          </td>
+                          <td
+                            className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans max-w-[10rem] truncate"
+                            title={user.signupContext?.ip || undefined}
+                          >
+                            {user.signupContext?.ip || '—'}
+                          </td>
+                          <td
+                            className="px-6 py-4 text-sm text-gray-500 font-sweet-sans max-w-[12rem] truncate"
+                            title={user.signupContext?.locationLabel || undefined}
+                          >
+                            {user.signupContext?.locationLabel || '—'}
+                          </td>
+                          <td
+                            className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans"
+                            title={user.signupContext?.userAgent || undefined}
+                          >
+                            {user.signupContext?.deviceType || '—'}
                           </td>
                         </>
                       )}

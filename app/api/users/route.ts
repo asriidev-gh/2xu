@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import clientPromise from '@/lib/mongodb';
+import { formatSignupContextView } from '@/lib/registrationContext';
 
 export const dynamic = 'force-dynamic';
 
@@ -168,6 +169,7 @@ export async function GET(request: NextRequest) {
       mailerLastError: (user as { mailerLastError?: string | null }).mailerLastError || null,
       teamId: (user as { teamId?: string }).teamId?.toString(),
       teamMemberIndex: (user as { teamMemberIndex?: number }).teamMemberIndex,
+      signupContext: formatSignupContextView((user as { signupContext?: unknown }).signupContext),
       createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : null
     }));
 

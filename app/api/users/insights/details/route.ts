@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import clientPromise from '@/lib/mongodb';
+import { formatSignupContextView } from '@/lib/registrationContext';
 import { buildClubAffiliationFilter } from '@/lib/affiliationKey';
 import {
   getUtcThisMonthSoFarBounds,
@@ -243,6 +244,7 @@ function formatUserDoc(user: Record<string, unknown>) {
     promotional: Boolean(user.promotional),
     promoCode: (user.promoCode as string) || '',
     teamMemberIndex: user.teamMemberIndex as number | undefined,
+    signupContext: formatSignupContextView(user.signupContext),
     createdAt,
   };
 }

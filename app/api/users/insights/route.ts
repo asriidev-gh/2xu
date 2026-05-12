@@ -156,6 +156,53 @@ export async function GET() {
       topClubRows.map((row) => ({ raw: String(row._id), count: row.count }))
     ).slice(0, 10);
 
+    const byDeviceType = (await users
+      .aggregate<{ _id: string; count: number }>([
+        {
+          $addFields: {
+            deviceBucket: {
+              $switch: {
+                branches: [
+                  { case: { $eq: ['$signupContext.deviceType', 'mobile'] }, then: 'Mobile' },
+                  { case: { $eq: ['$signupContext.deviceType', 'tablet'] }, then: 'Tablet' },
+                  { case: { $eq: ['$signupContext.deviceType', 'desktop'] }, then: 'Desktop' },
+                ],
+                default: 'Unknown',
+              },
+            },
+          },
+        },
+        { $group: { _id: '$deviceBucket', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ])
+      .toArray()) as { _id: string; count: number }[];
+
+    const byLocation = (await users
+      .aggregate<{ _id: string; count: number }>([
+        {
+          $addFields: {
+            locationBucket: {
+              $let: {
+                vars: {
+                  label: {
+                    $trim: {
+                      input: { $ifNull: ['$signupContext.locationLabel', ''] },
+                    },
+                  },
+                },
+                in: {
+                  $cond: [{ $gt: [{ $strLenCP: '$$label' }, 0] }, '$$label', 'Unknown'],
+                },
+              },
+            },
+          },
+        },
+        { $group: { _id: '$locationBucket', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 10 },
+      ])
+      .toArray()) as { _id: string; count: number }[];
+
     const promotionalOptIn = await users.countDocuments({ promotional: true });
 
     const now = new Date();
@@ -194,6 +241,14 @@ export async function GET() {
         })),
         registrationsByDay,
         topClubs,
+        byDeviceType: byDeviceType.map((row) => ({
+          name: String(row._id || 'Unknown'),
+          count: row.count,
+        })),
+        byLocation: byLocation.map((row) => ({
+          name: String(row._id || 'Unknown'),
+          count: row.count,
+        })),
       },
       { status: 200 }
     );

@@ -25,6 +25,16 @@ const MISSION_STRONG_PROMO = 'MISSIONSTRONG500';
 const MISSION_STRONG_ELIGIBLE_CATEGORIES = new Set(['Youth Category', 'Advocate / Influencer']);
 const PROMO_MAX_LENGTH = 20;
 
+function buildClientSignupContext() {
+  if (typeof window === 'undefined') return undefined;
+  return {
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    screenWidth: window.innerWidth,
+    screenHeight: window.innerHeight,
+    language: navigator.language,
+  };
+}
+
 export default function RegistrationSection({ selectedCategory = '', onCategoryApplied }: RegistrationSectionProps) {
   const registrationSectionRef = useRef<HTMLElement>(null);
   const [isRegistrationVisible, setIsRegistrationVisible] = useState(false);
@@ -239,6 +249,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
       const groupMemberKeys = (isTeam ? [1, 2, 3, 4] : isDuo ? [1, 2] : []) as Array<1 | 2 | 3 | 4>;
       // Only save promo code when it was validated as valid; otherwise save registration without it
       const promoToSave = promoCodeValid === true ? formData.promoCode : '';
+      const clientContext = buildClientSignupContext();
       const payload = groupMemberKeys.length > 0
         ? {
             email: formData.email,
@@ -247,6 +258,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
             promotional: formData.promotional,
             waiverAccepted: formData.waiverAccepted,
             promoCode: promoToSave || undefined,
+            clientContext,
             teamMembers: groupMemberKeys.map((num) => ({
               name: formData[`teamMember${num}Name`],
               birthday: formData[`teamMember${num}Birthday`],
@@ -255,7 +267,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
               tShirtSize: formData[`teamMember${num}TShirtSize`]
             }))
           }
-        : { ...formData, waiverAccepted: formData.waiverAccepted, promoCode: promoToSave };
+        : { ...formData, waiverAccepted: formData.waiverAccepted, promoCode: promoToSave, clientContext };
 
       const response = await fetch('/api/register', {
         method: 'POST',

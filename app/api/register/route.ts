@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
 import { Resend } from 'resend';
 import clientPromise from '@/lib/mongodb';
+import { buildSignupContext, type ClientSignupContext } from '@/lib/registrationContext';
 import { sendRegistrationConfirmation } from '@/lib/sendConfirmationEmail';
 
 export const dynamic = 'force-dynamic';
@@ -42,6 +43,7 @@ export async function POST(request: NextRequest) {
       promoCode,
       teamMembers,
       patronSpeedDistance,
+      clientContext,
     } = body;
 
     // Validate required fields
@@ -151,6 +153,7 @@ export async function POST(request: NextRequest) {
     }
 
     const now = new Date();
+    const signupContext = buildSignupContext(request, clientContext as ClientSignupContext | undefined);
 
     // Promo formats:
     // - Advocate format: SPS2XU + digits (single-use)
@@ -204,6 +207,7 @@ export async function POST(request: NextRequest) {
         mailerLastError: null,
         teamId,
         teamMemberIndex: index + 1,
+        signupContext,
         createdAt: now,
         updatedAt: now
       }));
@@ -290,6 +294,7 @@ export async function POST(request: NextRequest) {
       mailerStatus: 'pending',
       mailerLastAttemptAt: null,
       mailerLastError: null,
+      signupContext,
       createdAt: now,
       updatedAt: now,
     };
