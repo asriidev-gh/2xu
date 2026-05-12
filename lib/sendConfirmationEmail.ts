@@ -5,14 +5,34 @@ import {
   formatRaceCategoryLabel,
 } from '@/lib/registrationPaymentAmount';
 
-/**
- * Sends the registration confirmation email to the participant.
- * Uses SMTP env vars: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM.
- * Optional: SMTP_SIGNOFF_NAME (defaults to "One of a Kind Asia") for "Warm regards" line.
- * Best-effort; does not throw (logs and returns false on failure).
- * @param tShirtSizeInfo - Optional: "M" for individual, or "Team T-shirt sizes: M, L, XL, S" for team.
- */
-type MailerSendResult = { success: true; error: null } | { success: false; error: string };
+export type RegistrationConfirmationEmailPreview = {
+  subject: string;
+  html: string;
+  text: string;
+};
+
+type MailerSendResult =
+  | { success: true; error: null; preview: RegistrationConfirmationEmailPreview }
+  | { success: false; error: string; preview: RegistrationConfirmationEmailPreview };
+
+type BuildRegistrationConfirmationEmailInput = {
+  participantName: string;
+  useLegacyTemplate?: boolean;
+  promoCode?: string;
+  raceCategory?: string;
+  patronSpeedDistance?: string;
+};
+
+function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  };
+  return String(text).replace(/[&<>"']/g, (m) => map[m]);
+}
 
 function formatMailerError(err: unknown): string {
   const e = err as {
@@ -41,38 +61,25 @@ function formatResendError(err: unknown): string {
   return [name || null, msg || null].filter(Boolean).join(' | ').slice(0, 400) || 'Unknown Resend error';
 }
 
-export async function sendRegistrationConfirmation(
-  participantName: string,
-  participantEmail: string,
-  tShirtSizeInfo?: string,
+function isAdvocatePromoCode(promoCode: string): boolean {
+  return /^SPS2XU\d+$/i.test(promoCode.trim());
+}
+
+export function buildRegistrationConfirmationEmail({
+  participantName,
   useLegacyTemplate = false,
   promoCode = '',
   raceCategory = '',
-  patronSpeedDistance = ''
-): Promise<MailerSendResult> {
-  const host = process.env.SMTP_HOST?.trim();
-  const port = process.env.SMTP_PORT?.trim();
-  const user = process.env.SMTP_USER?.trim();
-  const pass = process.env.SMTP_PASS?.trim();
-  const from = process.env.SMTP_FROM?.trim() || 'One of a kind Asia <ops@oneofakindasia.com>';
-  const resendApiKey = process.env.RESEND_API_KEY?.trim();
-  const resendFrom = process.env.RESEND_FROM_EMAIL?.trim() || from;
+  patronSpeedDistance = '',
+}: BuildRegistrationConfirmationEmailInput): RegistrationConfirmationEmailPreview {
   const signOffName =
     process.env.SMTP_SIGNOFF_NAME?.trim() || 'One of a Kind Asia';
-
-  // CC internal organizers on every registration confirmation
-  const ccRecipients = [
-    'oneofakindasiaph@gmail.com',
-    'ops@oneofakindasia.com',
-    '1@oneofakindasia.com',
-  ];
-
   const siteUrl = 'https://www.oneofakindasia.com';
-  // Base URL for payment QR images in email
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL?.trim() ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
     siteUrl;
+  const showPaymentDetails = !isAdvocatePromoCode(promoCode);
 
   const headerBanner = baseUrl
     ? `
@@ -102,9 +109,10 @@ export async function sendRegistrationConfirmation(
       </table>
     </div>
   `;
-  const paymentAmount = raceCategory
-    ? computeRegistrationPaymentAmount(raceCategory, promoCode)
-    : null;
+  const paymentAmount =
+    showPaymentDetails && raceCategory
+      ? computeRegistrationPaymentAmount(raceCategory, promoCode)
+      : null;
   const raceExperienceLabel = raceCategory
     ? formatRaceCategoryLabel(raceCategory, patronSpeedDistance)
     : '';
@@ -159,11 +167,15 @@ export async function sendRegistrationConfirmation(
     ${headerBanner}
     <p>Dear ${escapeHtml(participantName)},</p>
     <p>Thank you for your interest in taking part in the Speed Series powered by 2XU—the ultimate urban run performance and advocacy event. We have successfully received your registration details.</p>
-    <p>You&rsquo;re now one step closer to the starting line. To complete your registration, please proceed with your preferred payment option and send your proof of payment to Speed Series for verification.</p>
+    ${
+      showPaymentDetails
+        ? '<p>You&rsquo;re now one step closer to the starting line. To complete your registration, please proceed with your preferred payment option and send your proof of payment to Speed Series for verification.</p>'
+        : '<p>You&rsquo;re now one step closer to the starting line.</p>'
+    }
     ${amountDueHtml}
     <p>Stay tuned for your final confirmation.</p>
     <p>Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit <a href="https://www.oneofakindasia.com">www.oneofakindasia.com</a> for official event details.</p>
-    ${paymentSection}
+    ${showPaymentDetails ? paymentSection : ''}
     <p>We can&rsquo;t wait to see you at the starting line.<br/>Let&rsquo;s make history.</p>
     <p>🔥 Mission Strong<br/>⚡ Speed Series<br/>Powered by 2XU</p>
     <p>Let&rsquo;s go.</p>
@@ -197,13 +209,17 @@ Powered by 2XU`;
 
 Thank you for your interest in taking part in the Speed Series powered by 2XU—the ultimate urban run performance and advocacy event. We have successfully received your registration details.
 
-You're now one step closer to the starting line. To complete your registration, please proceed with your preferred payment option and send your proof of payment to Speed Series for verification.
+${
+  showPaymentDetails
+    ? "You're now one step closer to the starting line. To complete your registration, please proceed with your preferred payment option and send your proof of payment to Speed Series for verification."
+    : "You're now one step closer to the starting line."
+}
 
 ${amountDueText}Stay tuned for your final confirmation.
 
 Stay locked in for updates and exciting announcements via the Mission Strong Speed Series Facebook page and visit www.oneofakindasia.com for official event details.
 
-${textPayment}We can't wait to see you at the starting line.
+${showPaymentDetails ? textPayment : ''}We can't wait to see you at the starting line.
 Let's make history.
 
 🔥 Mission Strong
@@ -218,7 +234,46 @@ ${siteUrl}`;
   const plainBody = useLegacyTemplate ? plainBodyLegacy : plainBodyNew;
   const subject = 'Speed Series powered by 2XU — Registration received';
 
-  // Prefer Resend when configured (requested by user). No SMTP fallback in this mode.
+  return {
+    subject,
+    html,
+    text: `Speed Series — Powered by 2XU\n\n${plainBody}`,
+  };
+}
+
+export async function sendRegistrationConfirmation(
+  participantName: string,
+  participantEmail: string,
+  tShirtSizeInfo?: string,
+  useLegacyTemplate = false,
+  promoCode = '',
+  raceCategory = '',
+  patronSpeedDistance = ''
+): Promise<MailerSendResult> {
+  void tShirtSizeInfo;
+
+  const host = process.env.SMTP_HOST?.trim();
+  const port = process.env.SMTP_PORT?.trim();
+  const user = process.env.SMTP_USER?.trim();
+  const pass = process.env.SMTP_PASS?.trim();
+  const from = process.env.SMTP_FROM?.trim() || 'One of a kind Asia <ops@oneofakindasia.com>';
+  const resendApiKey = process.env.RESEND_API_KEY?.trim();
+  const resendFrom = process.env.RESEND_FROM_EMAIL?.trim() || from;
+
+  const preview = buildRegistrationConfirmationEmail({
+    participantName,
+    useLegacyTemplate,
+    promoCode,
+    raceCategory,
+    patronSpeedDistance,
+  });
+
+  const ccRecipients = [
+    'oneofakindasiaph@gmail.com',
+    'ops@oneofakindasia.com',
+    '1@oneofakindasia.com',
+  ];
+
   if (resendApiKey) {
     try {
       const resend = new Resend(resendApiKey);
@@ -226,18 +281,18 @@ ${siteUrl}`;
         from: resendFrom,
         to: [participantEmail],
         cc: ccRecipients,
-        subject,
-        html,
-        text: `Speed Series — Powered by 2XU\n\n${plainBody}`,
+        subject: preview.subject,
+        html: preview.html,
+        text: preview.text,
       });
       if (error) {
         throw new Error(JSON.stringify(error));
       }
       console.log('[sendConfirmationEmail] Confirmation email sent via Resend to', participantEmail);
-      return { success: true, error: null };
+      return { success: true, error: null, preview };
     } catch (err) {
       console.error('[sendConfirmationEmail] Resend failed:', err);
-      return { success: false, error: formatResendError(err) };
+      return { success: false, error: formatResendError(err), preview };
     }
   }
 
@@ -248,6 +303,7 @@ ${siteUrl}`;
     return {
       success: false,
       error: 'SMTP not configured',
+      preview,
     };
   }
 
@@ -265,28 +321,18 @@ ${siteUrl}`;
       from,
       to: participantEmail,
       cc: ccRecipients,
-      subject,
-      html,
-      text: `Speed Series — Powered by 2XU\n\n${plainBody}`,
+      subject: preview.subject,
+      html: preview.html,
+      text: preview.text,
     });
     console.log('[sendConfirmationEmail] Confirmation email sent to', participantEmail);
-    return { success: true, error: null };
+    return { success: true, error: null, preview };
   } catch (err) {
     console.error('[sendConfirmationEmail] Failed to send:', err);
     return {
       success: false,
       error: formatMailerError(err),
+      preview,
     };
   }
-}
-
-function escapeHtml(text: string): string {
-  const map: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;',
-  };
-  return String(text).replace(/[&<>"']/g, (m) => map[m]);
 }

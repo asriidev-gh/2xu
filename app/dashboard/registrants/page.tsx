@@ -1,11 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import { RACE_CATEGORY_NAMES } from '@/components/RaceCategoriesSection';
 import DashboardAdminHeader from '@/components/DashboardAdminHeader';
+import 'react-quill/dist/quill.snow.css';
+
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 interface User {
   _id: string;
@@ -33,6 +37,16 @@ interface User {
   };
   createdAt: string;
 }
+
+type MailerEmailPreviewState = {
+  subject: string;
+  html: string;
+  text: string;
+  capturedAt: string | null;
+  mailerStatus: 'success' | 'failed' | 'pending';
+  mailerLastAttemptAt: string | null;
+  mailerLastError: string | null;
+};
 
 const T_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
@@ -247,6 +261,16 @@ export default function DashboardPage() {
   const [editingTShirtSizeUserId, setEditingTShirtSizeUserId] = useState<string | null>(null);
   const [savingTShirtSizeUserId, setSavingTShirtSizeUserId] = useState<string | null>(null);
   const [retryingMailerUserId, setRetryingMailerUserId] = useState<string | null>(null);
+  const [mailerPreviewOpen, setMailerPreviewOpen] = useState(false);
+  const [mailerPreviewUser, setMailerPreviewUser] = useState<User | null>(null);
+  const [mailerPreview, setMailerPreview] = useState<MailerEmailPreviewState | null>(null);
+  const [mailerPreviewLoading, setMailerPreviewLoading] = useState(false);
+  const [mailerPreviewError, setMailerPreviewError] = useState<string | null>(null);
+  const [composeEmailOpen, setComposeEmailOpen] = useState(false);
+  const [composeEmailUser, setComposeEmailUser] = useState<User | null>(null);
+  const [composeEmailSubject, setComposeEmailSubject] = useState('');
+  const [composeEmailHtml, setComposeEmailHtml] = useState('<p></p>');
+  const [composeEmailSending, setComposeEmailSending] = useState(false);
   const [clubAffiliationOptions, setClubAffiliationOptions] = useState<string[]>([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
   const [sortBy, setSortBy] = useState<DashboardSortField>('createdAt');
@@ -264,6 +288,20 @@ export default function DashboardPage() {
     dateFrom: '',
     dateTo: ''
   });
+
+  const composeEmailQuillModules = useMemo(
+    () => ({
+      toolbar: [
+        [{ header: [2, 3, false] }],
+        ['bold', 'italic', 'underline'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['link'],
+        ['clean'],
+      ],
+    }),
+    []
+  );
+  const composeEmailQuillFormats = ['header', 'bold', 'italic', 'underline', 'list', 'bullet', 'link'];
 
   useEffect(() => {
     setPagination((prev) => ({ ...prev, page: 1 }));
@@ -573,6 +611,124 @@ export default function DashboardPage() {
     });
   };
 
+  const closeMailerPreview = () => {
+    setMailerPreviewOpen(false);
+    setMailerPreviewUser(null);
+    setMailerPreview(null);
+    setMailerPreviewError(null);
+    setMailerPreviewLoading(false);
+  };
+
+  const openMailerPreview = async (user: User) => {
+    setMailerPreviewUser(user);
+    setMailerPreviewOpen(true);
+    setMailerPreviewLoading(true);
+    setMailerPreviewError(null);
+    setMailerPreview(null);
+
+    try {
+      const response = await fetch(`/api/users/${user._id}/mailer-preview`);
+      if (response.status === 401) {
+        router.push('/login');
+        return;
+      }
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load email preview');
+      }
+      setMailerPreview(data.preview as MailerEmailPreviewState);
+    } catch (error) {
+      setMailerPreviewError(
+        error instanceof Error ? error.message : 'Failed to load email preview'
+      );
+    } finally {
+      setMailerPreviewLoading(false);
+    }
+  };
+
+  const mailerStatusButtonClass = (status: User['mailerStatus']) => {
+    if (status === 'success') {
+      return 'bg-green-100 text-green-800 hover:bg-green-200';
+    }
+    if (status === 'failed') {
+      return 'bg-red-100 text-red-800 hover:bg-red-200';
+    }
+    return 'bg-amber-100 text-amber-800 hover:bg-amber-200';
+  };
+
+  const closeComposeEmail = () => {
+    setComposeEmailOpen(false);
+    setComposeEmailUser(null);
+    setComposeEmailSubject('');
+    setComposeEmailHtml('<p></p>');
+  };
+
+  const openComposeEmail = (user: User) => {
+    setComposeEmailUser(user);
+    setComposeEmailSubject('');
+    setComposeEmailHtml(`<p>Dear ${user.name},</p><p><br></p>`);
+    setComposeEmailOpen(true);
+  };
+
+  const handleSendComposedEmail = async () => {
+    if (!composeEmailUser) return;
+
+    const subject = composeEmailSubject.trim();
+    const messageHtml = composeEmailHtml.trim();
+    if (!subject) {
+      await Swal.fire({
+        title: 'Subject required',
+        text: 'Please enter an email subject before sending.',
+        icon: 'warning',
+        confirmButtonColor: '#ea580c',
+      });
+      return;
+    }
+    if (!messageHtml || messageHtml === '<p></p>' || messageHtml === '<p><br></p>') {
+      await Swal.fire({
+        title: 'Message required',
+        text: 'Please compose an email message before sending.',
+        icon: 'warning',
+        confirmButtonColor: '#ea580c',
+      });
+      return;
+    }
+
+    setComposeEmailSending(true);
+    try {
+      const response = await fetch(`/api/users/${composeEmailUser._id}/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject, messageHtml }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        router.push('/login');
+        return;
+      }
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send email');
+      }
+
+      closeComposeEmail();
+      await Swal.fire({
+        title: 'Email sent',
+        text: `Message sent to ${data.recipientEmail || composeEmailUser.email}.`,
+        icon: 'success',
+        confirmButtonColor: '#ea580c',
+      });
+    } catch (error) {
+      await Swal.fire({
+        title: 'Send failed',
+        text: error instanceof Error ? error.message : 'Failed to send email',
+        icon: 'error',
+        confirmButtonColor: '#ea580c',
+      });
+    } finally {
+      setComposeEmailSending(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-gray-50 to-gray-100/90 text-gray-900">
       <DashboardAdminHeader emailBlastEnabled={emailBlastEnabled} onLogout={handleLogout} />
@@ -801,9 +957,9 @@ export default function DashboardPage() {
                     )}
                     <SortableTh field="mailerStatus" label="Email Status" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
                     <SortableTh field="createdAt" label="Registered" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
-                    {deleteUserEnabled && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">Actions</th>
-                    )}
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -915,13 +1071,16 @@ export default function DashboardPage() {
                       )}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">
                         <div className="flex items-center gap-2">
-                          {user.mailerStatus === 'success' ? (
-                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">success</span>
-                          ) : user.mailerStatus === 'failed' ? (
-                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">failed</span>
-                          ) : (
-                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">pending</span>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => void openMailerPreview(user)}
+                            className={`px-2 py-1 text-xs font-semibold rounded-full transition-colors ${mailerStatusButtonClass(
+                              user.mailerStatus
+                            )}`}
+                            title="View registration email preview"
+                          >
+                            {user.mailerStatus || 'pending'}
+                          </button>
                           {user.mailerStatus === 'failed' && (
                             <button
                               type="button"
@@ -945,19 +1104,29 @@ export default function DashboardPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">{formatDate(user.createdAt)}</td>
-                      {deleteUserEnabled && (
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex items-center gap-2">
                           <button
-                            onClick={() => handleDeleteUser(user._id, user.name)}
-                            className="text-red-600 hover:text-red-900 transition-colors font-fira-sans"
-                            title="Delete user"
+                            type="button"
+                            onClick={() => openComposeEmail(user)}
+                            className="px-3 py-1.5 rounded-md text-xs font-semibold bg-orange-100 text-orange-700 hover:bg-orange-200 transition-colors font-fira-sans"
                           >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
+                            Send email
                           </button>
-                        </td>
-                      )}
+                          {deleteUserEnabled && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteUser(user._id, user.name)}
+                              className="text-red-600 hover:text-red-900 transition-colors font-fira-sans"
+                              title="Delete user"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                     );
                   })}
@@ -999,6 +1168,189 @@ export default function DashboardPage() {
           )}
         </div>
       </main>
+
+      {composeEmailOpen && composeEmailUser && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          role="presentation"
+          onClick={closeComposeEmail}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="compose-email-title"
+            className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] flex flex-col border border-gray-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-gray-100 shrink-0">
+              <div>
+                <h3 id="compose-email-title" className="text-lg font-semibold text-gray-900 font-druk">
+                  Send email
+                </h3>
+                <p className="text-sm text-gray-600 font-sweet-sans mt-1">
+                  {composeEmailUser.name} · {composeEmailUser.email}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeComposeEmail}
+                disabled={composeEmailSending}
+                className="shrink-0 rounded-md px-3 py-1.5 text-sm font-fira-sans text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="px-5 py-4 overflow-y-auto min-h-0 space-y-4">
+              <div>
+                <label htmlFor="compose-email-subject" className="block text-sm font-medium text-gray-700 mb-1 font-fira-sans">
+                  Subject
+                </label>
+                <input
+                  id="compose-email-subject"
+                  type="text"
+                  value={composeEmailSubject}
+                  onChange={(e) => setComposeEmailSubject(e.target.value)}
+                  disabled={composeEmailSending}
+                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 shadow-sm font-sweet-sans text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/25 focus:border-orange-500"
+                  placeholder="Email subject"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2 font-fira-sans">Message</p>
+                  <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+                    <ReactQuill
+                      theme="snow"
+                      value={composeEmailHtml}
+                      onChange={setComposeEmailHtml}
+                      modules={composeEmailQuillModules}
+                      formats={composeEmailQuillFormats}
+                      readOnly={composeEmailSending}
+                      className="compose-email-quill"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2 font-fira-sans">Preview</p>
+                  <div className="min-h-[280px] max-h-[420px] overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-4">
+                    <div
+                      className="prose prose-sm max-w-none font-sweet-sans"
+                      dangerouslySetInnerHTML={{ __html: composeEmailHtml }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-100 shrink-0">
+              <button
+                type="button"
+                onClick={closeComposeEmail}
+                disabled={composeEmailSending}
+                className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-fira-sans text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSendComposedEmail()}
+                disabled={composeEmailSending}
+                className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-fira-sans font-medium hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {composeEmailSending ? 'Sending…' : 'Send email'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {mailerPreviewOpen && mailerPreviewUser && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          role="presentation"
+          onClick={closeMailerPreview}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="mailer-preview-title"
+            className="bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[88vh] flex flex-col border border-gray-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-gray-100 shrink-0">
+              <div>
+                <h3 id="mailer-preview-title" className="text-lg font-semibold text-gray-900 font-druk">
+                  Registration email preview
+                </h3>
+                <p className="text-sm text-gray-600 font-sweet-sans mt-1">
+                  {mailerPreviewUser.name} · {mailerPreviewUser.email}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeMailerPreview}
+                className="shrink-0 rounded-md px-3 py-1.5 text-sm font-fira-sans text-gray-600 hover:bg-gray-100"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="px-5 py-4 overflow-y-auto min-h-0">
+              {mailerPreviewLoading && (
+                <p className="text-sm text-gray-500 font-sweet-sans">Loading email preview…</p>
+              )}
+              {!mailerPreviewLoading && mailerPreviewError && (
+                <p className="text-sm text-red-600 font-sweet-sans">{mailerPreviewError}</p>
+              )}
+              {!mailerPreviewLoading && !mailerPreviewError && mailerPreview && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm font-sweet-sans">
+                    <p className="text-gray-700">
+                      <span className="font-medium text-gray-900">Status:</span>{' '}
+                      {mailerPreview.mailerStatus}
+                    </p>
+                    <p className="text-gray-700">
+                      <span className="font-medium text-gray-900">Subject:</span>{' '}
+                      {mailerPreview.subject || '—'}
+                    </p>
+                    <p className="text-gray-700">
+                      <span className="font-medium text-gray-900">Last attempt:</span>{' '}
+                      {mailerPreview.mailerLastAttemptAt
+                        ? new Date(mailerPreview.mailerLastAttemptAt).toLocaleString()
+                        : '—'}
+                    </p>
+                    <p className="text-gray-700">
+                      <span className="font-medium text-gray-900">Preview captured:</span>{' '}
+                      {mailerPreview.capturedAt
+                        ? new Date(mailerPreview.capturedAt).toLocaleString()
+                        : '—'}
+                    </p>
+                  </div>
+                  {mailerPreview.mailerStatus === 'failed' && mailerPreview.mailerLastError && (
+                    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 font-sweet-sans">
+                      {mailerPreview.mailerLastError}
+                    </div>
+                  )}
+                  {mailerPreview.html ? (
+                    <iframe
+                      title={`Registration email preview for ${mailerPreviewUser.name}`}
+                      srcDoc={mailerPreview.html}
+                      className="w-full h-[60vh] border border-gray-200 rounded-lg bg-white"
+                      sandbox=""
+                    />
+                  ) : (
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 font-sweet-sans whitespace-pre-wrap">
+                      {mailerPreview.text || 'No email preview was saved for this registration yet.'}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

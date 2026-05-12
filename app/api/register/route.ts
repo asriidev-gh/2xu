@@ -231,6 +231,12 @@ export async function POST(request: NextRequest) {
             mailerStatus: mailResult.success ? 'success' : 'failed',
             mailerLastAttemptAt: new Date(),
             mailerLastError: mailResult.success ? null : mailResult.error,
+            mailerEmailPreview: {
+              subject: mailResult.preview.subject,
+              html: mailResult.preview.html,
+              text: mailResult.preview.text,
+              capturedAt: new Date(),
+            },
             updatedAt: new Date(),
           },
         }
@@ -321,6 +327,12 @@ export async function POST(request: NextRequest) {
           mailerStatus: mailResult.success ? 'success' : 'failed',
           mailerLastAttemptAt: new Date(),
           mailerLastError: mailResult.success ? null : mailResult.error,
+          mailerEmailPreview: {
+            subject: mailResult.preview.subject,
+            html: mailResult.preview.html,
+            text: mailResult.preview.text,
+            capturedAt: new Date(),
+          },
           updatedAt: new Date(),
         },
       }
