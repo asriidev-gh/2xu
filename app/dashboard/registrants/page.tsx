@@ -257,6 +257,7 @@ export default function DashboardPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deleteUserEnabled, setDeleteUserEnabled] = useState(false);
+  const [registrantSendEmailEnabled, setRegistrantSendEmailEnabled] = useState(false);
   const [emailBlastEnabled, setEmailBlastEnabled] = useState(false);
   const [editingTShirtSizeUserId, setEditingTShirtSizeUserId] = useState<string | null>(null);
   const [savingTShirtSizeUserId, setSavingTShirtSizeUserId] = useState<string | null>(null);
@@ -344,6 +345,7 @@ export default function DashboardPage() {
       if (response.ok) {
         const data = await response.json();
         setDeleteUserEnabled(data.deleteUserEnabled || false);
+        setRegistrantSendEmailEnabled(data.registrantSendEmailEnabled === true);
         setEmailBlastEnabled(data.emailBlastEnabled === true);
       }
     } catch (error) {
@@ -957,9 +959,11 @@ export default function DashboardPage() {
                     )}
                     <SortableTh field="mailerStatus" label="Email Status" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
                     <SortableTh field="createdAt" label="Registered" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">
-                      Actions
-                    </th>
+                    {(registrantSendEmailEnabled || deleteUserEnabled) && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">
+                        Actions
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -1104,15 +1108,18 @@ export default function DashboardPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">{formatDate(user.createdAt)}</td>
+                      {(registrantSendEmailEnabled || deleteUserEnabled) && (
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openComposeEmail(user)}
-                            className="px-3 py-1.5 rounded-md text-xs font-semibold bg-orange-100 text-orange-700 hover:bg-orange-200 transition-colors font-fira-sans"
-                          >
-                            Send email
-                          </button>
+                          {registrantSendEmailEnabled && (
+                            <button
+                              type="button"
+                              onClick={() => openComposeEmail(user)}
+                              className="px-3 py-1.5 rounded-md text-xs font-semibold bg-orange-100 text-orange-700 hover:bg-orange-200 transition-colors font-fira-sans"
+                            >
+                              Send email
+                            </button>
+                          )}
                           {deleteUserEnabled && (
                             <button
                               type="button"
@@ -1127,6 +1134,7 @@ export default function DashboardPage() {
                           )}
                         </div>
                       </td>
+                      )}
                     </tr>
                     );
                   })}

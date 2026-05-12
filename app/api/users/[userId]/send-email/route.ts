@@ -7,6 +7,10 @@ import clientPromise from '@/lib/mongodb';
 
 export const dynamic = 'force-dynamic';
 
+function isRegistrantSendEmailEnabled() {
+  return process.env.REGISTRANT_SEND_EMAIL_ENABLED === 'true';
+}
+
 async function isAuthenticated() {
   const cookieStore = await cookies();
   const session = cookieStore.get('admin_session');
@@ -36,6 +40,12 @@ export async function POST(
   try {
     if (!(await isAuthenticated())) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!isRegistrantSendEmailEnabled()) {
+      return NextResponse.json(
+        { error: 'Registrant send email is disabled in this environment' },
+        { status: 403 }
+      );
     }
 
     const { userId } = params;
