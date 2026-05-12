@@ -17,9 +17,9 @@ export default function DashboardBrandLogo({ variant = 'default' }: DashboardBra
   return (
     <Link
       href="/"
-      className="flex items-center shrink-0 min-w-0"
-      aria-label="One of a Kind Asia — public site"
-      title="One of a Kind Asia"
+      className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0"
+      aria-label="Oneofakindasia Admin — public site"
+      title="Oneofakindasia Admin"
     >
       <Image
         src="/images/oneofakindasia-logo.png"
@@ -29,6 +29,11 @@ export default function DashboardBrandLogo({ variant = 'default' }: DashboardBra
         className={imgClass}
         priority
       />
+      {variant === 'admin' ? (
+        <span className="font-fira-sans text-sm sm:text-base font-semibold text-gray-900 whitespace-nowrap">
+          Oneofakindasia Admin
+        </span>
+      ) : null}
     </Link>
   );
 }

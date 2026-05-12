@@ -6,6 +6,7 @@ import {
   getUtcThisWeekSoFarBounds,
   getUtcTodayBounds,
 } from '@/lib/insightsPeriodBounds';
+import { mergeAffiliationCounts } from '@/lib/affiliationKey';
 
 export const dynamic = 'force-dynamic';
 
@@ -144,14 +145,16 @@ export async function GET() {
       dailyAgg.map((r) => ({ date: r._id, count: r.count }))
     );
 
-    const topClubs = (await users
+    const topClubRows = (await users
       .aggregate<{ _id: string; count: number }>([
         { $match: { affiliations: { $type: 'string', $regex: /\S/ } } },
         { $group: { _id: '$affiliations', count: { $sum: 1 } } },
-        { $sort: { count: -1 } },
-        { $limit: 10 },
       ])
       .toArray()) as { _id: string; count: number }[];
+
+    const topClubs = mergeAffiliationCounts(
+      topClubRows.map((row) => ({ raw: String(row._id), count: row.count }))
+    ).slice(0, 10);
 
     const promotionalOptIn = await users.countDocuments({ promotional: true });
 
@@ -190,7 +193,7 @@ export async function GET() {
           count: r.count,
         })),
         registrationsByDay,
-        topClubs: topClubs.map((r) => ({ name: String(r._id), count: r.count })),
+        topClubs,
       },
       { status: 200 }
     );

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import clientPromise from '@/lib/mongodb';
+import { buildClubAffiliationFilter } from '@/lib/affiliationKey';
 import {
   getUtcThisMonthSoFarBounds,
   getUtcThisWeekSoFarBounds,
@@ -101,10 +102,10 @@ function buildFilter(metric: string, value: string): Record<string, unknown> {
       filter.createdAt = { $gte: start, $lte: end };
       break;
     }
-    case 'club':
+    case 'club': {
       if (!value) throw new Error('Missing value for club');
-      filter.affiliations = value;
-      break;
+      return buildClubAffiliationFilter(value);
+    }
     case 'period_today': {
       const { start, end } = getUtcTodayBounds();
       filter.createdAt = { $gte: start, $lte: end };
