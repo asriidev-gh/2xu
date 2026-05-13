@@ -49,6 +49,21 @@ export default function DashboardAdminHeader({ emailBlastEnabled, onLogout }: Da
             >
               Registrants
             </Link>
+            <Link
+              href="/dashboard/race-events"
+              className={`${navLinkBase} ${
+                pathname === '/dashboard/race-events' || pathname?.startsWith('/dashboard/race-events/')
+                  ? navLinkActive
+                  : navLinkIdle
+              }`}
+              aria-current={
+                pathname === '/dashboard/race-events' || pathname?.startsWith('/dashboard/race-events/')
+                  ? 'page'
+                  : undefined
+              }
+            >
+              Race events
+            </Link>
             {emailBlastEnabled && (
               <Link
                 href="/dashboard/email-blast"
