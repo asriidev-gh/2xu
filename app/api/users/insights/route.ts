@@ -8,6 +8,7 @@ import {
 } from '@/lib/insightsPeriodBounds';
 import { mergeAffiliationCounts } from '@/lib/affiliationKey';
 import { formatSignupLocationDisplayLabel, normalizeLocationString } from '@/lib/registrationContext';
+import { getCompletedAgeBirthdayStringBounds } from '@/lib/ageBirthdayBounds';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +21,68 @@ async function isAuthenticated() {
 type CountRow = { _id: string; count: number };
 
 const UNRECORDED_SIGNUP_LABEL = 'Unrecorded';
+
+const AGE_BRACKET_LABEL_ORDER = [
+  'Under 10',
+  '10–19',
+  '20–29',
+  '30–39',
+  '40–49',
+  '50–59',
+  '60–69',
+  '70–79',
+  '80+',
+] as const;
+
+function sortAgeBracketRows(
+  rows: { name: string; count: number; ageMin?: number; ageMax?: number }[]
+): { name: string; count: number; ageMin?: number; ageMax?: number }[] {
+  const order = new Map<string, number>(
+    AGE_BRACKET_LABEL_ORDER.map((label, i) => [label, i])
+  );
+  return [...rows].sort((a, b) => (order.get(a.name) ?? 999) - (order.get(b.name) ?? 999));
+}
+
+/** Same completed-age birthday windows as `/api/users` age filter & drill-down (not `$dateDiff`). */
+const AGE_BRACKET_SPECS: readonly { label: string; ageMin: number; ageMax: number }[] = [
+  { label: 'Under 10', ageMin: 0, ageMax: 9 },
+  { label: '10–19', ageMin: 10, ageMax: 19 },
+  { label: '20–29', ageMin: 20, ageMax: 29 },
+  { label: '30–39', ageMin: 30, ageMax: 39 },
+  { label: '40–49', ageMin: 40, ageMax: 49 },
+  { label: '50–59', ageMin: 50, ageMax: 59 },
+  { label: '60–69', ageMin: 60, ageMax: 69 },
+  { label: '70–79', ageMin: 70, ageMax: 79 },
+  { label: '80+', ageMin: 80, ageMax: 120 },
+];
+
+function drillBoundsForAgeBracketLabel(
+  name: string
+): { ageMin: number; ageMax: number } | null {
+  const spec = AGE_BRACKET_SPECS.find((s) => s.label === name);
+  return spec ? { ageMin: spec.ageMin, ageMax: spec.ageMax } : null;
+}
+
+function buildAgeBucketSwitchBranches(today: Date) {
+  return AGE_BRACKET_SPECS.map(({ label, ageMin, ageMax }) => {
+    const { minBirth, maxBirth } = getCompletedAgeBirthdayStringBounds(ageMin, ageMax, today);
+    return {
+      case: {
+        $and: [
+          {
+            $regexMatch: {
+              input: { $ifNull: ['$birthday', ''] },
+              regex: '^\\d{4}-\\d{2}-\\d{2}$',
+            },
+          },
+          { $gte: ['$birthday', minBirth] },
+          { $lte: ['$birthday', maxBirth] },
+        ],
+      },
+      then: label,
+    };
+  });
+}
 
 function mergeLocationInsightRows(
   rows: { _id: string; count: number }[]
@@ -207,6 +270,35 @@ export async function GET() {
       ])
       .toArray()) as { _id: string; count: number }[];
 
+    const nowForAge = new Date();
+
+    const byAgeBracketRaw = (await users
+      .aggregate<{ _id: string; count: number }>([
+        {
+          $addFields: {
+            ageBucketLabel: {
+              $switch: {
+                branches: buildAgeBucketSwitchBranches(nowForAge),
+                default: UNRECORDED_SIGNUP_LABEL,
+              },
+            },
+          },
+        },
+        { $group: { _id: '$ageBucketLabel', count: { $sum: 1 } } },
+      ])
+      .toArray()) as { _id: string; count: number }[];
+
+    const byAgeBracket = sortAgeBracketRows(
+      byAgeBracketRaw.map((row) => {
+        const name = String(row._id ?? UNRECORDED_SIGNUP_LABEL);
+        const bounds = drillBoundsForAgeBracketLabel(name);
+        if (!bounds) {
+          return { name, count: row.count };
+        }
+        return { name, count: row.count, ageMin: bounds.ageMin, ageMax: bounds.ageMax };
+      })
+    ).filter((row) => row.name !== UNRECORDED_SIGNUP_LABEL);
+
     const byLocation = (await users
       .aggregate<{ _id: string; count: number }>([
         {
@@ -276,6 +368,7 @@ export async function GET() {
           count: row.count,
         })),
         byLocation: mergeLocationInsightRows(byLocation),
+        byAgeBracket,
       },
       { status: 200 }
     );

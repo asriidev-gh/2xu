@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import DashboardAdminHeader from '@/components/DashboardAdminHeader';
+import { formatCompletedAgeLabel, getAgeYearsFromBirthday } from '@/lib/completedAge';
 
 type InsightsPayload = {
   generatedAt: string;
@@ -22,6 +23,7 @@ type InsightsPayload = {
   topClubs: { name: string; count: number }[];
   byDeviceType: { name: string; count: number }[];
   byLocation: { name: string; count: number; filterKeys?: string[] }[];
+  byAgeBracket: { name: string; count: number; ageMin?: number; ageMax?: number }[];
 };
 
 type DetailMetric =
@@ -39,7 +41,8 @@ type DetailMetric =
   | 'period_week'
   | 'period_month'
   | 'signup_device'
-  | 'signup_location';
+  | 'signup_location'
+  | 'age_bracket';
 
 const UNRECORDED_SIGNUP_LABEL = 'Unrecorded';
 
@@ -487,6 +490,7 @@ export default function InsightsPage() {
   const maxClub = data ? Math.max(1, ...data.topClubs.map((r) => r.count)) : 1;
   const maxDevice = data ? Math.max(1, ...(data.byDeviceType || []).map((r) => r.count)) : 1;
   const maxLocation = data ? Math.max(1, ...(data.byLocation || []).map((r) => r.count)) : 1;
+  const maxAgeBracket = data ? Math.max(1, ...(data.byAgeBracket || []).map((r) => r.count)) : 1;
   const maxDaily = data ? Math.max(1, ...data.registrationsByDay.map((d) => d.count)) : 1;
 
   const handleLogout = async () => {
@@ -676,6 +680,40 @@ export default function InsightsPage() {
                     }
                   />
                 ))}
+              </div>
+            </div>
+
+            <div className="mb-8">
+              <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900 font-druk mb-1">
+                  Registrants age group
+                </h3>
+                <div className="max-h-80 overflow-y-auto pr-1">
+                  {(data.byAgeBracket || []).length === 0 ? (
+                    <p className="text-sm text-gray-500 font-sweet-sans">No age data yet</p>
+                  ) : (
+                    (data.byAgeBracket || []).map((r) => (
+                      <BarRow
+                        key={r.name}
+                        label={r.name}
+                        count={r.count}
+                        max={maxAgeBracket}
+                        onCountClick={
+                          r.name === UNRECORDED_SIGNUP_LABEL ||
+                          r.ageMin === undefined ||
+                          r.ageMax === undefined
+                            ? undefined
+                            : () =>
+                                openDetails(
+                                  `Age: ${r.name}`,
+                                  'age_bracket',
+                                  JSON.stringify({ min: r.ageMin, max: r.ageMax })
+                                )
+                        }
+                      />
+                    ))
+                  )}
+                </div>
               </div>
             </div>
 
@@ -930,10 +968,20 @@ export default function InsightsPage() {
                           u.raceCategory,
                           u.patronSpeedDistance
                         );
+                        const ageYears = getAgeYearsFromBirthday(u.birthday);
+                        const ageLabel =
+                          ageYears != null ? formatCompletedAgeLabel(ageYears) : null;
+                        const nameTitle = ageLabel ? `${u.name} ${ageLabel}` : u.name;
                         return (
                         <tr key={u._id} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-2 pr-3 text-gray-900 max-w-[140px] truncate" title={u.name}>
-                            {u.name}
+                          <td
+                            className="py-2 pr-3 text-gray-900 font-medium whitespace-nowrap"
+                            title={nameTitle}
+                          >
+                            <span className="text-gray-900">{u.name}</span>
+                            {ageLabel != null && (
+                              <span className="text-gray-500 font-normal"> {ageLabel}</span>
+                            )}
                           </td>
                           <td className="py-2 pr-3 text-gray-700 max-w-[180px] truncate" title={u.email}>
                             {u.email}

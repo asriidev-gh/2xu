@@ -8,6 +8,7 @@ import {
   getUtcThisWeekSoFarBounds,
   getUtcTodayBounds,
 } from '@/lib/insightsPeriodBounds';
+import { getAgeBirthdayMatchClauses } from '@/lib/ageBirthdayBounds';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,6 +28,7 @@ const ALLOWED_METRICS = new Set([
   'period_month',
   'signup_device',
   'signup_location',
+  'age_bracket',
 ]);
 
 const UNRECORDED_SIGNUP_LABEL = 'Unrecorded';
@@ -68,6 +70,31 @@ function parseMongoSort(searchParams: URLSearchParams): Record<string, 1 | -1> {
 }
 
 function buildFilter(metric: string, value: string): Record<string, unknown> {
+  if (metric === 'age_bracket') {
+    if (!value) throw new Error('Missing value for age bracket');
+    let minAge: number;
+    let maxAge: number;
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      if (!parsed || typeof parsed !== 'object') throw new SyntaxError('invalid');
+      const o = parsed as { min?: unknown; max?: unknown };
+      minAge = Math.round(Number(o.min));
+      maxAge = Math.round(Number(o.max));
+      if (
+        !Number.isFinite(minAge) ||
+        !Number.isFinite(maxAge) ||
+        minAge > maxAge ||
+        minAge < 0 ||
+        maxAge > 120
+      ) {
+        throw new Error('Invalid age bracket');
+      }
+    } catch {
+      throw new Error('Invalid age bracket');
+    }
+    return { $and: [...getAgeBirthdayMatchClauses(minAge, maxAge, new Date())] };
+  }
+
   const filter: Record<string, unknown> = {};
 
   switch (metric) {

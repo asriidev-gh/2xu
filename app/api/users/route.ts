@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import clientPromise from '@/lib/mongodb';
 import { formatSignupContextView } from '@/lib/registrationContext';
+import { getAgeBirthdayMatchClauses, mergeBirthdayAgeClausesIntoFilter } from '@/lib/ageBirthdayBounds';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +34,8 @@ export async function GET(request: NextRequest) {
     const emailStatus = searchParams.get('emailStatus') || '';
     const dateFrom = searchParams.get('dateFrom') || '';
     const dateTo = searchParams.get('dateTo') || '';
+    const ageMinRaw = searchParams.get('ageMin');
+    const ageMaxRaw = searchParams.get('ageMax');
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const limit = Math.min(10000, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)));
     const skip = (page - 1) * limit;
@@ -134,6 +137,28 @@ export async function GET(request: NextRequest) {
         endDate.setHours(23, 59, 59, 999);
         filter.createdAt.$lte = endDate;
       }
+    }
+
+    const AGE_CAP = 120;
+    let ageMin = 0;
+    let ageMax = AGE_CAP;
+    if (ageMinRaw !== null && ageMinRaw !== '') {
+      const n = parseInt(ageMinRaw, 10);
+      if (!Number.isNaN(n)) ageMin = Math.min(AGE_CAP, Math.max(0, n));
+    }
+    if (ageMaxRaw !== null && ageMaxRaw !== '') {
+      const n = parseInt(ageMaxRaw, 10);
+      if (!Number.isNaN(n)) ageMax = Math.min(AGE_CAP, Math.max(0, n));
+    }
+    if (ageMin > ageMax) {
+      const t = ageMin;
+      ageMin = ageMax;
+      ageMax = t;
+    }
+
+    if (ageMin > 0 || ageMax < AGE_CAP) {
+      const ageClauses = getAgeBirthdayMatchClauses(ageMin, ageMax, new Date());
+      mergeBirthdayAgeClausesIntoFilter(filter, ageClauses);
     }
 
     // Get total count and paginated users

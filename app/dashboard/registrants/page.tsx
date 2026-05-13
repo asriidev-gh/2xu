@@ -7,6 +7,7 @@ import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import { RACE_CATEGORY_NAMES } from '@/components/RaceCategoriesSection';
 import DashboardAdminHeader from '@/components/DashboardAdminHeader';
+import { formatCompletedAgeLabel, getAgeYearsFromBirthday } from '@/lib/completedAge';
 import 'react-quill/dist/quill.snow.css';
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
@@ -86,14 +87,97 @@ type DashboardSortField =
   | 'mailerStatus'
   | 'createdAt';
 
-/** Sort fields that map to columns hidden in compact view (7 core columns + optional Actions). */
+/** Sort fields that map to columns hidden in compact view (core columns + optional Actions). */
 const COMPACT_HIDDEN_SORT_FIELDS = new Set<DashboardSortField>([
+  'contact',
   'birthday',
   'tShirtSize',
   'affiliations',
   'promoCode',
   'promotional',
 ]);
+
+/** Age filter slider endpoints (inclusive). Full span = no API age filter. */
+const AGE_SLIDER_MIN = 10;
+const AGE_SLIDER_MAX = 80;
+
+const ageDualRangeTrack =
+  '[&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-transparent ' +
+  '[&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-transparent';
+
+const ageDualRangeThumb =
+  '[&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 ' +
+  '[&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-orange-600 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white ' +
+  '[&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-grab [&::-webkit-slider-thumb]:active:cursor-grabbing [&::-webkit-slider-thumb]:-mt-1 ' +
+  '[&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full ' +
+  '[&::-moz-range-thumb]:bg-orange-600 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:shadow-md ' +
+  '[&::-moz-range-thumb]:cursor-grab';
+
+function AgeDualRangeSlider({
+  min,
+  max,
+  onMinChange,
+  onMaxChange,
+}: {
+  min: number;
+  max: number;
+  onMinChange: (v: number) => void;
+  onMaxChange: (v: number) => void;
+}) {
+  const lo = AGE_SLIDER_MIN;
+  const hi = AGE_SLIDER_MAX;
+  const span = hi - lo;
+  const leftPct = span > 0 ? ((min - lo) / span) * 100 : 0;
+  const widthPct = span > 0 ? Math.max(0, ((max - min) / span) * 100) : 0;
+  /** Let the handle farther from its track end sit on top so both stay grabbable when values are close. */
+  const mid = lo + hi;
+  const zMin = min + max <= mid ? 30 : 20;
+  const zMax = min + max <= mid ? 20 : 30;
+
+  return (
+    <div className="relative w-full pt-1 pb-7">
+      <div
+        className="absolute left-0 right-0 top-[18px] h-2 rounded-full bg-gray-200"
+        aria-hidden
+      />
+      <div
+        className="absolute top-[18px] h-2 rounded-full bg-orange-400 pointer-events-none"
+        style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+        aria-hidden
+      />
+      <input
+        type="range"
+        min={lo}
+        max={hi}
+        value={min}
+        aria-label="Minimum age"
+        onChange={(e) => {
+          const v = Number(e.target.value);
+          onMinChange(v <= max ? v : max);
+        }}
+        style={{ zIndex: zMin }}
+        className={`absolute inset-x-0 top-2.5 w-full h-8 appearance-none bg-transparent pointer-events-none ${ageDualRangeTrack} ${ageDualRangeThumb}`}
+      />
+      <input
+        type="range"
+        min={lo}
+        max={hi}
+        value={max}
+        aria-label="Maximum age"
+        onChange={(e) => {
+          const v = Number(e.target.value);
+          onMaxChange(v >= min ? v : min);
+        }}
+        style={{ zIndex: zMax }}
+        className={`absolute inset-x-0 top-2.5 w-full h-8 appearance-none bg-transparent pointer-events-none ${ageDualRangeTrack} ${ageDualRangeThumb}`}
+      />
+      <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-600 font-sweet-sans tabular-nums">
+        <span>{min} yrs old</span>
+        <span>{max} yrs old</span>
+      </div>
+    </div>
+  );
+}
 
 function SortableTh({
   field,
@@ -141,7 +225,9 @@ async function exportToExcel(
   pagination: { total: number },
   filters: Record<string, string>,
   sortBy: string,
-  sortDir: 'asc' | 'desc'
+  sortDir: 'asc' | 'desc',
+  ageRangeMin: number,
+  ageRangeMax: number
 ) {
   if (pagination.total === 0) {
     Swal.fire({
@@ -159,6 +245,10 @@ async function exportToExcel(
     Object.entries(filters).forEach(([key, value]) => {
       if (value) queryParams.append(key, value);
     });
+    if (ageRangeMin > AGE_SLIDER_MIN || ageRangeMax < AGE_SLIDER_MAX) {
+      queryParams.set('ageMin', String(ageRangeMin));
+      queryParams.set('ageMax', String(ageRangeMax));
+    }
     queryParams.set('page', '1');
     queryParams.set('limit', String(Math.max(pagination.total, 10000)));
     queryParams.set('sortBy', sortBy);
@@ -278,6 +368,8 @@ export default function DashboardPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   /** When false, hide 5 middle columns so the grid stays readable (core 7 + Actions). */
   const [showExtraTableColumns, setShowExtraTableColumns] = useState(false);
+  const [ageRangeMin, setAgeRangeMin] = useState(AGE_SLIDER_MIN);
+  const [ageRangeMax, setAgeRangeMax] = useState(AGE_SLIDER_MAX);
   const [filters, setFilters] = useState({
     name: '',
     email: '',
@@ -289,6 +381,22 @@ export default function DashboardPage() {
     dateFrom: '',
     dateTo: ''
   });
+  const [filtersSectionOpen, setFiltersSectionOpen] = useState(true);
+
+  const appliedFilterCount = useMemo(() => {
+    let n = 0;
+    if (filters.name.trim()) n += 1;
+    if (filters.email.trim()) n += 1;
+    if (filters.gender) n += 1;
+    if (filters.raceCategory) n += 1;
+    if (filters.club) n += 1;
+    if (filters.promoCode.trim()) n += 1;
+    if (filters.emailStatus) n += 1;
+    if (filters.dateFrom) n += 1;
+    if (filters.dateTo) n += 1;
+    if (ageRangeMin > AGE_SLIDER_MIN || ageRangeMax < AGE_SLIDER_MAX) n += 1;
+    return n;
+  }, [filters, ageRangeMin, ageRangeMax]);
 
   const composeEmailQuillModules = useMemo(
     () => ({
@@ -306,7 +414,19 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setPagination((prev) => ({ ...prev, page: 1 }));
-  }, [filters.name, filters.email, filters.gender, filters.raceCategory, filters.club, filters.promoCode, filters.emailStatus, filters.dateFrom, filters.dateTo]);
+  }, [
+    filters.name,
+    filters.email,
+    filters.gender,
+    filters.raceCategory,
+    filters.club,
+    filters.promoCode,
+    filters.emailStatus,
+    filters.dateFrom,
+    filters.dateTo,
+    ageRangeMin,
+    ageRangeMax,
+  ]);
 
   useEffect(() => {
     if (!showExtraTableColumns && COMPACT_HIDDEN_SORT_FIELDS.has(sortBy)) {
@@ -319,7 +439,7 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchUsers();
     fetchConfig();
-  }, [filters, pagination.page, pagination.limit, sortBy, sortDir]);
+  }, [filters, ageRangeMin, ageRangeMax, pagination.page, pagination.limit, sortBy, sortDir]);
 
   useEffect(() => {
     const loadAffiliations = async () => {
@@ -360,6 +480,10 @@ export default function DashboardPage() {
       Object.entries(filters).forEach(([key, value]) => {
         if (value) queryParams.append(key, value);
       });
+      if (ageRangeMin > AGE_SLIDER_MIN || ageRangeMax < AGE_SLIDER_MAX) {
+        queryParams.set('ageMin', String(ageRangeMin));
+        queryParams.set('ageMax', String(ageRangeMax));
+      }
       queryParams.set('page', String(pagination.page));
       queryParams.set('limit', String(pagination.limit));
       queryParams.set('sortBy', sortBy);
@@ -737,14 +861,61 @@ export default function DashboardPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-12">
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-200/60 p-5 sm:p-6 mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-5">
-            <h2 className="text-lg font-semibold text-gray-900 font-druk tracking-tight">Filters</h2>
-            <p className="text-xs text-gray-500 font-sweet-sans sm:text-right max-w-md">
-              Narrow the list below; filters apply as you type or change a field.
-            </p>
+        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-200/60 mb-6 sm:mb-8 overflow-hidden">
+          <div className="flex flex-row items-start justify-between gap-3 p-5 sm:p-6">
+            <div className="min-w-0 flex-1">
+              <h2
+                id="registrants-filters-heading"
+                className="text-lg font-semibold text-gray-900 font-druk tracking-tight"
+              >
+                Filters
+              </h2>
+              {filtersSectionOpen ? (
+                <p className="text-xs text-gray-500 font-sweet-sans mt-1.5 max-w-xl leading-relaxed">
+                  Narrow the list below; filters apply as you type or change a field.
+                </p>
+              ) : (
+                <p className="text-xs text-gray-500 font-sweet-sans mt-1.5">
+                  {appliedFilterCount > 0 ? (
+                    <>
+                      <span className="font-medium text-orange-700 tabular-nums">{appliedFilterCount}</span>{' '}
+                      {appliedFilterCount === 1 ? 'filter' : 'filters'} active — open to edit.
+                    </>
+                  ) : (
+                    <>Default view — open to narrow the list.</>
+                  )}
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              aria-expanded={filtersSectionOpen}
+              aria-controls="registrants-filters-panel"
+              onClick={() => setFiltersSectionOpen((v) => !v)}
+              className="shrink-0 inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50/80 text-gray-800 hover:bg-orange-50/90 hover:border-orange-200/80 transition-colors font-fira-sans text-sm font-medium"
+            >
+              <span>{filtersSectionOpen ? 'Hide' : 'Show'} filters</span>
+              <svg
+                className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${
+                  filtersSectionOpen ? 'rotate-180' : ''
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-x-4 gap-y-5">
+          {filtersSectionOpen ? (
+          <div
+            id="registrants-filters-panel"
+            role="region"
+            aria-labelledby="registrants-filters-heading"
+            className="px-5 sm:px-6 pb-5 sm:pb-6 pt-0 border-t border-gray-100"
+          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-x-4 gap-y-5 pt-5">
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1.5 font-fira-sans">Name</label>
               <input
@@ -850,7 +1021,33 @@ export default function DashboardPage() {
                 className={dashboardFieldClass}
               />
             </div>
+            <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4 2xl:col-span-6 pt-2 border-t border-gray-100 mt-1">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                <label className="block text-sm font-medium text-gray-600 font-fira-sans">
+                  Age <span className="font-normal text-gray-500">(completed years)</span>
+                </label>
+                <span className="text-sm text-orange-700 font-fira-sans font-semibold tabular-nums whitespace-nowrap">
+                  {ageRangeMin} – {ageRangeMax}
+                  {ageRangeMin === AGE_SLIDER_MIN && ageRangeMax === AGE_SLIDER_MAX ? (
+                    <span className="font-normal text-gray-500 font-sweet-sans font-medium ml-1">
+                      (all)
+                    </span>
+                  ) : null}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 font-sweet-sans mb-1">
+                Drag either end of the bar to set the age range.
+              </p>
+              <AgeDualRangeSlider
+                min={ageRangeMin}
+                max={ageRangeMax}
+                onMinChange={setAgeRangeMin}
+                onMaxChange={setAgeRangeMax}
+              />
+            </div>
           </div>
+          </div>
+          ) : null}
         </div>
 
         {/* Users Table */}
@@ -864,7 +1061,7 @@ export default function DashboardPage() {
               <p className="text-xs sm:text-sm text-gray-500 font-sweet-sans mt-1.5 max-w-xl leading-relaxed">
                 {showExtraTableColumns
                   ? 'Showing all columns.'
-                  : 'Compact view: 7 columns. Use “More columns” for birthday, kit, club, advocate & promo.'}
+                  : 'Compact view: 6 columns. Use “More columns” for contact, birthday, kit, club, advocate & promo.'}
               </p>
             </div>
             <div className="flex flex-wrap items-stretch sm:items-center gap-2 sm:gap-3">
@@ -894,7 +1091,9 @@ export default function DashboardPage() {
             {users.length > 0 && (
               <button
                 type="button"
-                onClick={() => exportToExcel(pagination, filters, sortBy, sortDir)}
+                onClick={() =>
+                  exportToExcel(pagination, filters, sortBy, sortDir, ageRangeMin, ageRangeMax)
+                }
                 className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-fira-sans text-sm font-medium flex items-center justify-center gap-2 shadow-sm"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -922,7 +1121,9 @@ export default function DashboardPage() {
                   <tr>
                     <SortableTh field="name" label="Name" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
                     <SortableTh field="email" label="Email" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
-                    <SortableTh field="contact" label="Contact" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
+                    {showExtraTableColumns && (
+                      <SortableTh field="contact" label="Contact" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
+                    )}
                     <SortableTh field="gender" label="Gender" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
                     {showExtraTableColumns && (
                       <SortableTh field="birthday" label="Birthday" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
@@ -972,15 +1173,20 @@ export default function DashboardPage() {
                       user.raceCategory,
                       user.patronSpeedDistance
                     );
+                    const ageYears = getAgeYearsFromBirthday(user.birthday);
+                    const ageLabel =
+                      ageYears != null ? formatCompletedAgeLabel(ageYears) : null;
+                    const nameTitle = ageLabel ? `${user.name} ${ageLabel}` : user.name;
                     return (
                     <tr key={user._id} className="hover:bg-gray-50">
                       <td
-                        className={`px-6 py-4 text-sm font-medium text-gray-900 font-sweet-sans ${
-                          showExtraTableColumns ? 'whitespace-nowrap' : 'max-w-[9rem] sm:max-w-[11rem] truncate whitespace-nowrap'
-                        }`}
-                        title={user.name}
+                        className="px-6 py-4 text-sm font-medium text-gray-900 font-sweet-sans whitespace-nowrap"
+                        title={nameTitle}
                       >
-                        {user.name}
+                        <span className="text-gray-900">{user.name}</span>
+                        {ageLabel != null && (
+                          <span className="text-gray-500 font-normal"> {ageLabel}</span>
+                        )}
                       </td>
                       <td
                         className={`px-6 py-4 text-sm text-gray-500 font-sweet-sans ${
@@ -990,7 +1196,11 @@ export default function DashboardPage() {
                       >
                         {user.email}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">{user.contact}</td>
+                      {showExtraTableColumns && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">
+                          {user.contact}
+                        </td>
+                      )}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">{user.gender}</td>
                       {showExtraTableColumns && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">{user.birthday || 'N/A'}</td>
