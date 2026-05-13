@@ -7,6 +7,7 @@ import {
   getUtcTodayBounds,
 } from '@/lib/insightsPeriodBounds';
 import { mergeAffiliationCounts } from '@/lib/affiliationKey';
+import { formatSignupLocationDisplayLabel, normalizeLocationString } from '@/lib/registrationContext';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,35 @@ async function isAuthenticated() {
 }
 
 type CountRow = { _id: string; count: number };
+
+const UNRECORDED_SIGNUP_LABEL = 'Unrecorded';
+
+function mergeLocationInsightRows(
+  rows: { _id: string; count: number }[]
+): { name: string; count: number; filterKeys: string[] }[] {
+  const merged = new Map<string, { count: number; filterKeys: Set<string> }>();
+  for (const row of rows) {
+    const raw = String(row._id ?? '');
+    const name =
+      raw === UNRECORDED_SIGNUP_LABEL
+        ? UNRECORDED_SIGNUP_LABEL
+        : formatSignupLocationDisplayLabel(raw);
+    const existing = merged.get(name) ?? { count: 0, filterKeys: new Set<string>() };
+    existing.count += row.count;
+    if (raw !== UNRECORDED_SIGNUP_LABEL) {
+      existing.filterKeys.add(raw);
+    }
+    merged.set(name, existing);
+  }
+  return Array.from(merged.entries())
+    .map(([name, { count, filterKeys }]) => ({
+      name,
+      count,
+      filterKeys: Array.from(filterKeys),
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+}
 
 function fillLastNDailyCounts(
   days: number,
@@ -167,7 +197,7 @@ export async function GET() {
                   { case: { $eq: ['$signupContext.deviceType', 'tablet'] }, then: 'Tablet' },
                   { case: { $eq: ['$signupContext.deviceType', 'desktop'] }, then: 'Desktop' },
                 ],
-                default: 'Unknown',
+                default: UNRECORDED_SIGNUP_LABEL,
               },
             },
           },
@@ -191,7 +221,7 @@ export async function GET() {
                   },
                 },
                 in: {
-                  $cond: [{ $gt: [{ $strLenCP: '$$label' }, 0] }, '$$label', 'Unknown'],
+                  $cond: [{ $gt: [{ $strLenCP: '$$label' }, 0] }, '$$label', UNRECORDED_SIGNUP_LABEL],
                 },
               },
             },
@@ -242,13 +272,10 @@ export async function GET() {
         registrationsByDay,
         topClubs,
         byDeviceType: byDeviceType.map((row) => ({
-          name: String(row._id || 'Unknown'),
+          name: String(row._id || UNRECORDED_SIGNUP_LABEL),
           count: row.count,
         })),
-        byLocation: byLocation.map((row) => ({
-          name: String(row._id || 'Unknown'),
-          count: row.count,
-        })),
+        byLocation: mergeLocationInsightRows(byLocation),
       },
       { status: 200 }
     );

@@ -21,7 +21,7 @@ type InsightsPayload = {
   registrationsByDay: { date: string; count: number; label: string }[];
   topClubs: { name: string; count: number }[];
   byDeviceType: { name: string; count: number }[];
-  byLocation: { name: string; count: number }[];
+  byLocation: { name: string; count: number; filterKeys?: string[] }[];
 };
 
 type DetailMetric =
@@ -37,7 +37,11 @@ type DetailMetric =
   | 'club'
   | 'period_today'
   | 'period_week'
-  | 'period_month';
+  | 'period_month'
+  | 'signup_device'
+  | 'signup_location';
+
+const UNRECORDED_SIGNUP_LABEL = 'Unrecorded';
 
 type DetailUser = {
   _id: string;
@@ -744,7 +748,17 @@ export default function InsightsPage() {
                     <p className="text-sm text-gray-500 font-sweet-sans">No signup device data yet</p>
                   ) : (
                     (data.byDeviceType || []).map((r) => (
-                      <BarRow key={r.name} label={r.name} count={r.count} max={maxDevice} />
+                      <BarRow
+                        key={r.name}
+                        label={r.name}
+                        count={r.count}
+                        max={maxDevice}
+                        onCountClick={
+                          r.name === UNRECORDED_SIGNUP_LABEL
+                            ? undefined
+                            : () => openDetails(`Signup device: ${r.name}`, 'signup_device', r.name)
+                        }
+                      />
                     ))
                   )}
                 </div>
@@ -756,7 +770,22 @@ export default function InsightsPage() {
                     <p className="text-sm text-gray-500 font-sweet-sans">No signup location data yet</p>
                   ) : (
                     (data.byLocation || []).map((r) => (
-                      <BarRow key={r.name} label={r.name} count={r.count} max={maxLocation} />
+                      <BarRow
+                        key={r.name}
+                        label={r.name}
+                        count={r.count}
+                        max={maxLocation}
+                        onCountClick={
+                          r.name === UNRECORDED_SIGNUP_LABEL || !r.filterKeys?.length
+                            ? undefined
+                            : () =>
+                                openDetails(
+                                  `Signup location: ${r.name}`,
+                                  'signup_location',
+                                  JSON.stringify(r.filterKeys)
+                                )
+                        }
+                      />
                     ))
                   )}
                 </div>

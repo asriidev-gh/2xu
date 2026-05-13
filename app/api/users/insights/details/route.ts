@@ -25,7 +25,17 @@ const ALLOWED_METRICS = new Set([
   'period_today',
   'period_week',
   'period_month',
+  'signup_device',
+  'signup_location',
 ]);
+
+const UNRECORDED_SIGNUP_LABEL = 'Unrecorded';
+
+const SIGNUP_DEVICE_FILTER_BY_LABEL: Record<string, string> = {
+  Mobile: 'mobile',
+  Tablet: 'tablet',
+  Desktop: 'desktop',
+};
 
 async function isAuthenticated() {
   const cookieStore = await cookies();
@@ -120,6 +130,39 @@ function buildFilter(metric: string, value: string): Record<string, unknown> {
     case 'period_month': {
       const { start, end } = getUtcThisMonthSoFarBounds();
       filter.createdAt = { $gte: start, $lte: end };
+      break;
+    }
+    case 'signup_device': {
+      if (!value) throw new Error('Missing value for signup device');
+      if (value === UNRECORDED_SIGNUP_LABEL) {
+        throw new Error('Unrecorded signup device is not drill-downable');
+      }
+      const deviceType = SIGNUP_DEVICE_FILTER_BY_LABEL[value];
+      if (!deviceType) throw new Error('Invalid signup device');
+      filter['signupContext.deviceType'] = deviceType;
+      break;
+    }
+    case 'signup_location': {
+      if (!value) throw new Error('Missing value for signup location');
+      let filterKeys: string[];
+      try {
+        const parsed = JSON.parse(value) as unknown;
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+          throw new Error('Invalid signup location filter');
+        }
+        filterKeys = parsed.map((key) => String(key).trim()).filter(Boolean);
+        if (filterKeys.length === 0) {
+          throw new Error('Invalid signup location filter');
+        }
+      } catch (e) {
+        if (e instanceof Error && e.message.startsWith('Invalid signup location')) {
+          throw e;
+        }
+        throw new Error('Invalid signup location filter');
+      }
+      filter.$or = filterKeys.map((key) => ({
+        'signupContext.locationLabel': key,
+      }));
       break;
     }
     default:
