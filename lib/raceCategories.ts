@@ -7,7 +7,7 @@ export type RaceCategoryDefinition = {
   kitDescription: string;
   /** Replaces the third entitlement bullet (default: jersey kit disclaimer) */
   kitFooterNote?: string;
-  highlight?: 'popular' | 'best-value' | 'youth' | 'community' | 'team' | 'duo';
+  highlight?: 'popular' | 'best-value' | 'youth' | 'community' | 'team' | 'duo' | 'founders';
 };
 
 export const raceCategories: RaceCategoryDefinition[] = [
@@ -28,6 +28,15 @@ export const raceCategories: RaceCategoryDefinition[] = [
     kitValueLabel: 'Includes $70 worth of 2XU race kit',
     kitDescription: 'For dedicated runners who want a complete 2XU race experience and premium kit value.',
     highlight: 'popular',
+  },
+  {
+    name: 'Mission Strong Founders Club',
+    ageGroup: 'Pre-register for 3 Speed Series legs',
+    pricePhp: '₱3,300',
+    priceUsd: '$66',
+    kitDescription: '',
+    kitFooterNote: '',
+    highlight: 'founders',
   },
   {
     name: 'Team Category',

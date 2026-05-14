@@ -28,9 +28,15 @@ function getHighlightLabel(highlight?: RaceCategoryDefinition['highlight']) {
       return 'Group of 4 runners';
     case 'duo':
       return 'Group of 2 runners';
+    case 'founders':
+      return 'Founders Club';
     default:
       return null;
   }
+}
+
+function isPremiumRaceCardHighlight(h?: RaceCategoryDefinition['highlight']) {
+  return h === 'team' || h === 'duo' || h === 'founders';
 }
 
 type RaceCategoriesSectionProps = {
@@ -180,7 +186,7 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
                   }
                 }}
                 className={`group relative h-full rounded-2xl border backdrop-blur-md p-6 lg:p-7 shadow-2xl transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:ring-offset-2 focus:ring-offset-gray-900 ${
-                  category.highlight === 'team' || category.highlight === 'duo'
+                  isPremiumRaceCardHighlight(category.highlight)
                     ? 'border-orange-400/70 bg-gradient-to-br from-orange-500/20 via-white/5 to-yellow-500/15 hover:border-orange-400 hover:shadow-xl'
                     : 'border-white/10 bg-white/5 hover:border-orange-400/80 hover:bg-white/10'
                 } ${isVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`}
@@ -188,7 +194,7 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
               >
                 {/* Glow accent */}
                 <div className={`pointer-events-none absolute inset-0 rounded-2xl transition-opacity duration-300 ${
-                  category.highlight === 'team' || category.highlight === 'duo'
+                  isPremiumRaceCardHighlight(category.highlight)
                     ? 'opacity-100 bg-gradient-to-br from-orange-500/20 via-transparent to-yellow-400/15'
                     : 'opacity-0 group-hover:opacity-100 bg-gradient-to-br from-orange-500/15 via-transparent to-yellow-400/10'
                 }`} />
@@ -199,14 +205,14 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
                       <h3 className="text-xl lg:text-2xl font-bold text-white font-druk">
                         {category.name}
                       </h3>
-                      <p className={`mt-1 text-sm font-sweet-sans ${category.highlight === 'team' || category.highlight === 'duo' ? 'text-orange-300 font-semibold' : 'text-gray-300'}`}>
+                      <p className={`mt-1 text-sm font-sweet-sans ${isPremiumRaceCardHighlight(category.highlight) ? 'text-orange-300 font-semibold' : 'text-gray-300'}`}>
                         {category.ageGroup}
                       </p>
                     </div>
                     {highlightLabel && (
                       <span
                         className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold font-fira-sans uppercase tracking-wide shadow-md ${
-                          category.highlight === 'team' || category.highlight === 'duo'
+                          isPremiumRaceCardHighlight(category.highlight)
                             ? 'bg-gradient-to-r from-orange-500 to-orange-400 text-white ring-2 ring-orange-300/50'
                             : category.highlight === 'best-value'
                             ? 'bg-yellow-400 text-gray-900'
@@ -243,7 +249,37 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
                   </div>
 
                   {/* Entitlements */}
-                  {category.name === 'Patron' ? (
+                  {category.name === 'Mission Strong Founders Club' ? (
+                    <div className="mt-2 space-y-3 text-left">
+                      <div className="rounded-xl border border-orange-400/50 bg-gradient-to-br from-orange-500/20 to-black/40 p-4 shadow-inner">
+                        <p className="text-sm font-bold tracking-wide text-white font-druk mb-3">FOUNDERS CLUB INCLUDES</p>
+                        <ul className="space-y-2.5 text-sm text-gray-100 font-sweet-sans leading-snug">
+                          <li className="flex gap-2">
+                            <span className="shrink-0" aria-hidden>
+                              ⚡
+                            </span>
+                            <span>Access to 3 legs of the Speed Series</span>
+                          </li>
+                          <li className="flex gap-2">
+                            <span className="shrink-0" aria-hidden>
+                              🎁
+                            </span>
+                            <span>Exclusive perks from 2XU and One of a Kind Asia by-invite events</span>
+                          </li>
+                          <li className="flex gap-2">
+                            <span className="shrink-0" aria-hidden>
+                              🏁
+                            </span>
+                            <span>Plus access to 3 races free</span>
+                          </li>
+                        </ul>
+                        <p className="mt-3 text-xs text-gray-400 font-sweet-sans border-t border-white/10 pt-3">
+                          Bundle for runners committing to three legs ahead. Final entitlements subject to event
+                          confirmation.
+                        </p>
+                      </div>
+                    </div>
+                  ) : category.name === 'Patron' ? (
                     <div className="mt-2 space-y-3 text-left">
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-wider text-orange-300 font-fira-sans">

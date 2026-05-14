@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import clientPromise from '@/lib/mongodb';
 import { formatSignupContextView } from '@/lib/registrationContext';
 import { getAgeBirthdayMatchClauses, mergeBirthdayAgeClausesIntoFilter } from '@/lib/ageBirthdayBounds';
+import { mergeRegistrantsListFilterForEnv } from '@/lib/productionRegistrantExclusions';
 
 export const dynamic = 'force-dynamic';
 
@@ -161,10 +162,12 @@ export async function GET(request: NextRequest) {
       mergeBirthdayAgeClausesIntoFilter(filter, ageClauses);
     }
 
+    const listFilter = mergeRegistrantsListFilterForEnv(filter);
+
     // Get total count and paginated users
-    const total = await collection.countDocuments(filter);
+    const total = await collection.countDocuments(listFilter);
     const users = await collection
-      .find(filter)
+      .find(listFilter)
       .sort(mongoSort)
       .skip(skip)
       .limit(limit)
