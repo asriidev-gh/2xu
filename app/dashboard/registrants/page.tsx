@@ -7,8 +7,9 @@ import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import { RACE_CATEGORY_NAMES } from '@/components/RaceCategoriesSection';
 import DashboardAdminHeader from '@/components/DashboardAdminHeader';
-import { getAgeYearsFromBirthday } from '@/lib/completedAge';
+import { getAgeYearsFromBirthday, parseBirthdayLocal } from '@/lib/completedAge';
 import { formatRegistrantProfileName, genderLetterAbbrev } from '@/lib/registrantProfileName';
+import { PATRON_SPEED_DISTANCES } from '@/lib/raceCategories';
 import 'react-quill/dist/quill.snow.css';
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
@@ -60,6 +61,35 @@ function formatRaceCategoryLabel(raceCategory: string, patronSpeedDistance?: str
   if (base !== 'Patron') return base;
   const speed = patronSpeedDistance?.trim();
   return speed ? `Patron (${speed})` : base;
+}
+
+function birthdayToDateInputValue(birthday: string): string {
+  const parsed = parseBirthdayLocal(birthday);
+  if (!parsed) return '';
+  const y = parsed.getFullYear();
+  const m = String(parsed.getMonth() + 1).padStart(2, '0');
+  const day = String(parsed.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+type UpdateRegistrantForm = {
+  name: string;
+  gender: string;
+  birthday: string;
+  promoCode: string;
+  raceCategory: string;
+  patronSpeedDistance: string;
+};
+
+function buildUpdateFormFromUser(user: User): UpdateRegistrantForm {
+  return {
+    name: user.name || '',
+    gender: user.gender === 'Female' ? 'Female' : user.gender === 'Male' ? 'Male' : '',
+    birthday: birthdayToDateInputValue(user.birthday),
+    promoCode: user.promoCode || '',
+    raceCategory: user.raceCategory || '',
+    patronSpeedDistance: user.patronSpeedDistance || '',
+  };
 }
 
 function formatDateForExport(dateString: string) {
@@ -379,6 +409,17 @@ export default function DashboardPage() {
   const [composeEmailSubject, setComposeEmailSubject] = useState('');
   const [composeEmailHtml, setComposeEmailHtml] = useState('<p></p>');
   const [composeEmailSending, setComposeEmailSending] = useState(false);
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [updateModalUser, setUpdateModalUser] = useState<User | null>(null);
+  const [updateForm, setUpdateForm] = useState<UpdateRegistrantForm>({
+    name: '',
+    gender: '',
+    birthday: '',
+    promoCode: '',
+    raceCategory: '',
+    patronSpeedDistance: '',
+  });
+  const [updateSaving, setUpdateSaving] = useState(false);
   const [clubAffiliationOptions, setClubAffiliationOptions] = useState<string[]>([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
   const [sortBy, setSortBy] = useState<DashboardSortField>('createdAt');
@@ -864,6 +905,139 @@ export default function DashboardPage() {
     setComposeEmailOpen(true);
   };
 
+  const openUpdateRegistrant = (user: User) => {
+    setUpdateModalUser(user);
+    setUpdateForm(buildUpdateFormFromUser(user));
+    setUpdateModalOpen(true);
+  };
+
+  const closeUpdateRegistrant = () => {
+    setUpdateModalOpen(false);
+    setUpdateModalUser(null);
+    setUpdateSaving(false);
+  };
+
+  const updateFormAgeYears = useMemo(
+    () => (updateForm.birthday ? getAgeYearsFromBirthday(updateForm.birthday) : null),
+    [updateForm.birthday]
+  );
+
+  const handleSaveRegistrantUpdate = async () => {
+    if (!updateModalUser) return;
+
+    const name = updateForm.name.trim();
+    if (!name) {
+      await Swal.fire({
+        title: 'Name required',
+        text: 'Please enter the registrant name.',
+        icon: 'warning',
+        confirmButtonColor: '#ea580c',
+      });
+      return;
+    }
+    if (updateForm.gender !== 'Male' && updateForm.gender !== 'Female') {
+      await Swal.fire({
+        title: 'Gender required',
+        text: 'Please select Male or Female.',
+        icon: 'warning',
+        confirmButtonColor: '#ea580c',
+      });
+      return;
+    }
+    if (!updateForm.birthday.trim()) {
+      await Swal.fire({
+        title: 'Birthday required',
+        text: 'Please enter a valid birthday to set age.',
+        icon: 'warning',
+        confirmButtonColor: '#ea580c',
+      });
+      return;
+    }
+    if (!updateForm.raceCategory) {
+      await Swal.fire({
+        title: 'Race category required',
+        text: 'Please select a race experience category.',
+        icon: 'warning',
+        confirmButtonColor: '#ea580c',
+      });
+      return;
+    }
+    if (updateForm.raceCategory === 'Patron' && !updateForm.patronSpeedDistance) {
+      await Swal.fire({
+        title: 'Patron speed required',
+        text: 'Please select a Patron speed distance (2KM, 5KM, 10KM, or 21KM).',
+        icon: 'warning',
+        confirmButtonColor: '#ea580c',
+      });
+      return;
+    }
+
+    setUpdateSaving(true);
+    try {
+      const payload: Record<string, string> = {
+        name,
+        gender: updateForm.gender,
+        birthday: updateForm.birthday,
+        promoCode: updateForm.promoCode.trim(),
+        raceCategory: updateForm.raceCategory,
+      };
+      if (updateForm.raceCategory === 'Patron') {
+        payload.patronSpeedDistance = updateForm.patronSpeedDistance;
+      }
+
+      const response = await fetch(`/api/users/${updateModalUser._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        router.push('/login');
+        return;
+      }
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update registrant');
+      }
+
+      setUsers((prev) =>
+        prev.map((u) =>
+          u._id === updateModalUser._id
+            ? {
+                ...u,
+                name: data.name ?? name,
+                gender: data.gender ?? updateForm.gender,
+                birthday: data.birthday ?? updateForm.birthday,
+                promoCode: data.promoCode ?? updateForm.promoCode.trim(),
+                raceCategory: data.raceCategory ?? updateForm.raceCategory,
+                patronSpeedDistance:
+                  updateForm.raceCategory === 'Patron'
+                    ? data.patronSpeedDistance ?? updateForm.patronSpeedDistance
+                    : undefined,
+              }
+            : u
+        )
+      );
+      closeUpdateRegistrant();
+      await Swal.fire({
+        title: 'Updated',
+        text: 'Registrant profile has been saved.',
+        icon: 'success',
+        confirmButtonColor: '#ea580c',
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      await Swal.fire({
+        title: 'Update failed',
+        text: error instanceof Error ? error.message : 'Failed to update registrant',
+        icon: 'error',
+        confirmButtonColor: '#ea580c',
+      });
+    } finally {
+      setUpdateSaving(false);
+    }
+  };
+
   const handleSendComposedEmail = async () => {
     if (!composeEmailUser) return;
 
@@ -1247,11 +1421,9 @@ export default function DashboardPage() {
                     )}
                     <SortableTh field="mailerStatus" label="Email Status" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
                     <SortableTh field="createdAt" label="Registered" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
-                    {(registrantSendEmailEnabled || deleteUserEnabled) && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">
-                        Actions
-                      </th>
-                    )}
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -1430,9 +1602,24 @@ export default function DashboardPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">{formatDate(user.createdAt)}</td>
-                      {(registrantSendEmailEnabled || deleteUserEnabled) && (
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => openUpdateRegistrant(user)}
+                            className="p-1.5 rounded-md border border-gray-200 text-gray-500 hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 transition-colors font-fira-sans"
+                            title="Update registrant"
+                            aria-label="Update registrant"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                              />
+                            </svg>
+                          </button>
                           {registrantSendEmailEnabled && (
                             <button
                               type="button"
@@ -1446,7 +1633,7 @@ export default function DashboardPage() {
                             <button
                               type="button"
                               onClick={() => handleDeleteUser(user._id, user.name)}
-                              className="text-red-600 hover:text-red-900 transition-colors font-fira-sans"
+                              className="p-1.5 rounded-md border border-gray-200 text-red-600 hover:text-red-700 hover:border-red-300 hover:bg-red-50 transition-colors font-fira-sans"
                               title="Delete user"
                             >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1456,7 +1643,6 @@ export default function DashboardPage() {
                           )}
                         </div>
                       </td>
-                      )}
                     </tr>
                     );
                   })}
@@ -1664,6 +1850,185 @@ export default function DashboardPage() {
                 className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-fira-sans font-medium hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {composeEmailSending ? 'Sending…' : 'Send email'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {updateModalOpen && updateModalUser && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          role="presentation"
+          onClick={closeUpdateRegistrant}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="update-registrant-title"
+            className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col border border-gray-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-gray-100 shrink-0">
+              <div>
+                <h3 id="update-registrant-title" className="text-lg font-semibold text-gray-900 font-druk">
+                  Update registrant
+                </h3>
+                <p className="text-sm text-gray-600 font-sweet-sans mt-1">{updateModalUser.email}</p>
+              </div>
+              <button
+                type="button"
+                onClick={closeUpdateRegistrant}
+                disabled={updateSaving}
+                className="shrink-0 rounded-md px-3 py-1.5 text-sm font-fira-sans text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="px-5 py-4 overflow-y-auto min-h-0 space-y-4">
+              <div>
+                <label htmlFor="update-registrant-name" className="block text-sm font-medium text-gray-700 mb-1 font-fira-sans">
+                  Name
+                </label>
+                <input
+                  id="update-registrant-name"
+                  type="text"
+                  value={updateForm.name}
+                  onChange={(e) => setUpdateForm((f) => ({ ...f, name: e.target.value }))}
+                  disabled={updateSaving}
+                  className={dashboardFieldClass}
+                />
+              </div>
+
+              <div>
+                <span className="block text-sm font-medium text-gray-700 mb-2 font-fira-sans">Gender</span>
+                <div className="flex gap-6">
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      name="update-registrant-gender"
+                      value="Male"
+                      checked={updateForm.gender === 'Male'}
+                      onChange={() => setUpdateForm((f) => ({ ...f, gender: 'Male' }))}
+                      disabled={updateSaving}
+                      className="w-4 h-4 text-orange-600 border-gray-300 focus:ring-orange-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700 font-sweet-sans">Male</span>
+                  </label>
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      name="update-registrant-gender"
+                      value="Female"
+                      checked={updateForm.gender === 'Female'}
+                      onChange={() => setUpdateForm((f) => ({ ...f, gender: 'Female' }))}
+                      disabled={updateSaving}
+                      className="w-4 h-4 text-orange-600 border-gray-300 focus:ring-orange-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700 font-sweet-sans">Female</span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="update-registrant-birthday" className="block text-sm font-medium text-gray-700 mb-1 font-fira-sans">
+                  Birthday (age)
+                </label>
+                <input
+                  id="update-registrant-birthday"
+                  type="date"
+                  value={updateForm.birthday}
+                  onChange={(e) => setUpdateForm((f) => ({ ...f, birthday: e.target.value }))}
+                  disabled={updateSaving}
+                  className={dashboardFieldClass}
+                />
+                {updateFormAgeYears != null && (
+                  <p className="mt-1 text-xs text-gray-500 font-sweet-sans">{updateFormAgeYears} years old</p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="update-registrant-promo" className="block text-sm font-medium text-gray-700 mb-1 font-fira-sans">
+                  Advocate code
+                </label>
+                <input
+                  id="update-registrant-promo"
+                  type="text"
+                  value={updateForm.promoCode}
+                  onChange={(e) => setUpdateForm((f) => ({ ...f, promoCode: e.target.value.toUpperCase() }))}
+                  disabled={updateSaving}
+                  placeholder="e.g. SPS2XU1 (leave empty to clear)"
+                  className={dashboardFieldClass}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="update-registrant-race" className="block text-sm font-medium text-gray-700 mb-1 font-fira-sans">
+                  Race experience category
+                </label>
+                <select
+                  id="update-registrant-race"
+                  value={updateForm.raceCategory}
+                  onChange={(e) => {
+                    const raceCategory = e.target.value;
+                    setUpdateForm((f) => ({
+                      ...f,
+                      raceCategory,
+                      patronSpeedDistance: raceCategory === 'Patron' ? f.patronSpeedDistance : '',
+                    }));
+                  }}
+                  disabled={updateSaving}
+                  className={dashboardFieldClass}
+                >
+                  <option value="">Select category…</option>
+                  {RACE_CATEGORY_NAMES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {updateForm.raceCategory === 'Patron' && (
+                <div>
+                  <label htmlFor="update-registrant-patron-speed" className="block text-sm font-medium text-gray-700 mb-1 font-fira-sans">
+                    Patron speed distance
+                  </label>
+                  <select
+                    id="update-registrant-patron-speed"
+                    value={updateForm.patronSpeedDistance}
+                    onChange={(e) => setUpdateForm((f) => ({ ...f, patronSpeedDistance: e.target.value }))}
+                    disabled={updateSaving}
+                    className={dashboardFieldClass}
+                  >
+                    <option value="">Select distance…</option>
+                    {PATRON_SPEED_DISTANCES.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-100 shrink-0">
+              <button
+                type="button"
+                onClick={closeUpdateRegistrant}
+                disabled={updateSaving}
+                className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-fira-sans text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSaveRegistrantUpdate()}
+                disabled={updateSaving}
+                className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-fira-sans font-medium hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {updateSaving ? 'Saving…' : 'Save changes'}
               </button>
             </div>
           </div>
