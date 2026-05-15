@@ -176,12 +176,14 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
     }));
   };
 
-  const handlePromoBlur = async () => {
-    const trimmed = formData.promoCode.trim();
+  const validatePromoCode = async (
+    trimmed: string,
+    raceCategory: string
+  ): Promise<boolean | null> => {
     if (trimmed.length === 0) {
       setPromoCodeValid(null);
       setPromoCodeError('');
-      return;
+      return null;
     }
 
     setIsCheckingPromoCode(true);
@@ -193,7 +195,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
         },
         body: JSON.stringify({
           promoCode: trimmed,
-          raceCategory: formData.raceCategory,
+          raceCategory,
         }),
       });
 
@@ -206,17 +208,38 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
       if (!response.ok || data.valid !== true) {
         setPromoCodeValid(false);
         setPromoCodeError(data.error || 'Invalid Promo Code');
-        return;
+        return false;
       }
 
       setPromoCodeValid(true);
       setPromoCodeError('');
+      return true;
     } catch {
       setPromoCodeValid(false);
       setPromoCodeError('Unable to validate promo code right now. Please try again.');
+      return false;
     } finally {
       setIsCheckingPromoCode(false);
     }
+  };
+
+  const handlePromoBlur = async () => {
+    await validatePromoCode(formData.promoCode.trim(), formData.raceCategory);
+  };
+
+  const confirmProceedWithoutInvalidAdvocateCode = async () => {
+    const proceed = await Swal.fire({
+      title: 'Advocate code invalid',
+      text: 'This advocate code has already been used and is no longer valid. Do you want to proceed with your registration without it?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Proceed',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#ea580c',
+      cancelButtonColor: '#6b7280',
+      customClass: { confirmButton: 'font-fira-sans', cancelButton: 'font-fira-sans' },
+    });
+    return proceed.isConfirmed;
   };
 
   const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -253,6 +276,24 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
       });
       return;
     }
+
+    const advocateCodeTrimmed = formData.promoCode.trim();
+    const isAdvocateCode =
+      advocateCodeTrimmed.length > 0 && PROMO_FORMAT.test(advocateCodeTrimmed);
+
+    if (isAdvocateCode) {
+      let advocateValid = promoCodeValid;
+      if (advocateValid === null) {
+        advocateValid = await validatePromoCode(advocateCodeTrimmed, formData.raceCategory);
+      }
+      if (advocateValid === false) {
+        const proceed = await confirmProceedWithoutInvalidAdvocateCode();
+        if (!proceed) {
+          return;
+        }
+      }
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -952,10 +993,14 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                 <div className="pt-4">
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isCheckingPromoCode}
                     className="w-full bg-gradient-to-r from-orange-600 to-orange-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:from-orange-700 hover:to-orange-600 transition-all transform hover:scale-105 shadow-lg font-fira-sans disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   >
-                    {isSubmitting ? 'Submitting...' : 'Submit Registration'}
+                    {isCheckingPromoCode
+                      ? 'Checking advocate code...'
+                      : isSubmitting
+                        ? 'Submitting...'
+                        : 'Submit Registration'}
                   </button>
                 </div>
               </form>

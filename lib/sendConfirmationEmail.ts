@@ -269,7 +269,7 @@ export async function sendRegistrationConfirmation(
   });
 
   const ccRecipients = [
-    'oneofakindasiaph@gmail.com',
+    // 'oneofakindasiaph@gmail.com',
     'ops@oneofakindasia.com',
     '1@oneofakindasia.com',
   ];
