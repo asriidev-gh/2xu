@@ -4,6 +4,10 @@ import { Resend } from 'resend';
 import clientPromise from '@/lib/mongodb';
 import { buildSignupContext, type ClientSignupContext } from '@/lib/registrationContext';
 import { sendRegistrationConfirmation } from '@/lib/sendConfirmationEmail';
+import {
+  normalizePhilippinesContact,
+  isPhilippinesContactIncomplete,
+} from '@/lib/normalizePhilippinesContact';
 
 export const dynamic = 'force-dynamic';
 
@@ -100,8 +104,13 @@ export async function POST(request: NextRequest) {
         const memberName = m.name != null ? String(m.name).trim() : '';
         const memberBirthday = m.birthday != null ? String(m.birthday).trim() : '';
         const memberGender = m.gender != null ? String(m.gender).trim() : '';
-        const memberContact = m.contact != null ? String(m.contact).trim() : '';
-        if (!memberName || !memberBirthday || !memberGender || !memberContact) {
+        const memberContactNorm = normalizePhilippinesContact(m.contact);
+        if (
+          !memberName ||
+          !memberBirthday ||
+          !memberGender ||
+          isPhilippinesContactIncomplete(memberContactNorm)
+        ) {
           return NextResponse.json(
             { error: `${memberLabel} ${i + 1}: name, birthday, gender, and contact are required` },
             { status: 400 }
@@ -116,7 +125,15 @@ export async function POST(request: NextRequest) {
         }
       }
     } else {
-      if (!name || String(name).trim() === '' || !contact || String(contact).trim() === '' || !gender || String(gender).trim() === '' || !birthday || String(birthday).trim() === '') {
+      if (
+        !name ||
+        String(name).trim() === '' ||
+        isPhilippinesContactIncomplete(normalizePhilippinesContact(contact)) ||
+        !gender ||
+        String(gender).trim() === '' ||
+        !birthday ||
+        String(birthday).trim() === ''
+      ) {
         return NextResponse.json(
           { error: 'Missing required fields' },
           { status: 400 }
@@ -194,7 +211,7 @@ export async function POST(request: NextRequest) {
       const docs = members.map((m: { name: string; birthday: string; gender: string; contact: string; tShirtSize: string }, index: number) => ({
         name: String(m.name).trim(),
         email,
-        contact: String(m.contact).trim(),
+        contact: normalizePhilippinesContact(m.contact),
         gender: String(m.gender).trim(),
         birthday: String(m.birthday).trim(),
         tShirtSize: String(m.tShirtSize || '').trim(),
@@ -249,9 +266,17 @@ export async function POST(request: NextRequest) {
         console.warn('[Register] Resend skipped: RESEND_API_KEY is not set in .env.local');
       } else {
         const from = process.env.RESEND_FROM_EMAIL?.trim() || '2XU Speed Run <onboarding@resend.dev>';
-        const memberList = members.map((m: { name: string; birthday: string; gender: string; contact: string; tShirtSize: string }, i: number) =>
-          `${i + 1}. ${escapeHtml(m.name)} — ${escapeHtml(m.birthday)} — ${escapeHtml(m.gender)} — ${escapeHtml(m.contact)} — T-shirt: ${escapeHtml(m.tShirtSize || '')}`
-        ).join('<br/>');
+        const memberList = members
+          .map(
+            (
+              m: { name: string; birthday: string; gender: string; contact: string; tShirtSize: string },
+              i: number
+            ) =>
+              `${i + 1}. ${escapeHtml(m.name)} — ${escapeHtml(m.birthday)} — ${escapeHtml(m.gender)} — ${escapeHtml(
+                normalizePhilippinesContact(m.contact)
+              )} — T-shirt: ${escapeHtml(m.tShirtSize || '')}`
+          )
+          .join('<br/>');
         const groupLabel = isDuo ? 'duo' : 'team';
         const { data, error } = await resend.emails.send({
           from,
@@ -286,10 +311,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert single record for non-team
+    const contactForDb = normalizePhilippinesContact(contact);
     const doc: Record<string, unknown> = {
       name,
       email,
-      contact,
+      contact: contactForDb,
       gender,
       birthday,
       tShirtSize: (tShirtSize != null ? String(tShirtSize).trim() : '') || '',
@@ -354,7 +380,7 @@ export async function POST(request: NextRequest) {
           <h2>New registration submitted</h2>
           <p><strong>Name:</strong> ${escapeHtml(name)}</p>
           <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-          <p><strong>Contact:</strong> ${escapeHtml(contact)}</p>
+          <p><strong>Contact:</strong> ${escapeHtml(contactForDb)}</p>
           <p><strong>Gender:</strong> ${escapeHtml(gender)}</p>
           <p><strong>Birthday:</strong> ${escapeHtml(birthday)}</p>
           <p><strong>Race Experience:</strong> ${escapeHtml(raceCategory)}</p>

@@ -16,6 +16,7 @@ export function buildRegistrantsListMongoFilterFromSearchParams(
   const raceCategory = searchParams.get('raceCategory') || '';
   const club = searchParams.get('club') || '';
   const promoCode = searchParams.get('promoCode') || '';
+  const withPromoRaw = searchParams.get('withPromo') || '';
   const emailStatus = searchParams.get('emailStatus') || '';
   const dateFrom = searchParams.get('dateFrom') || '';
   const dateTo = searchParams.get('dateTo') || '';
@@ -44,8 +45,25 @@ export function buildRegistrantsListMongoFilterFromSearchParams(
     filter.affiliations = club;
   }
 
-  if (promoCode) {
-    filter.promoCode = { $regex: promoCode.trim(), $options: 'i' };
+  const withPromoOnly = withPromoRaw === '1' || withPromoRaw.toLowerCase() === 'true';
+  const promoTrim = promoCode.trim();
+
+  function escapeRegExp(s: string): string {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  if (withPromoOnly && promoTrim) {
+    if (!Array.isArray(filter.$and)) {
+      filter.$and = [];
+    }
+    (filter.$and as Record<string, unknown>[]).push(
+      { promoCode: { $regex: /\S/ } },
+      { promoCode: { $regex: escapeRegExp(promoTrim), $options: 'i' } }
+    );
+  } else if (withPromoOnly) {
+    filter.promoCode = { $regex: /\S/ };
+  } else if (promoTrim) {
+    filter.promoCode = { $regex: escapeRegExp(promoTrim), $options: 'i' };
   }
 
   if (emailStatus && ['success', 'failed', 'pending'].includes(emailStatus)) {

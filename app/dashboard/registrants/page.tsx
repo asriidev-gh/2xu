@@ -7,7 +7,8 @@ import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import { RACE_CATEGORY_NAMES } from '@/components/RaceCategoriesSection';
 import DashboardAdminHeader from '@/components/DashboardAdminHeader';
-import { formatCompletedAgeLabel, getAgeYearsFromBirthday } from '@/lib/completedAge';
+import { getAgeYearsFromBirthday } from '@/lib/completedAge';
+import { formatRegistrantProfileName, genderLetterAbbrev } from '@/lib/registrantProfileName';
 import 'react-quill/dist/quill.snow.css';
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
@@ -91,9 +92,9 @@ type DashboardSortField =
 const COMPACT_HIDDEN_SORT_FIELDS = new Set<DashboardSortField>([
   'contact',
   'birthday',
+  'gender',
   'tShirtSize',
   'affiliations',
-  'promoCode',
   'promotional',
 ]);
 
@@ -135,43 +136,45 @@ function AgeDualRangeSlider({
   const zMax = min + max <= mid ? 20 : 30;
 
   return (
-    <div className="relative w-full pt-1 pb-7">
-      <div
-        className="absolute left-0 right-0 top-[18px] h-2 rounded-full bg-gray-200"
-        aria-hidden
-      />
-      <div
-        className="absolute top-[18px] h-2 rounded-full bg-orange-400 pointer-events-none"
-        style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
-        aria-hidden
-      />
-      <input
-        type="range"
-        min={lo}
-        max={hi}
-        value={min}
-        aria-label="Minimum age"
-        onChange={(e) => {
-          const v = Number(e.target.value);
-          onMinChange(v <= max ? v : max);
-        }}
-        style={{ zIndex: zMin }}
-        className={`absolute inset-x-0 top-2.5 w-full h-8 appearance-none bg-transparent pointer-events-none ${ageDualRangeTrack} ${ageDualRangeThumb}`}
-      />
-      <input
-        type="range"
-        min={lo}
-        max={hi}
-        value={max}
-        aria-label="Maximum age"
-        onChange={(e) => {
-          const v = Number(e.target.value);
-          onMaxChange(v >= min ? v : min);
-        }}
-        style={{ zIndex: zMax }}
-        className={`absolute inset-x-0 top-2.5 w-full h-8 appearance-none bg-transparent pointer-events-none ${ageDualRangeTrack} ${ageDualRangeThumb}`}
-      />
-      <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-600 font-sweet-sans tabular-nums">
+    <div className="w-full">
+      <div className="relative w-full h-[48px] pt-1 pb-1">
+        <div
+          className="absolute left-0 right-0 top-[18px] h-2 rounded-full bg-gray-200"
+          aria-hidden
+        />
+        <div
+          className="absolute top-[18px] h-2 rounded-full bg-orange-400 pointer-events-none"
+          style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+          aria-hidden
+        />
+        <input
+          type="range"
+          min={lo}
+          max={hi}
+          value={min}
+          aria-label="Minimum age"
+          onChange={(e) => {
+            const v = Number(e.target.value);
+            onMinChange(v <= max ? v : max);
+          }}
+          style={{ zIndex: zMin }}
+          className={`absolute inset-x-0 top-2.5 w-full h-6 appearance-none bg-transparent pointer-events-none ${ageDualRangeTrack} ${ageDualRangeThumb}`}
+        />
+        <input
+          type="range"
+          min={lo}
+          max={hi}
+          value={max}
+          aria-label="Maximum age"
+          onChange={(e) => {
+            const v = Number(e.target.value);
+            onMaxChange(v >= min ? v : min);
+          }}
+          style={{ zIndex: zMax }}
+          className={`absolute inset-x-0 top-2.5 w-full h-6 appearance-none bg-transparent pointer-events-none ${ageDualRangeTrack} ${ageDualRangeThumb}`}
+        />
+      </div>
+      <div className="flex justify-between text-xs text-gray-600 font-sweet-sans tabular-nums">
         <span>{min} yrs old</span>
         <span>{max} yrs old</span>
       </div>
@@ -278,14 +281,13 @@ async function exportToExcel(
 
     const headers = [
       'Name',
+      'Advocate Code',
+      'Race Experience',
       'Email',
       'Contact',
-      'Gender',
       'Birthday',
-      'Race Experience',
       'T-shirt Size',
       'Club/Organization',
-      'Advocate Code',
       'Promotional Emails',
       'Email Status',
       'Signup IP',
@@ -295,15 +297,14 @@ async function exportToExcel(
     ];
 
     const rows = allUsers.map((user: User) => [
-      user.name,
+      formatRegistrantProfileName(user),
+      user.promoCode || '',
+      formatRaceCategoryLabel(user.raceCategory, user.patronSpeedDistance),
       user.email,
       user.contact,
-      user.gender,
       user.birthday || '',
-      formatRaceCategoryLabel(user.raceCategory, user.patronSpeedDistance),
       user.tShirtSize || '',
       user.affiliations || '',
-      user.promoCode || '',
       user.promotional ? 'Yes' : 'No',
       user.mailerStatus || 'pending',
       user.signupContext?.ip || '',
@@ -393,6 +394,8 @@ export default function DashboardPage() {
     raceCategory: '',
     club: '',
     promoCode: '',
+    /** When `'1'`, list only rows with a non-empty advocate / promo code. */
+    withPromo: '',
     emailStatus: '',
     dateFrom: '',
     dateTo: ''
@@ -407,6 +410,7 @@ export default function DashboardPage() {
     if (filters.raceCategory) n += 1;
     if (filters.club) n += 1;
     if (filters.promoCode.trim()) n += 1;
+    if (filters.withPromo === '1') n += 1;
     if (filters.emailStatus) n += 1;
     if (filters.dateFrom) n += 1;
     if (filters.dateTo) n += 1;
@@ -437,6 +441,7 @@ export default function DashboardPage() {
     filters.raceCategory,
     filters.club,
     filters.promoCode,
+    filters.withPromo,
     filters.emailStatus,
     filters.dateFrom,
     filters.dateTo,
@@ -1043,17 +1048,6 @@ export default function DashboardPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1.5 font-fira-sans">Advocate Code</label>
-              <input
-                type="text"
-                value={filters.promoCode}
-                onChange={(e) => handleFilterChange('promoCode', e.target.value.toUpperCase())}
-                placeholder="Filter by advocate code"
-                maxLength={6}
-                className={`${dashboardFieldClass} uppercase tracking-wide`}
-              />
-            </div>
-            <div>
               <label className="block text-sm font-medium text-gray-600 mb-1.5 font-fira-sans">Email Status</label>
               <select
                 value={filters.emailStatus}
@@ -1084,19 +1078,33 @@ export default function DashboardPage() {
                 className={dashboardFieldClass}
               />
             </div>
-            <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4 2xl:col-span-6 pt-2 border-t border-gray-100 mt-1">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
-                <label className="block text-sm font-medium text-gray-600 font-fira-sans">
-                  Age <span className="font-normal text-gray-500">(completed years)</span>
-                </label>
-                <span className="text-sm text-orange-700 font-fira-sans font-semibold tabular-nums whitespace-nowrap">
-                  {ageRangeMin} – {ageRangeMax}
-                  {ageRangeMin === AGE_SLIDER_MIN && ageRangeMax === AGE_SLIDER_MAX ? (
-                    <span className="font-normal text-gray-500 font-sweet-sans font-medium ml-1">
-                      (all)
-                    </span>
-                  ) : null}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1.5 font-fira-sans">Advocate Code</label>
+              <input
+                type="text"
+                value={filters.promoCode}
+                onChange={(e) => handleFilterChange('promoCode', e.target.value.toUpperCase())}
+                placeholder="Filter by advocate code"
+                maxLength={6}
+                className={`${dashboardFieldClass} uppercase tracking-wide`}
+              />
+              <label className="mt-2.5 flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                  checked={filters.withPromo === '1'}
+                  onChange={(e) => handleFilterChange('withPromo', e.target.checked ? '1' : '')}
+                />
+                <span className="text-sm text-gray-700 font-sweet-sans leading-snug">
+                  With promo code
                 </span>
+              </label>
+            </div>
+            <div className="min-w-0">
+              <div className="flex flex-col gap-1.5 mb-1">
+                <label className="block text-sm font-medium text-gray-600 font-fira-sans">
+                  Age 
+                </label>
               </div>
               <p className="text-xs text-gray-500 font-sweet-sans mb-1">
                 Drag either end of the bar to set the age range.
@@ -1124,7 +1132,7 @@ export default function DashboardPage() {
               <p className="text-xs sm:text-sm text-gray-500 font-sweet-sans mt-1.5 max-w-xl leading-relaxed">
                 {showExtraTableColumns
                   ? 'Showing all columns.'
-                  : 'Compact view: 6 columns. Use “More columns” for contact, birthday, kit, club, advocate & promo.'}
+                  : 'Compact view: name (with gender & age), advocate code, race, email, email status & registered. Use “More columns” for contact, birthday, gender, kit, club & signup details.'}
               </p>
             </div>
             <div className="flex flex-wrap items-stretch sm:items-center gap-2 sm:gap-3">
@@ -1197,14 +1205,7 @@ export default function DashboardPage() {
                 <thead className="bg-gray-50/95 border-b border-gray-200/90">
                   <tr>
                     <SortableTh field="name" label="Name" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
-                    <SortableTh field="email" label="Email" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
-                    {showExtraTableColumns && (
-                      <SortableTh field="contact" label="Contact" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
-                    )}
-                    <SortableTh field="gender" label="Gender" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
-                    {showExtraTableColumns && (
-                      <SortableTh field="birthday" label="Birthday" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
-                    )}
+                    <SortableTh field="promoCode" label="Advocate Code" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
                     <SortableTh
                       field="raceCategory"
                       label="Race Experience"
@@ -1212,6 +1213,16 @@ export default function DashboardPage() {
                       sortDir={sortDir}
                       onSort={handleSortColumn}
                     />
+                    <SortableTh field="email" label="Email" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
+                    {showExtraTableColumns && (
+                      <SortableTh field="contact" label="Contact" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
+                    )}
+                    {showExtraTableColumns && (
+                      <SortableTh field="birthday" label="Birthday" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
+                    )}
+                    {showExtraTableColumns && (
+                      <SortableTh field="gender" label="Gender" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
+                    )}
                     {showExtraTableColumns && (
                       <>
                         <SortableTh field="tShirtSize" label="T-shirt Size" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
@@ -1222,7 +1233,6 @@ export default function DashboardPage() {
                           sortDir={sortDir}
                           onSort={handleSortColumn}
                         />
-                        <SortableTh field="promoCode" label="Advocate Code" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
                         <SortableTh field="promotional" label="Promotional" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">
                           Signup IP
@@ -1250,20 +1260,52 @@ export default function DashboardPage() {
                       user.raceCategory,
                       user.patronSpeedDistance
                     );
+                    const abbr = genderLetterAbbrev(user.gender);
                     const ageYears = getAgeYearsFromBirthday(user.birthday);
-                    const ageLabel =
-                      ageYears != null ? formatCompletedAgeLabel(ageYears) : null;
-                    const nameTitle = ageLabel ? `${user.name} ${ageLabel}` : user.name;
+                    const nameTitle = formatRegistrantProfileName(user);
+                    let nameInner;
+                    if (abbr && ageYears != null) {
+                      nameInner = (
+                        <>
+                          <span className="text-gray-900">{user.name}</span>
+                          <span className="text-gray-500 font-normal">{` (${abbr}-${ageYears} yrs old)`}</span>
+                        </>
+                      );
+                    } else if (abbr) {
+                      nameInner = (
+                        <>
+                          <span className="text-gray-900">{user.name}</span>
+                          <span className="text-gray-500 font-normal">{` (${abbr})`}</span>
+                        </>
+                      );
+                    } else if (ageYears != null) {
+                      nameInner = (
+                        <>
+                          <span className="text-gray-900">{user.name}</span>
+                          <span className="text-gray-500 font-normal">{` (${ageYears} yrs old)`}</span>
+                        </>
+                      );
+                    } else {
+                      nameInner = <span className="text-gray-900">{user.name}</span>;
+                    }
                     return (
                     <tr key={user._id} className="hover:bg-gray-50">
                       <td
-                        className="px-6 py-4 text-sm font-medium text-gray-900 font-sweet-sans whitespace-nowrap"
+                        className="px-6 py-4 text-sm font-medium text-gray-900 font-sweet-sans whitespace-nowrap max-w-[min(22rem,55vw)]"
                         title={nameTitle}
                       >
-                        <span className="text-gray-900">{user.name}</span>
-                        {ageLabel != null && (
-                          <span className="text-gray-500 font-normal"> {ageLabel}</span>
-                        )}
+                        {nameInner}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans max-w-[10rem] truncate" title={user.promoCode || undefined}>
+                        {user.promoCode || '—'}
+                      </td>
+                      <td
+                        className={`px-6 py-4 text-sm text-gray-500 font-sweet-sans ${
+                          showExtraTableColumns ? 'whitespace-nowrap' : 'max-w-[10rem] sm:max-w-[14rem] truncate whitespace-nowrap'
+                        }`}
+                        title={raceExperience || undefined}
+                      >
+                        {raceExperience || 'N/A'}
                       </td>
                       <td
                         className={`px-6 py-4 text-sm text-gray-500 font-sweet-sans ${
@@ -1278,18 +1320,12 @@ export default function DashboardPage() {
                           {user.contact}
                         </td>
                       )}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">{user.gender}</td>
                       {showExtraTableColumns && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">{user.birthday || 'N/A'}</td>
                       )}
-                      <td
-                        className={`px-6 py-4 text-sm text-gray-500 font-sweet-sans ${
-                          showExtraTableColumns ? 'whitespace-nowrap' : 'max-w-[10rem] sm:max-w-[14rem] truncate whitespace-nowrap'
-                        }`}
-                        title={raceExperience || undefined}
-                      >
-                        {raceExperience || 'N/A'}
-                      </td>
+                      {showExtraTableColumns && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">{user.gender}</td>
+                      )}
                       {showExtraTableColumns && (
                         <>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">
@@ -1332,7 +1368,6 @@ export default function DashboardPage() {
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">{user.affiliations || 'N/A'}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">{user.promoCode || '—'}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">
                             {user.promotional ? (
                               <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Yes</span>

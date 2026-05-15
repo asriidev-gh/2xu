@@ -8,6 +8,7 @@ import {
   RACE_CATEGORY_PRICES,
   PATRON_SPEED_DISTANCES,
 } from '@/components/RaceCategoriesSection';
+import { normalizePhilippinesContact, PH_MOBILE_PREFIX, isPhilippinesContactIncomplete } from '@/lib/normalizePhilippinesContact';
 
 type RegistrationSectionProps = {
   selectedCategory?: string;
@@ -25,6 +26,50 @@ const MISSION_STRONG_PROMO = 'MISSIONSTRONG500';
 const MISSION_STRONG_ELIGIBLE_CATEGORIES = new Set(['Youth Category', 'Advocate / Influencer']);
 const PROMO_MAX_LENGTH = 20;
 
+/** Jan 1 of (current calendar year − years), for HTML date inputs (YYYY-MM-DD). */
+function defaultBirthdayJan1YearsAgo(years: number): string {
+  const y = new Date().getFullYear() - years;
+  return `${y}-01-01`;
+}
+
+function createInitialFormData() {
+  const b = defaultBirthdayJan1YearsAgo(13);
+  return {
+    name: '',
+    email: '',
+    contact: '',
+    gender: '',
+    birthday: b,
+    raceCategory: '',
+    patronSpeedDistance: '',
+    affiliations: '',
+    promotional: false,
+    waiverAccepted: false,
+    tShirtSize: '',
+    promoCode: '',
+    teamMember1Name: '',
+    teamMember1Birthday: b,
+    teamMember1Gender: '',
+    teamMember1Contact: '',
+    teamMember1TShirtSize: '',
+    teamMember2Name: '',
+    teamMember2Birthday: b,
+    teamMember2Gender: '',
+    teamMember2Contact: '',
+    teamMember2TShirtSize: '',
+    teamMember3Name: '',
+    teamMember3Birthday: b,
+    teamMember3Gender: '',
+    teamMember3Contact: '',
+    teamMember3TShirtSize: '',
+    teamMember4Name: '',
+    teamMember4Birthday: b,
+    teamMember4Gender: '',
+    teamMember4Contact: '',
+    teamMember4TShirtSize: '',
+  };
+}
+
 function buildClientSignupContext() {
   if (typeof window === 'undefined') return undefined;
   return {
@@ -39,40 +84,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
   const registrationSectionRef = useRef<HTMLElement>(null);
   const [isRegistrationVisible, setIsRegistrationVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    contact: '',
-    gender: '',
-    birthday: '',
-    raceCategory: '',
-    patronSpeedDistance: '',
-    affiliations: '',
-    promotional: false,
-    waiverAccepted: false,
-    tShirtSize: '',
-    promoCode: '',
-    teamMember1Name: '',
-    teamMember1Birthday: '',
-    teamMember1Gender: '',
-    teamMember1Contact: '',
-    teamMember1TShirtSize: '',
-    teamMember2Name: '',
-    teamMember2Birthday: '',
-    teamMember2Gender: '',
-    teamMember2Contact: '',
-    teamMember2TShirtSize: '',
-    teamMember3Name: '',
-    teamMember3Birthday: '',
-    teamMember3Gender: '',
-    teamMember3Contact: '',
-    teamMember3TShirtSize: '',
-    teamMember4Name: '',
-    teamMember4Birthday: '',
-    teamMember4Gender: '',
-    teamMember4Contact: '',
-    teamMember4TShirtSize: ''
-  });
+  const [formData, setFormData] = useState(() => createInitialFormData());
 
   const [promoCodeValid, setPromoCodeValid] = useState<boolean | null>(null);
   const [promoCodeError, setPromoCodeError] = useState('');
@@ -247,6 +259,41 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
       const isTeam = formData.raceCategory === 'Team Category';
       const isDuo = formData.raceCategory === 'The Speed Duo - 2XU pair';
       const groupMemberKeys = (isTeam ? [1, 2, 3, 4] : isDuo ? [1, 2] : []) as Array<1 | 2 | 3 | 4>;
+
+      if (groupMemberKeys.length === 0) {
+        if (isPhilippinesContactIncomplete(normalizePhilippinesContact(formData.contact))) {
+          await Swal.fire({
+            title: 'Mobile number required',
+            text: `Enter your mobile number (digits only; ${PH_MOBILE_PREFIX} is added when you submit).`,
+            icon: 'warning',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#ea580c',
+            customClass: { confirmButton: 'font-fira-sans' },
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      } else {
+        for (const num of groupMemberKeys) {
+          if (
+            isPhilippinesContactIncomplete(
+              normalizePhilippinesContact(formData[`teamMember${num}Contact`])
+            )
+          ) {
+            await Swal.fire({
+              title: 'Mobile number required',
+              text: `Enter a mobile number for ${isDuo ? 'Duo' : 'Team'} member ${num} (digits after ${PH_MOBILE_PREFIX}).`,
+              icon: 'warning',
+              confirmButtonText: 'OK',
+              confirmButtonColor: '#ea580c',
+              customClass: { confirmButton: 'font-fira-sans' },
+            });
+            setIsSubmitting(false);
+            return;
+          }
+        }
+      }
+
       // Only save promo code when it was validated as valid; otherwise save registration without it
       const promoToSave = promoCodeValid === true ? formData.promoCode : '';
       const clientContext = buildClientSignupContext();
@@ -263,11 +310,17 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
               name: formData[`teamMember${num}Name`],
               birthday: formData[`teamMember${num}Birthday`],
               gender: formData[`teamMember${num}Gender`],
-              contact: formData[`teamMember${num}Contact`],
-              tShirtSize: formData[`teamMember${num}TShirtSize`]
-            }))
+              contact: normalizePhilippinesContact(formData[`teamMember${num}Contact`]),
+              tShirtSize: formData[`teamMember${num}TShirtSize`],
+            })),
           }
-        : { ...formData, waiverAccepted: formData.waiverAccepted, promoCode: promoToSave, clientContext };
+        : {
+            ...formData,
+            contact: normalizePhilippinesContact(formData.contact),
+            waiverAccepted: formData.waiverAccepted,
+            promoCode: promoToSave,
+            clientContext,
+          };
 
       const response = await fetch('/api/register', {
         method: 'POST',
@@ -311,40 +364,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
       });
       
       // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        contact: '',
-        gender: '',
-        birthday: '',
-        raceCategory: '',
-        patronSpeedDistance: '',
-        affiliations: '',
-        promotional: false,
-        waiverAccepted: false,
-        tShirtSize: '',
-        promoCode: '',
-        teamMember1Name: '',
-        teamMember1Birthday: '',
-        teamMember1Gender: '',
-        teamMember1Contact: '',
-        teamMember1TShirtSize: '',
-        teamMember2Name: '',
-        teamMember2Birthday: '',
-        teamMember2Gender: '',
-        teamMember2Contact: '',
-        teamMember2TShirtSize: '',
-        teamMember3Name: '',
-        teamMember3Birthday: '',
-        teamMember3Gender: '',
-        teamMember3Contact: '',
-        teamMember3TShirtSize: '',
-        teamMember4Name: '',
-        teamMember4Birthday: '',
-        teamMember4Gender: '',
-        teamMember4Contact: '',
-        teamMember4TShirtSize: ''
-      });
+      setFormData(createInitialFormData());
     } catch (error) {
       console.error('Registration error:', error);
       await Swal.fire({
@@ -549,18 +569,25 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                           </div>
                           <div className="sm:col-span-2">
                             <label htmlFor={`teamMember${num}Contact`} className="block text-sm font-semibold text-gray-700 mb-1 font-fira-sans">
-                              Contact Number <span className="text-orange-600">*</span>
+                              Mobile number <span className="text-orange-600">*</span>
                             </label>
-                            <input
-                              type="tel"
-                              id={`teamMember${num}Contact`}
-                              name={`teamMember${num}Contact`}
-                              value={formData[`teamMember${num}Contact`]}
-                              onChange={handleInputChange}
-                              required
-                              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900"
-                              placeholder="+63 XXX XXX XXXX"
-                            />
+                            <div className="flex rounded-lg border border-gray-300 bg-white overflow-hidden focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/20 transition-all">
+                              <span className="px-3 sm:px-4 py-3 bg-gray-50 text-gray-800 font-sweet-sans text-sm border-r border-gray-200 shrink-0 tabular-nums">
+                                {PH_MOBILE_PREFIX}
+                              </span>
+                              <input
+                                type="tel"
+                                id={`teamMember${num}Contact`}
+                                name={`teamMember${num}Contact`}
+                                inputMode="tel"
+                                autoComplete="tel-national"
+                                value={formData[`teamMember${num}Contact`]}
+                                onChange={handleInputChange}
+                                required
+                                className="flex-1 min-w-0 px-4 py-3 border-0 font-sweet-sans text-gray-900 focus:ring-0 focus:outline-none placeholder:text-gray-400"
+                                placeholder="Ex. (966-123-4567)"
+                              />
+                            </div>
                           </div>
                           <div>
                             <label htmlFor={`teamMember${num}TShirtSize`} className="block text-sm font-semibold text-gray-700 mb-1 font-fira-sans">
@@ -621,18 +648,28 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
 
                     <div>
                       <label htmlFor="contact" className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
-                        Contact Number <span className="text-orange-600">*</span>
+                        Mobile number <span className="text-orange-600">*</span>
                       </label>
-                      <input
-                        type="tel"
-                        id="contact"
-                        name="contact"
-                        value={formData.contact}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900"
-                        placeholder="+63 XXX XXX XXXX"
-                      />
+                      <div className="flex rounded-lg border border-gray-300 bg-white overflow-hidden focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/20 transition-all">
+                        <span className="px-3 sm:px-4 py-3 bg-gray-50 text-gray-800 font-sweet-sans text-sm border-r border-gray-200 shrink-0 tabular-nums">
+                          {PH_MOBILE_PREFIX}
+                        </span>
+                        <input
+                          type="tel"
+                          id="contact"
+                          name="contact"
+                          inputMode="tel"
+                          autoComplete="tel-national"
+                          value={formData.contact}
+                          onChange={handleInputChange}
+                          required
+                          className="flex-1 min-w-0 px-4 py-3 border-0 font-sweet-sans text-gray-900 focus:ring-0 focus:outline-none placeholder:text-gray-400"
+                          placeholder="Ex. (966-123-4567)"
+                        />
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500 font-sweet-sans">
+                        Country code {PH_MOBILE_PREFIX} is added automatically when you submit.
+                      </p>
                     </div>
 
                     <div>

@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import DashboardAdminHeader from '@/components/DashboardAdminHeader';
-import { formatCompletedAgeLabel, getAgeYearsFromBirthday } from '@/lib/completedAge';
+import { getAgeYearsFromBirthday } from '@/lib/completedAge';
+import { formatRegistrantProfileName, genderLetterAbbrev } from '@/lib/registrantProfileName';
 
 type InsightsPayload = {
   generatedAt: string;
@@ -410,12 +411,11 @@ export default function InsightsPage() {
         'Name',
         'Email',
         'Contact',
-        'Gender',
+        'Promo Code',
         'Birthday',
         'Race Experience',
         'T-shirt Size',
         'Club/Organization',
-        'Promo Code',
         'Team member index',
         'Signup IP',
         'Signup location',
@@ -424,15 +424,14 @@ export default function InsightsPage() {
       ];
 
       const rows = allUsers.map((u) => [
-        u.name,
+        formatRegistrantProfileName(u),
         u.email,
         u.contact,
-        u.gender,
+        u.promoCode || '',
         u.birthday || '',
         formatRaceCategoryLabel(u.raceCategory, u.patronSpeedDistance),
         u.tShirtSize || '',
         u.affiliations || '',
-        u.promoCode || '',
         u.teamMemberIndex != null ? String(u.teamMemberIndex) : '',
         u.signupContext?.ip || '',
         u.signupContext?.locationLabel || '',
@@ -1013,8 +1012,8 @@ export default function InsightsPage() {
                           onSort={handleDetailSortColumn}
                         />
                         <DetailSortableTh
-                          field="gender"
-                          label="Gender"
+                          field="promoCode"
+                          label="Promo Code"
                           sortBy={detailSortBy}
                           sortDir={detailSortDir}
                           onSort={handleDetailSortColumn}
@@ -1029,13 +1028,6 @@ export default function InsightsPage() {
                         <DetailSortableTh
                           field="affiliations"
                           label="Club"
-                          sortBy={detailSortBy}
-                          sortDir={detailSortDir}
-                          onSort={handleDetailSortColumn}
-                        />
-                        <DetailSortableTh
-                          field="promoCode"
-                          label="Promo Code"
                           sortBy={detailSortBy}
                           sortDir={detailSortDir}
                           onSort={handleDetailSortColumn}
@@ -1057,6 +1049,13 @@ export default function InsightsPage() {
                           Device
                         </th>
                         <DetailSortableTh
+                          field="gender"
+                          label="Gender"
+                          sortBy={detailSortBy}
+                          sortDir={detailSortDir}
+                          onSort={handleDetailSortColumn}
+                        />
+                        <DetailSortableTh
                           field="createdAt"
                           label="Registered"
                           sortBy={detailSortBy}
@@ -1071,34 +1070,54 @@ export default function InsightsPage() {
                           u.raceCategory,
                           u.patronSpeedDistance
                         );
-                        const ageYears = getAgeYearsFromBirthday(u.birthday);
-                        const ageLabel =
-                          ageYears != null ? formatCompletedAgeLabel(ageYears) : null;
-                        const nameTitle = ageLabel ? `${u.name} ${ageLabel}` : u.name;
+                        const abbr = genderLetterAbbrev(u.gender);
+                        const ageYears = getAgeYearsFromBirthday(u.birthday || '');
+                        const nameTitle = formatRegistrantProfileName(u);
+                        let nameInner;
+                        if (abbr && ageYears != null) {
+                          nameInner = (
+                            <>
+                              <span className="text-gray-900">{u.name}</span>
+                              <span className="text-gray-500 font-normal">{` (${abbr}-${ageYears} yrs old)`}</span>
+                            </>
+                          );
+                        } else if (abbr) {
+                          nameInner = (
+                            <>
+                              <span className="text-gray-900">{u.name}</span>
+                              <span className="text-gray-500 font-normal">{` (${abbr})`}</span>
+                            </>
+                          );
+                        } else if (ageYears != null) {
+                          nameInner = (
+                            <>
+                              <span className="text-gray-900">{u.name}</span>
+                              <span className="text-gray-500 font-normal">{` (${ageYears} yrs old)`}</span>
+                            </>
+                          );
+                        } else {
+                          nameInner = <span className="text-gray-900">{u.name}</span>;
+                        }
                         return (
                         <tr key={u._id} className="border-b border-gray-100 hover:bg-gray-50">
                           <td
-                            className="py-2 pr-3 text-gray-900 font-medium whitespace-nowrap"
+                            className="py-2 pr-3 text-gray-900 font-medium whitespace-nowrap max-w-[min(22rem,55vw)]"
                             title={nameTitle}
                           >
-                            <span className="text-gray-900">{u.name}</span>
-                            {ageLabel != null && (
-                              <span className="text-gray-500 font-normal"> {ageLabel}</span>
-                            )}
+                            {nameInner}
                           </td>
                           <td className="py-2 pr-3 text-gray-700 max-w-[180px] truncate" title={u.email}>
                             {u.email}
                           </td>
                           <td className="py-2 pr-3 text-gray-700 whitespace-nowrap">{u.contact}</td>
-                          <td className="py-2 pr-3 text-gray-700 whitespace-nowrap">{u.gender}</td>
+                          <td className="py-2 pr-3 text-gray-700 whitespace-nowrap max-w-[120px] truncate" title={u.promoCode || undefined}>
+                            {u.promoCode || '—'}
+                          </td>
                           <td className="py-2 pr-3 text-gray-700 max-w-[120px] truncate" title={raceExperience}>
                             {raceExperience}
                           </td>
                           <td className="py-2 pr-3 text-gray-700 max-w-[140px] truncate" title={u.affiliations}>
                             {u.affiliations}
-                          </td>
-                          <td className="py-2 pr-3 text-gray-700 whitespace-nowrap max-w-[120px] truncate" title={u.promoCode || undefined}>
-                            {u.promoCode || '—'}
                           </td>
                           <td className="py-2 pr-3 text-gray-700 whitespace-nowrap">
                             {u.teamMemberIndex != null ? u.teamMemberIndex : '—'}
@@ -1121,6 +1140,7 @@ export default function InsightsPage() {
                           >
                             {u.signupContext?.deviceType || '—'}
                           </td>
+                          <td className="py-2 pr-3 text-gray-700 whitespace-nowrap">{u.gender}</td>
                           <td className="py-2 pr-3 text-gray-600 whitespace-nowrap text-xs">
                             {u.createdAt ? new Date(u.createdAt).toLocaleString() : '—'}
                           </td>
