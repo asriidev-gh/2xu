@@ -26,6 +26,7 @@ export async function GET() {
         deleteUserEnabled: process.env.DELETE_USER_ENABLED === 'true',
         emailBlastEnabled: process.env.EMAIL_BLAST_ENABLED === 'true',
         registrantSendEmailEnabled: process.env.REGISTRANT_SEND_EMAIL_ENABLED === 'true',
+        registrantsExportAllEmailsEnabled: process.env.REGISTRANTS_EXPORT_ALL_EMAILS_ENABLED === 'true',
       },
       { status: 200 }
     );

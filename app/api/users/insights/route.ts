@@ -203,9 +203,14 @@ export async function GET() {
       pending: mailerMap.pending ?? 0,
     };
 
-    const withPromoCode = await users.countDocuments({
-      promoCode: { $type: 'string', $regex: /\S/ },
-    });
+    const [withPromoCode, withoutPromoCode] = await Promise.all([
+      users.countDocuments({
+        promoCode: { $type: 'string', $regex: /\S/ },
+      }),
+      users.countDocuments({
+        $nor: [{ promoCode: { $type: 'string', $regex: /\S/ } }],
+      }),
+    ]);
 
     const teamIds = await users.distinct('teamId', {
       teamId: { $exists: true, $ne: null },
@@ -352,6 +357,7 @@ export async function GET() {
         soloRows: soloOrNonTeamRows,
         distinctGroupRegistrations,
         withPromoCode,
+        withoutPromoCode,
         promotionalOptIn,
         byRaceCategory: raceRows.map((r) => ({
           name: String(r._id || 'Unknown'),

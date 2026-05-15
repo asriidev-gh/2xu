@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import clientPromise from '@/lib/mongodb';
 import { formatSignupContextView } from '@/lib/registrationContext';
-import { getAgeBirthdayMatchClauses, mergeBirthdayAgeClausesIntoFilter } from '@/lib/ageBirthdayBounds';
-import { mergeRegistrantsListFilterForEnv } from '@/lib/productionRegistrantExclusions';
+import { buildRegistrantsListMongoFilterFromSearchParams } from '@/lib/buildRegistrantsListMongoFilter';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,19 +23,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get query parameters for filtering and pagination
     const searchParams = request.nextUrl.searchParams;
-    const name = searchParams.get('name') || '';
-    const email = searchParams.get('email') || '';
-    const gender = searchParams.get('gender') || '';
-    const raceCategory = searchParams.get('raceCategory') || '';
-    const club = searchParams.get('club') || '';
-    const promoCode = searchParams.get('promoCode') || '';
-    const emailStatus = searchParams.get('emailStatus') || '';
-    const dateFrom = searchParams.get('dateFrom') || '';
-    const dateTo = searchParams.get('dateTo') || '';
-    const ageMinRaw = searchParams.get('ageMin');
-    const ageMaxRaw = searchParams.get('ageMax');
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const limit = Math.min(10000, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)));
     const skip = (page - 1) * limit;
@@ -86,83 +73,7 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    // Build filter query
-    const filter: any = {};
-
-    if (name) {
-      filter.name = { $regex: name, $options: 'i' };
-    }
-
-    if (email) {
-      filter.email = { $regex: email, $options: 'i' };
-    }
-
-    if (gender) {
-      filter.gender = gender;
-    }
-
-    if (raceCategory) {
-      filter.raceCategory = raceCategory;
-    }
-
-    if (club) {
-      // Exact match (filter value comes from distinct-affiliations dropdown)
-      filter.affiliations = club;
-    }
-
-    if (promoCode) {
-      filter.promoCode = { $regex: promoCode.trim(), $options: 'i' };
-    }
-
-    if (emailStatus && ['success', 'failed', 'pending'].includes(emailStatus)) {
-      if (emailStatus === 'pending') {
-        // Legacy users may not have mailerStatus persisted yet; treat them as pending.
-        filter.$or = [
-          { mailerStatus: 'pending' },
-          { mailerStatus: { $exists: false } },
-          { mailerStatus: null },
-          { mailerStatus: '' },
-        ];
-      } else {
-        filter.mailerStatus = emailStatus;
-      }
-    }
-
-    if (dateFrom || dateTo) {
-      filter.createdAt = {};
-      if (dateFrom) {
-        filter.createdAt.$gte = new Date(dateFrom);
-      }
-      if (dateTo) {
-        const endDate = new Date(dateTo);
-        endDate.setHours(23, 59, 59, 999);
-        filter.createdAt.$lte = endDate;
-      }
-    }
-
-    const AGE_CAP = 120;
-    let ageMin = 0;
-    let ageMax = AGE_CAP;
-    if (ageMinRaw !== null && ageMinRaw !== '') {
-      const n = parseInt(ageMinRaw, 10);
-      if (!Number.isNaN(n)) ageMin = Math.min(AGE_CAP, Math.max(0, n));
-    }
-    if (ageMaxRaw !== null && ageMaxRaw !== '') {
-      const n = parseInt(ageMaxRaw, 10);
-      if (!Number.isNaN(n)) ageMax = Math.min(AGE_CAP, Math.max(0, n));
-    }
-    if (ageMin > ageMax) {
-      const t = ageMin;
-      ageMin = ageMax;
-      ageMax = t;
-    }
-
-    if (ageMin > 0 || ageMax < AGE_CAP) {
-      const ageClauses = getAgeBirthdayMatchClauses(ageMin, ageMax, new Date());
-      mergeBirthdayAgeClausesIntoFilter(filter, ageClauses);
-    }
-
-    const listFilter = mergeRegistrantsListFilterForEnv(filter);
+    const listFilter = buildRegistrantsListMongoFilterFromSearchParams(searchParams);
 
     // Get total count and paginated users
     const total = await collection.countDocuments(listFilter);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Swal from 'sweetalert2';
@@ -221,6 +221,22 @@ function SortableTh({
   );
 }
 
+function buildRegistrantsFilterQueryString(
+  filters: Record<string, string>,
+  ageRangeMin: number,
+  ageRangeMax: number
+) {
+  const queryParams = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) queryParams.append(key, value);
+  });
+  if (ageRangeMin > AGE_SLIDER_MIN || ageRangeMax < AGE_SLIDER_MAX) {
+    queryParams.set('ageMin', String(ageRangeMin));
+    queryParams.set('ageMax', String(ageRangeMax));
+  }
+  return queryParams;
+}
+
 async function exportToExcel(
   pagination: { total: number },
   filters: Record<string, string>,
@@ -241,14 +257,7 @@ async function exportToExcel(
   }
 
   try {
-    const queryParams = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) queryParams.append(key, value);
-    });
-    if (ageRangeMin > AGE_SLIDER_MIN || ageRangeMax < AGE_SLIDER_MAX) {
-      queryParams.set('ageMin', String(ageRangeMin));
-      queryParams.set('ageMax', String(ageRangeMax));
-    }
+    const queryParams = buildRegistrantsFilterQueryString(filters, ageRangeMin, ageRangeMax);
     queryParams.set('page', '1');
     queryParams.set('limit', String(Math.max(pagination.total, 10000)));
     queryParams.set('sortBy', sortBy);
@@ -349,6 +358,13 @@ export default function DashboardPage() {
   const [deleteUserEnabled, setDeleteUserEnabled] = useState(false);
   const [registrantSendEmailEnabled, setRegistrantSendEmailEnabled] = useState(false);
   const [emailBlastEnabled, setEmailBlastEnabled] = useState(false);
+  const [registrantsExportAllEmailsEnabled, setRegistrantsExportAllEmailsEnabled] = useState(false);
+  const [allEmailsModalOpen, setAllEmailsModalOpen] = useState(false);
+  const [allEmailsText, setAllEmailsText] = useState('');
+  const [allEmailsCount, setAllEmailsCount] = useState(0);
+  const [allEmailsLoading, setAllEmailsLoading] = useState(false);
+  const [allEmailsError, setAllEmailsError] = useState<string | null>(null);
+  const [allEmailsCopied, setAllEmailsCopied] = useState(false);
   const [editingTShirtSizeUserId, setEditingTShirtSizeUserId] = useState<string | null>(null);
   const [savingTShirtSizeUserId, setSavingTShirtSizeUserId] = useState<string | null>(null);
   const [retryingMailerUserId, setRetryingMailerUserId] = useState<string | null>(null);
@@ -467,6 +483,7 @@ export default function DashboardPage() {
         setDeleteUserEnabled(data.deleteUserEnabled || false);
         setRegistrantSendEmailEnabled(data.registrantSendEmailEnabled === true);
         setEmailBlastEnabled(data.emailBlastEnabled === true);
+        setRegistrantsExportAllEmailsEnabled(data.registrantsExportAllEmailsEnabled === true);
       }
     } catch (error) {
       console.error('Error fetching config:', error);
@@ -476,14 +493,7 @@ export default function DashboardPage() {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const queryParams = new URLSearchParams();
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value) queryParams.append(key, value);
-      });
-      if (ageRangeMin > AGE_SLIDER_MIN || ageRangeMax < AGE_SLIDER_MAX) {
-        queryParams.set('ageMin', String(ageRangeMin));
-        queryParams.set('ageMax', String(ageRangeMax));
-      }
+      const queryParams = buildRegistrantsFilterQueryString(filters, ageRangeMin, ageRangeMax);
       queryParams.set('page', String(pagination.page));
       queryParams.set('limit', String(pagination.limit));
       queryParams.set('sortBy', sortBy);
@@ -546,6 +556,59 @@ export default function DashboardPage() {
       setSortDir(field === 'createdAt' ? 'desc' : 'asc');
     }
   };
+
+  const closeAllEmailsModal = useCallback(() => {
+    setAllEmailsModalOpen(false);
+    setAllEmailsText('');
+    setAllEmailsCount(0);
+    setAllEmailsError(null);
+    setAllEmailsLoading(false);
+    setAllEmailsCopied(false);
+  }, []);
+
+  const handleOpenAllEmailsModal = useCallback(async () => {
+    setAllEmailsModalOpen(true);
+    setAllEmailsLoading(true);
+    setAllEmailsError(null);
+    setAllEmailsText('');
+    setAllEmailsCount(0);
+    setAllEmailsCopied(false);
+    try {
+      const qs = buildRegistrantsFilterQueryString(filters, ageRangeMin, ageRangeMax).toString();
+      const response = await fetch(`/api/users/export-emails?${qs}`);
+      if (response.status === 401) {
+        router.push('/login');
+        return;
+      }
+      const data = (await response.json()) as { commaSeparated?: string; count?: number; error?: string };
+      if (!response.ok) {
+        setAllEmailsError(data.error || 'Could not load emails.');
+        return;
+      }
+      setAllEmailsText(typeof data.commaSeparated === 'string' ? data.commaSeparated : '');
+      setAllEmailsCount(typeof data.count === 'number' ? data.count : 0);
+    } catch {
+      setAllEmailsError('Could not load emails.');
+    } finally {
+      setAllEmailsLoading(false);
+    }
+  }, [filters, ageRangeMin, ageRangeMax, router]);
+
+  const handleCopyAllEmails = useCallback(async () => {
+    if (!allEmailsText) return;
+    try {
+      await navigator.clipboard.writeText(allEmailsText);
+      setAllEmailsCopied(true);
+      window.setTimeout(() => setAllEmailsCopied(false), 2000);
+    } catch {
+      await Swal.fire({
+        title: 'Copy failed',
+        text: 'Your browser blocked clipboard access. Select the text and copy manually.',
+        icon: 'info',
+        confirmButtonColor: '#ea580c',
+      });
+    }
+  }, [allEmailsText]);
 
   const handleTShirtSizeChange = async (userId: string, newSize: string) => {
     setSavingTShirtSizeUserId(userId);
@@ -1102,6 +1165,20 @@ export default function DashboardPage() {
                 Export to Excel
               </button>
             )}
+            {registrantsExportAllEmailsEnabled && (
+              <button
+                type="button"
+                onClick={() => void handleOpenAllEmailsModal()}
+                disabled={isLoading}
+                className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 transition-colors font-fira-sans text-sm font-medium flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Uses the same filters as the table (excluding pagination). Unique emails, comma-separated."
+              >
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                All emails
+              </button>
+            )}
             </div>
           </div>
           
@@ -1386,6 +1463,80 @@ export default function DashboardPage() {
           )}
         </div>
       </main>
+
+      {allEmailsModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          role="presentation"
+          onClick={closeAllEmailsModal}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="all-emails-modal-title"
+            className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col border border-gray-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-gray-100 shrink-0">
+              <div>
+                <h3 id="all-emails-modal-title" className="text-lg font-semibold text-gray-900 font-druk">
+                  Registrant emails
+                </h3>
+                <p className="text-sm text-gray-600 font-sweet-sans mt-1">
+                  {allEmailsLoading
+                    ? 'Loading…'
+                    : allEmailsError
+                      ? allEmailsError
+                      : `${allEmailsCount} unique address${allEmailsCount === 1 ? '' : 'es'} (current table filters, sorted A–Z).`}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeAllEmailsModal}
+                className="shrink-0 rounded-md px-3 py-1.5 text-sm font-fira-sans text-gray-600 hover:bg-gray-100"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="px-5 py-4 overflow-y-auto min-h-0 flex-1 space-y-3">
+              {allEmailsLoading && (
+                <p className="text-sm text-gray-500 font-sweet-sans">Fetching email list…</p>
+              )}
+              {!allEmailsLoading && allEmailsError && (
+                <p className="text-sm text-red-600 font-sweet-sans">{allEmailsError}</p>
+              )}
+              {!allEmailsLoading && !allEmailsError && (
+                <textarea
+                  readOnly
+                  value={allEmailsText}
+                  rows={12}
+                  className="w-full min-h-[200px] px-3 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-900 text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-orange-500/25 focus:border-orange-500 resize-y"
+                  aria-label="Comma-separated registrant emails"
+                />
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-100 shrink-0">
+              <button
+                type="button"
+                onClick={closeAllEmailsModal}
+                className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-fira-sans text-gray-700 hover:bg-gray-50"
+              >
+                Done
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleCopyAllEmails()}
+                disabled={allEmailsLoading || !!allEmailsError || !allEmailsText}
+                className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-fira-sans font-medium hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {allEmailsCopied ? 'Copied' : 'Copy to clipboard'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {composeEmailOpen && composeEmailUser && (
         <div

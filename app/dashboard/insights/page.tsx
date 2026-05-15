@@ -16,6 +16,7 @@ type InsightsPayload = {
   soloRows: number;
   distinctGroupRegistrations: number;
   withPromoCode: number;
+  withoutPromoCode: number;
   promotionalOptIn: number;
   byRaceCategory: { name: string; count: number }[];
   byGender: { name: string; count: number }[];
@@ -32,6 +33,7 @@ type DetailMetric =
   | 'team_member'
   | 'group_leads'
   | 'with_promo'
+  | 'without_promo'
   | 'promotional'
   | 'race'
   | 'gender'
@@ -145,11 +147,13 @@ async function fetchAllInsightDetailUsers(
   value: string,
   total: number,
   sortBy: DetailSortField,
-  sortDir: 'asc' | 'desc'
+  sortDir: 'asc' | 'desc',
+  nameSearch = ''
 ): Promise<DetailUser[]> {
   const limit = 100;
   const pages = Math.max(1, Math.ceil(total / limit));
   const out: DetailUser[] = [];
+  const ns = nameSearch.trim().slice(0, 120);
   for (let page = 1; page <= pages; page += 1) {
     const q = new URLSearchParams({
       metric,
@@ -159,6 +163,7 @@ async function fetchAllInsightDetailUsers(
       sortDir,
     });
     if (value) q.set('value', value);
+    if (ns) q.set('nameSearch', ns);
     const res = await fetch(`/api/users/insights/details?${q}`);
     if (res.status === 401) {
       onUnauthorized();
@@ -260,6 +265,8 @@ export default function InsightsPage() {
   const [exportingExcel, setExportingExcel] = useState(false);
   const [detailSortBy, setDetailSortBy] = useState<DetailSortField>('createdAt');
   const [detailSortDir, setDetailSortDir] = useState<'asc' | 'desc'>('desc');
+  const [detailNameQuery, setDetailNameQuery] = useState('');
+  const [detailNameApplied, setDetailNameApplied] = useState('');
 
   const loadDetailsPage = useCallback(
     async (
@@ -267,7 +274,8 @@ export default function InsightsPage() {
       metric: DetailMetric,
       value: string,
       sortBy: DetailSortField,
-      sortDir: 'asc' | 'desc'
+      sortDir: 'asc' | 'desc',
+      nameSearchOverride?: string
     ) => {
       setDetailLoading(true);
       setDetailError(null);
@@ -280,6 +288,10 @@ export default function InsightsPage() {
           sortDir,
         });
         if (value) q.set('value', value);
+        const nameQ = (nameSearchOverride !== undefined ? nameSearchOverride : detailNameApplied)
+          .trim()
+          .slice(0, 120);
+        if (nameQ) q.set('nameSearch', nameQ);
         const res = await fetch(`/api/users/insights/details?${q}`);
         if (res.status === 401) {
           router.push('/login');
@@ -302,7 +314,7 @@ export default function InsightsPage() {
         setDetailLoading(false);
       }
     },
-    [router]
+    [router, detailNameApplied]
   );
 
   const openDetails = useCallback(
@@ -316,11 +328,32 @@ export default function InsightsPage() {
       setDetailError(null);
       setDetailSortBy('createdAt');
       setDetailSortDir('desc');
+      setDetailNameQuery('');
+      setDetailNameApplied('');
       setDetailOpen(true);
-      void loadDetailsPage(1, metric, value, 'createdAt', 'desc');
+      void loadDetailsPage(1, metric, value, 'createdAt', 'desc', '');
     },
     [loadDetailsPage]
   );
+
+  const applyDetailNameSearch = useCallback(() => {
+    const q = detailNameQuery.trim();
+    setDetailNameApplied(q);
+    void loadDetailsPage(1, detailMetric, detailValue, detailSortBy, detailSortDir, q);
+  }, [
+    detailNameQuery,
+    detailMetric,
+    detailValue,
+    detailSortBy,
+    detailSortDir,
+    loadDetailsPage,
+  ]);
+
+  const clearDetailNameSearch = useCallback(() => {
+    setDetailNameQuery('');
+    setDetailNameApplied('');
+    void loadDetailsPage(1, detailMetric, detailValue, detailSortBy, detailSortDir, '');
+  }, [detailMetric, detailValue, detailSortBy, detailSortDir, loadDetailsPage]);
 
   const handleDetailSortColumn = (field: DetailSortField) => {
     let nextBy: DetailSortField = field;
@@ -360,7 +393,8 @@ export default function InsightsPage() {
         detailValue,
         detailTotal,
         detailSortBy,
-        detailSortDir
+        detailSortDir,
+        detailNameApplied
       );
       if (allUsers.length === 0) {
         await Swal.fire({
@@ -442,7 +476,7 @@ export default function InsightsPage() {
     } finally {
       setExportingExcel(false);
     }
-  }, [detailTotal, detailMetric, detailValue, detailSortBy, detailSortDir, router]);
+  }, [detailTotal, detailMetric, detailValue, detailSortBy, detailSortDir, detailNameApplied, router]);
 
   useEffect(() => {
     const load = async () => {
@@ -568,7 +602,7 @@ export default function InsightsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
               <div className="bg-white rounded-lg shadow-sm p-5 border border-gray-100">
                 <p className="text-sm font-medium text-gray-500 font-fira-sans">Total rows</p>
                 <p className="text-3xl font-bold text-orange-600 font-druk mt-1">
@@ -623,6 +657,20 @@ export default function InsightsPage() {
                     onClick={() => openDetails('With advocate / promo code', 'with_promo')}
                     className="font-druk font-bold text-3xl text-gray-900"
                   />
+                </p>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm p-5 border border-gray-100">
+                <p className="text-sm font-medium text-gray-500 font-fira-sans">Without advocate / promo code</p>
+                <p className="text-3xl font-bold text-gray-900 font-druk mt-1">
+                  <ClickableStat
+                    count={data.withoutPromoCode ?? 0}
+                    label="Rows without advocate / promo code"
+                    onClick={() => openDetails('Without advocate / promo code', 'without_promo')}
+                    className="font-druk font-bold text-3xl text-gray-900"
+                  />
+                </p>
+                <p className="text-xs text-gray-500 font-sweet-sans mt-2">
+                  Blank, missing, or whitespace-only code (same rule as “with code” inverted).
                 </p>
               </div>
               <div className="bg-white rounded-lg shadow-sm p-5 border border-gray-100">
@@ -872,6 +920,61 @@ export default function InsightsPage() {
                   Close
                 </button>
               </div>
+            </div>
+
+            <div className="px-5 py-3 border-b border-gray-100 bg-gray-50/80 shrink-0">
+              <label
+                htmlFor="insights-detail-name-search"
+                className="block text-xs font-medium text-gray-600 mb-1.5 font-fira-sans"
+              >
+                Filter by name
+              </label>
+              <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                <input
+                  id="insights-detail-name-search"
+                  type="search"
+                  value={detailNameQuery}
+                  onChange={(e) => setDetailNameQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      void applyDetailNameSearch();
+                    }
+                  }}
+                  placeholder="Input name here"
+                  className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-sweet-sans text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/25 focus:border-orange-500"
+                  maxLength={120}
+                  autoComplete="off"
+                  disabled={detailLoading}
+                />
+                <div className="flex gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => void applyDetailNameSearch()}
+                    disabled={detailLoading}
+                    className="px-3 py-2 rounded-lg bg-orange-600 text-white text-sm font-fira-sans font-medium hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Search
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void clearDetailNameSearch()}
+                    disabled={
+                      detailLoading ||
+                      (detailNameQuery.trim() === '' && detailNameApplied.trim() === '')
+                    }
+                    className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm font-fira-sans text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+              {detailNameApplied.trim() !== '' && (
+                <p className="text-xs text-gray-500 font-sweet-sans mt-2">
+                  Active:{' '}
+                  <span className="font-medium text-gray-800">&quot;{detailNameApplied}&quot;</span>
+                </p>
+              )}
             </div>
 
             {detailError && (

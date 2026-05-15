@@ -18,6 +18,7 @@ const ALLOWED_METRICS = new Set([
   'team_member',
   'group_leads',
   'with_promo',
+  'without_promo',
   'promotional',
   'race',
   'gender',
@@ -109,6 +110,9 @@ function buildFilter(metric: string, value: string): Record<string, unknown> {
     case 'with_promo':
       filter.promoCode = { $type: 'string', $regex: /\S/ };
       break;
+    case 'without_promo':
+      filter.$nor = [{ promoCode: { $type: 'string', $regex: /\S/ } }];
+      break;
     case 'promotional':
       filter.promotional = true;
       break;
@@ -199,6 +203,32 @@ function buildFilter(metric: string, value: string): Record<string, unknown> {
   return filter;
 }
 
+const MAX_NAME_SEARCH_LEN = 120;
+
+function escapeMongoRegexLiteral(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Optional case-insensitive substring match on `name` (merged with existing metric filter). */
+function mergeInsightDetailNameSearch(
+  filter: Record<string, unknown>,
+  rawNameSearch: string
+): Record<string, unknown> {
+  const q = rawNameSearch.trim().slice(0, MAX_NAME_SEARCH_LEN);
+  if (!q) return filter;
+  const escaped = escapeMongoRegexLiteral(q);
+  const nameClause = { name: { $regex: escaped, $options: 'i' } };
+  if (Object.keys(filter).length === 0) return nameClause;
+  return { $and: [filter, nameClause] };
+}
+
+function nameSearchOnlyMatch(rawNameSearch: string): Record<string, unknown> | null {
+  const q = rawNameSearch.trim().slice(0, MAX_NAME_SEARCH_LEN);
+  if (!q) return null;
+  const escaped = escapeMongoRegexLiteral(q);
+  return { name: { $regex: escaped, $options: 'i' } };
+}
+
 export async function GET(request: NextRequest) {
   try {
     if (!(await isAuthenticated())) {
@@ -208,6 +238,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
     const metric = (searchParams.get('metric') || '').trim();
     const value = searchParams.get('value') ?? '';
+    const nameSearchRaw = searchParams.get('nameSearch') ?? '';
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '25', 10)));
 
@@ -222,6 +253,7 @@ export async function GET(request: NextRequest) {
     const mongoSort = parseMongoSort(request.nextUrl.searchParams);
 
     if (metric === 'group_leads') {
+      const postNameMatch = nameSearchOnlyMatch(nameSearchRaw);
       const pipeline: Record<string, unknown>[] = [
         { $match: { teamId: { $exists: true, $ne: null } } },
         { $sort: { teamMemberIndex: 1 } },
@@ -232,14 +264,19 @@ export async function GET(request: NextRequest) {
           },
         },
         { $replaceWith: '$doc' },
+      ];
+      if (postNameMatch) {
+        pipeline.push({ $match: postNameMatch });
+      }
+      pipeline.push(
         { $sort: mongoSort },
         {
           $facet: {
             total: [{ $count: 'n' }],
             rows: [{ $skip: (page - 1) * limit }, { $limit: limit }],
           },
-        },
-      ];
+        }
+      );
 
       const agg = await collection.aggregate(pipeline).toArray();
       const facet = agg[0] as { total: { n: number }[]; rows: Record<string, unknown>[] };
@@ -260,15 +297,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    let filter: Record<string, unknown>;
+    let baseFilter: Record<string, unknown>;
     try {
-      filter = buildFilter(metric, value);
+      baseFilter = buildFilter(metric, value);
     } catch (e) {
       return NextResponse.json(
         { error: e instanceof Error ? e.message : 'Invalid parameters' },
         { status: 400 }
       );
     }
+
+    const filter = mergeInsightDetailNameSearch(baseFilter, nameSearchRaw);
 
     const total = await collection.countDocuments(filter);
     const totalPages = Math.ceil(total / limit) || 1;
