@@ -78,8 +78,8 @@ export default function HomePromoSplash({ onPatronImageClick }: HomePromoSplashP
           <button
             type="button"
             onClick={() => {
-              onPatronImageClick?.();
               dismiss();
+              onPatronImageClick?.();
             }}
             className="group relative max-w-full rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black/50"
             aria-label="Continue to Patron registration"

@@ -16,6 +16,8 @@ import SpeedSeriesMechanicsModal from '@/components/SpeedSeriesMechanicsModal';
 import HomePromoSplash from '@/components/HomePromoSplash';
 
 const REGISTRATION_SCROLL_OFFSET_PX = 80;
+const BAGUIO_PROMO_2XU_URL =
+  'https://ph.2xu.com/?utm_source=facebook&utm_campaign=oneofakindasia&utm_medium=affiliate&fbclid=IwY2xjawSBD4FleHRuA2FlbQIxMQBzcnRjBmFwcF9pZAEwAAEegNhNRzmBdmgPSXUSWdBktsEi6xJ6ITp_xbg7nwsJCeUyWc1RlEgFeHfrIqY_aem_RlyaNvZI403PIfpSrbxbBg';
 
 type HomePageClientProps = {
   promoBaguioLegEnabled: boolean;
@@ -35,7 +37,8 @@ export default function HomePageClient({ promoBaguioLegEnabled }: HomePageClient
 
   const handlePromoPatronImageClick = useCallback(() => {
     setSelectedCategory('Patron');
-    scrollToRegistration();
+    window.open(BAGUIO_PROMO_2XU_URL, '_blank', 'noopener,noreferrer');
+    requestAnimationFrame(() => scrollToRegistration());
   }, [scrollToRegistration]);
 
   return (
