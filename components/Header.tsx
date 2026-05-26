@@ -43,7 +43,7 @@ export default function Header() {
             <a href="#home" onClick={(e) => smoothScroll(e, '#home')} className="text-gray-700 hover:text-orange-600 font-medium transition-colors font-fira-sans cursor-pointer">
               Home
             </a>
-            <a href="#events" onClick={(e) => smoothScroll(e, '#events')} className="text-gray-700 hover:text-orange-600 font-medium transition-colors font-fira-sans cursor-pointer">
+            <a href="#race-experience-gallery" onClick={(e) => smoothScroll(e, '#race-experience-gallery')} className="text-gray-700 hover:text-orange-600 font-medium transition-colors font-fira-sans cursor-pointer">
               Events
             </a>
             <a href="#race-categories" onClick={(e) => smoothScroll(e, '#race-categories')} className="text-gray-700 hover:text-orange-600 font-medium transition-colors font-fira-sans cursor-pointer">
@@ -108,7 +108,7 @@ export default function Header() {
             <a href="#home" onClick={(e) => { smoothScroll(e, '#home'); setIsMenuOpen(false); }} className="block text-gray-700 hover:text-orange-600 font-medium font-fira-sans">
               Home
             </a>
-            <a href="#events" onClick={(e) => { smoothScroll(e, '#events'); setIsMenuOpen(false); }} className="block text-gray-700 hover:text-orange-600 font-medium font-fira-sans">
+            <a href="#race-experience-gallery" onClick={(e) => { smoothScroll(e, '#race-experience-gallery'); setIsMenuOpen(false); }} className="block text-gray-700 hover:text-orange-600 font-medium font-fira-sans">
               Events
             </a>
             <a href="#race-categories" onClick={(e) => { smoothScroll(e, '#race-categories'); setIsMenuOpen(false); }} className="block text-gray-700 hover:text-orange-600 font-medium font-fira-sans">

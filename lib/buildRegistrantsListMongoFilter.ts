@@ -81,15 +81,15 @@ export function buildRegistrantsListMongoFilterFromSearchParams(
 
   if (dateFrom || dateTo) {
     const createdAt: Record<string, Date> = {};
-    if (dateFrom) {
-      createdAt.$gte = new Date(dateFrom);
+    if (dateFrom && /^\d{4}-\d{2}-\d{2}$/.test(dateFrom)) {
+      createdAt.$gte = new Date(`${dateFrom}T00:00:00.000Z`);
     }
-    if (dateTo) {
-      const endDate = new Date(dateTo);
-      endDate.setHours(23, 59, 59, 999);
-      createdAt.$lte = endDate;
+    if (dateTo && /^\d{4}-\d{2}-\d{2}$/.test(dateTo)) {
+      createdAt.$lte = new Date(`${dateTo}T23:59:59.999Z`);
     }
-    filter.createdAt = createdAt;
+    if (Object.keys(createdAt).length > 0) {
+      filter.createdAt = createdAt;
+    }
   }
 
   let ageMin = 0;

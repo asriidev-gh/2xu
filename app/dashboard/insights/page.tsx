@@ -8,6 +8,11 @@ import { DateRangePicker } from 'rsuite';
 import 'rsuite/dist/rsuite-no-reset.min.css';
 import DashboardAdminHeader from '@/components/DashboardAdminHeader';
 import { getAgeYearsFromBirthday } from '@/lib/completedAge';
+import {
+  appendInsightsDateRangeParams,
+  defaultDashboardDateRange,
+  type DateRangeValue,
+} from '@/lib/dashboardDateRange';
 import { formatRegistrantProfileName, genderLetterAbbrev } from '@/lib/registrantProfileName';
 
 type InsightsPayload = {
@@ -143,27 +148,6 @@ function formatDateForExport(iso: string | null | undefined): string {
   }
 }
 
-type DateRangeValue = [Date, Date] | null;
-
-function defaultInsightsDateRange(): DateRangeValue {
-  const now = new Date();
-  const year = now.getUTCFullYear();
-  const start = new Date(Date.UTC(year, 4, 23, 0, 0, 0, 0)); // May is month 4 (0-based)
-  const end = new Date(Date.UTC(year, now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
-  return [start, end];
-}
-
-function formatYmd(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
-
-function appendDateRangeParams(q: URLSearchParams, dateRange: DateRangeValue) {
-  if (!dateRange) return;
-  const [start, end] = dateRange;
-  q.set('startDate', formatYmd(start));
-  q.set('endDate', formatYmd(end));
-}
-
 async function fetchAllInsightDetailUsers(
   onUnauthorized: () => void,
   metric: DetailMetric,
@@ -188,7 +172,7 @@ async function fetchAllInsightDetailUsers(
     });
     if (value) q.set('value', value);
     if (ns) q.set('nameSearch', ns);
-    appendDateRangeParams(q, dateRange);
+    appendInsightsDateRangeParams(q, dateRange);
     const res = await fetch(`/api/users/insights/details?${q}`);
     if (res.status === 401) {
       onUnauthorized();
@@ -292,7 +276,7 @@ export default function InsightsPage() {
   const [detailSortDir, setDetailSortDir] = useState<'asc' | 'desc'>('desc');
   const [detailNameQuery, setDetailNameQuery] = useState('');
   const [detailNameApplied, setDetailNameApplied] = useState('');
-  const [dateRange, setDateRange] = useState<DateRangeValue>(() => defaultInsightsDateRange());
+  const [dateRange, setDateRange] = useState<DateRangeValue>(() => defaultDashboardDateRange());
 
   const loadDetailsPage = useCallback(
     async (
@@ -318,7 +302,7 @@ export default function InsightsPage() {
           .trim()
           .slice(0, 120);
         if (nameQ) q.set('nameSearch', nameQ);
-        appendDateRangeParams(q, dateRange);
+        appendInsightsDateRangeParams(q, dateRange);
         const res = await fetch(`/api/users/insights/details?${q}`);
         if (res.status === 401) {
           router.push('/login');
@@ -518,7 +502,7 @@ export default function InsightsPage() {
       setLoading(true);
       try {
         const insightsQuery = new URLSearchParams();
-        appendDateRangeParams(insightsQuery, dateRange);
+        appendInsightsDateRangeParams(insightsQuery, dateRange);
         const insightsUrl = insightsQuery.toString()
           ? `/api/users/insights?${insightsQuery.toString()}`
           : '/api/users/insights';

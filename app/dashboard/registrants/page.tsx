@@ -5,11 +5,20 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
+import { DateRangePicker } from 'rsuite';
 import { RACE_CATEGORY_NAMES } from '@/components/RaceCategoriesSection';
 import DashboardAdminHeader from '@/components/DashboardAdminHeader';
 import { getAgeYearsFromBirthday, parseBirthdayLocal } from '@/lib/completedAge';
+import {
+  dateRangeFromFilterStrings,
+  defaultDashboardDateFilterStrings,
+  filterStringsFromDateRange,
+  isDefaultDashboardDateFilter,
+  type DateRangeValue,
+} from '@/lib/dashboardDateRange';
 import { formatRegistrantProfileName, genderLetterAbbrev } from '@/lib/registrantProfileName';
 import { SPEED_DISTANCES } from '@/lib/raceCategories';
+import 'rsuite/dist/rsuite-no-reset.min.css';
 import 'react-quill/dist/quill.snow.css';
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
@@ -437,8 +446,7 @@ export default function DashboardPage() {
     /** When `'1'`, list only rows with a non-empty advocate / promo code. */
     withPromo: '',
     emailStatus: '',
-    dateFrom: '',
-    dateTo: ''
+    ...defaultDashboardDateFilterStrings(),
   });
   const [filtersSectionOpen, setFiltersSectionOpen] = useState(true);
 
@@ -452,8 +460,12 @@ export default function DashboardPage() {
     if (filters.promoCode.trim()) n += 1;
     if (filters.withPromo === '1') n += 1;
     if (filters.emailStatus) n += 1;
-    if (filters.dateFrom) n += 1;
-    if (filters.dateTo) n += 1;
+    if (
+      (filters.dateFrom || filters.dateTo) &&
+      !isDefaultDashboardDateFilter(filters.dateFrom, filters.dateTo)
+    ) {
+      n += 1;
+    }
     if (ageRangeMin > AGE_SLIDER_MIN || ageRangeMax < AGE_SLIDER_MAX) n += 1;
     return n;
   }, [filters, ageRangeMin, ageRangeMax]);
@@ -1229,22 +1241,23 @@ export default function DashboardPage() {
                 <option value="pending">Pending</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1.5 font-fira-sans">Date From</label>
-              <input
-                type="date"
-                value={filters.dateFrom}
-                onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                className={dashboardFieldClass}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1.5 font-fira-sans">Date To</label>
-              <input
-                type="date"
-                value={filters.dateTo}
-                onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                className={dashboardFieldClass}
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-600 mb-1.5 font-fira-sans">
+                Registration date range (UTC)
+              </label>
+              <DateRangePicker
+                value={dateRangeFromFilterStrings(filters.dateFrom, filters.dateTo)}
+                onChange={(next: DateRangeValue) => {
+                  const { dateFrom, dateTo } = filterStringsFromDateRange(next);
+                  setFilters((prev) => ({ ...prev, dateFrom, dateTo }));
+                }}
+                cleanable
+                editable={false}
+                format="yyyy-MM-dd"
+                character=" to "
+                placeholder="All time"
+                placement="bottomStart"
+                className="w-full"
               />
             </div>
             <div>
