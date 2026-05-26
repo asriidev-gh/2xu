@@ -214,6 +214,7 @@ export default function UpdatesSection() {
       <ApparelImageModal
         isOpen={resultsModalOpen}
         imageSrc={AYALA_RESULTS_IMAGE}
+        imageAlt="Speed Series Ayala Makati race results"
         onClose={() => setResultsModalOpen(false)}
       />
     </section>
