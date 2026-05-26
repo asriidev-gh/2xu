@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Fira_Sans } from "next/font/google";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next"
 
 const inter = Inter({ subsets: ["latin"] });
 const firaSans = Fira_Sans({ 
@@ -68,6 +69,7 @@ export default function RootLayout({
           style={{ display: 'none' }}
         />
         {children}
+        <Analytics />
       </body>
     </html>
   );

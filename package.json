@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "bcryptjs": "^3.0.3",
     "framer-motion": "^12.34.0",
     "mongodb": "^7.0.0",
