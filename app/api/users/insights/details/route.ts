@@ -9,6 +9,7 @@ import {
   getUtcTodayBounds,
 } from '@/lib/insightsPeriodBounds';
 import { getAgeBirthdayMatchClauses } from '@/lib/ageBirthdayBounds';
+import { getStoredSpeedDistance } from '@/lib/raceCategories';
 
 export const dynamic = 'force-dynamic';
 
@@ -203,6 +204,30 @@ function buildFilter(metric: string, value: string): Record<string, unknown> {
   return filter;
 }
 
+function parseDateRangeFilter(searchParams: URLSearchParams): Record<string, unknown> | null {
+  const startRaw = (searchParams.get('startDate') || '').trim();
+  const endRaw = (searchParams.get('endDate') || '').trim();
+  if (!startRaw && !endRaw) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startRaw) || !/^\d{4}-\d{2}-\d{2}$/.test(endRaw)) {
+    throw new Error('Invalid date range');
+  }
+  const start = new Date(`${startRaw}T00:00:00.000Z`);
+  const end = new Date(`${endRaw}T23:59:59.999Z`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) {
+    throw new Error('Invalid date range');
+  }
+  return { createdAt: { $gte: start, $lte: end } };
+}
+
+function mergeFilter(
+  baseFilter: Record<string, unknown>,
+  rangeFilter: Record<string, unknown> | null
+): Record<string, unknown> {
+  if (!rangeFilter) return baseFilter;
+  if (Object.keys(baseFilter).length === 0) return rangeFilter;
+  return { $and: [baseFilter, rangeFilter] };
+}
+
 const MAX_NAME_SEARCH_LEN = 120;
 
 function escapeMongoRegexLiteral(s: string): string {
@@ -251,11 +276,22 @@ export async function GET(request: NextRequest) {
     const collection = db.collection('users');
 
     const mongoSort = parseMongoSort(request.nextUrl.searchParams);
+    let dateRangeFilter: Record<string, unknown> | null;
+    try {
+      dateRangeFilter = parseDateRangeFilter(searchParams);
+    } catch (e) {
+      return NextResponse.json(
+        { error: e instanceof Error ? e.message : 'Invalid parameters' },
+        { status: 400 }
+      );
+    }
 
     if (metric === 'group_leads') {
       const postNameMatch = nameSearchOnlyMatch(nameSearchRaw);
       const pipeline: Record<string, unknown>[] = [
-        { $match: { teamId: { $exists: true, $ne: null } } },
+        {
+          $match: mergeFilter({ teamId: { $exists: true, $ne: null } }, dateRangeFilter),
+        },
         { $sort: { teamMemberIndex: 1 } },
         {
           $group: {
@@ -307,7 +343,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const filter = mergeInsightDetailNameSearch(baseFilter, nameSearchRaw);
+    const filter = mergeInsightDetailNameSearch(
+      mergeFilter(baseFilter, dateRangeFilter),
+      nameSearchRaw
+    );
 
     const total = await collection.countDocuments(filter);
     const totalPages = Math.ceil(total / limit) || 1;
@@ -347,7 +386,7 @@ function formatUserDoc(user: Record<string, unknown>) {
     gender: user.gender ?? '',
     birthday: user.birthday ?? '',
     raceCategory: (user.raceCategory as string) || '',
-    patronSpeedDistance: (user.patronSpeedDistance as string) || '',
+    speedDistance: getStoredSpeedDistance(user as { speedDistance?: unknown; patronSpeedDistance?: unknown }),
     tShirtSize: (user.tShirtSize as string) || '',
     affiliations: user.affiliations ?? '',
     promotional: Boolean(user.promotional),

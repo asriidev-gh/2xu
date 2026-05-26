@@ -5,14 +5,64 @@ import Image from 'next/image';
 import ApparelGallery from '@/components/ApparelGallery';
 import { SPEED_SERIES_PDF_URL } from '@/components/SpeedSeriesMechanicsModal';
 import {
-  raceCategories,
+  publicRaceCategories,
   RACE_CATEGORY_NAMES,
+  PUBLIC_RACE_CATEGORY_NAMES,
   RACE_CATEGORY_PRICES,
-  PATRON_SPEED_DISTANCES,
+  SPEED_DISTANCES,
+  SPEED_DISTANCE_PRICING,
+  TEAM_CATEGORY_NAME,
+  FOUNDERS_CATEGORY_NAME,
+  formatPhp,
   type RaceCategoryDefinition,
 } from '@/lib/raceCategories';
 
-export { RACE_CATEGORY_NAMES, RACE_CATEGORY_PRICES, PATRON_SPEED_DISTANCES };
+export { RACE_CATEGORY_NAMES, PUBLIC_RACE_CATEGORY_NAMES, RACE_CATEGORY_PRICES, SPEED_DISTANCES };
+
+function SpeedDistancePricingGrid() {
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-semibold uppercase tracking-wider text-orange-300 font-fira-sans">
+        Fee by distance
+      </p>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+        {SPEED_DISTANCES.map((distance) => {
+          const pricing = SPEED_DISTANCE_PRICING[distance];
+          return (
+            <div key={distance} className="min-w-0">
+              <p className="text-[11px] uppercase tracking-wide text-gray-400 font-fira-sans leading-none mb-1">
+                {distance}
+              </p>
+              <p className="text-xl lg:text-2xl font-bold text-yellow-400 font-druk tabular-nums leading-none">
+                {formatPhp(pricing.php)}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+      <p className="text-xs text-gray-400 font-sweet-sans pt-0.5">
+        Approx. USD varies by distance at checkout.
+      </p>
+    </div>
+  );
+}
+
+function FixedCategoryPricing({ pricePhp, priceUsd }: { pricePhp: string; priceUsd: string }) {
+  return (
+    <>
+      <div className="flex items-baseline gap-2">
+        <span className="text-3xl lg:text-4xl font-bold text-yellow-400 font-druk tabular-nums">
+          {pricePhp}
+        </span>
+        <span className="text-sm text-gray-300 font-sweet-sans uppercase tracking-wide">PHP</span>
+      </div>
+      <p className="mt-1 text-sm text-gray-300 font-sweet-sans">
+        Approx.{' '}
+        <span className="font-semibold text-white">{priceUsd}</span> (USD)
+      </p>
+    </>
+  );
+}
 
 function getHighlightLabel(highlight?: RaceCategoryDefinition['highlight']) {
   switch (highlight) {
@@ -166,7 +216,7 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
 
         {/* Categories Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
-          {raceCategories.map((category, index) => {
+          {publicRaceCategories.map((category, index) => {
             const highlightLabel = getHighlightLabel(category.highlight);
 
             return (
@@ -231,21 +281,14 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
 
                   {/* Pricing */}
                   <div className="mb-4">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl lg:text-4xl font-bold text-yellow-400 font-druk">
-                        {category.pricePhp}
-                      </span>
-                      <span className="text-sm text-gray-300 font-sweet-sans uppercase tracking-wide">
-                        PHP
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm text-gray-300 font-sweet-sans">
-                      Approx.{' '}
-                      <span className="font-semibold text-white">
-                        {category.priceUsd}
-                      </span>{' '}
-                      (USD)
-                    </p>
+                    {category.name === TEAM_CATEGORY_NAME || category.name === FOUNDERS_CATEGORY_NAME ? (
+                      <FixedCategoryPricing
+                        pricePhp={category.pricePhp}
+                        priceUsd={category.priceUsd}
+                      />
+                    ) : (
+                      <SpeedDistancePricingGrid />
+                    )}
                   </div>
 
                   {/* Entitlements */}
@@ -281,14 +324,6 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
                     </div>
                   ) : category.name === 'Patron' ? (
                     <div className="mt-2 space-y-3 text-left">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-orange-300 font-fira-sans">
-                          Speed options
-                        </p>
-                        <p className="mt-1 text-sm text-gray-100 font-sweet-sans">
-                          2KM · 5KM · 10KM · 21KM
-                        </p>
-                      </div>
                       <div className="rounded-xl border border-orange-400/50 bg-gradient-to-br from-orange-500/20 to-black/40 p-4 shadow-inner">
                         <p className="text-sm font-bold tracking-wide text-white font-druk mb-3">PATRONS UNLOCK</p>
                         <ul className="space-y-2.5 text-sm text-gray-100 font-sweet-sans leading-snug">
@@ -369,8 +404,8 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
           }`}
           style={{ animationDelay: '1s' }}
         >
-          All pricing is indicative and may be subject to final confirmation. Race kits and entitlements are curated
-          to deliver a Mission Strong : speed series Experience powered by 2XU.
+          Registration fees: Team Category ₱6,000 (group of 4); all other categories by speed distance (2KM
+          ₱1,800 · 5KM ₱2,000 · 10KM ₱2,200 · 21KM ₱2,800). Pricing may be subject to final confirmation.
         </p>
 
         {/* Mission Strong image - end of section */}

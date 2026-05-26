@@ -280,16 +280,16 @@ export default function Hero({ onOpenRaceEventsDetails }: HeroProps) {
                 Featured Distance
               </p>
               <p className="text-2xl sm:text-3xl font-druk font-bold tracking-wide mb-1">
-                2KM Speed Run
+                2/5/10/21 KM Speed Run
               </p>
               <p className="text-sm sm:text-base text-gray-200 mb-3">
                 Short-distance, high-intensity course built to test pure speed.
               </p>
               <hr className="border-white/40 my-3 w-full" />
               <p className="text-lg sm:text-xl">
-                AYALA TRIANGLE, MAKATI<br />
+                BAGUIO<br />
                 <span>
-                  May <span className="text-yellow-500">17th</span> 2026
+                  July <span className="text-yellow-500">26th</span> 2026
                 </span>
               </p>
               <p className="text-gray-300 font-sweet-sans mt-2">
@@ -308,9 +308,9 @@ export default function Hero({ onOpenRaceEventsDetails }: HeroProps) {
               type="button"
               onClick={scrollToRegistration}
               className="w-full sm:w-auto bg-yellow-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-orange-700 transition-all transform hover:scale-105 shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-              aria-label="Register for 2KM Speed Run"
+              aria-label="Register for 2/5/10/21 KM Speed Run"
             >
-              Register for 2KM Speed Run
+              Register for 2/5/10/21 KM Speed Run
             </button>
             <button 
               type="button"

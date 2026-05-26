@@ -9,7 +9,7 @@ import { RACE_CATEGORY_NAMES } from '@/components/RaceCategoriesSection';
 import DashboardAdminHeader from '@/components/DashboardAdminHeader';
 import { getAgeYearsFromBirthday, parseBirthdayLocal } from '@/lib/completedAge';
 import { formatRegistrantProfileName, genderLetterAbbrev } from '@/lib/registrantProfileName';
-import { PATRON_SPEED_DISTANCES } from '@/lib/raceCategories';
+import { SPEED_DISTANCES } from '@/lib/raceCategories';
 import 'react-quill/dist/quill.snow.css';
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
@@ -22,7 +22,7 @@ interface User {
   gender: string;
   birthday: string;
   raceCategory: string;
-  patronSpeedDistance?: string;
+  speedDistance?: string;
   affiliations: string;
   promotional: boolean;
   promoCode?: string;
@@ -56,11 +56,10 @@ const T_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const dashboardFieldClass =
   'w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 shadow-sm font-sweet-sans text-sm transition-colors hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500/25 focus:border-orange-500';
 
-function formatRaceCategoryLabel(raceCategory: string, patronSpeedDistance?: string) {
+function formatRaceCategoryLabel(raceCategory: string, speedDistance?: string) {
   const base = raceCategory?.trim() || '';
-  if (base !== 'Patron') return base;
-  const speed = patronSpeedDistance?.trim();
-  return speed ? `Patron (${speed})` : base;
+  const speed = speedDistance?.trim();
+  return speed ? `${base} (${speed})` : base;
 }
 
 function birthdayToDateInputValue(birthday: string): string {
@@ -78,7 +77,7 @@ type UpdateRegistrantForm = {
   birthday: string;
   promoCode: string;
   raceCategory: string;
-  patronSpeedDistance: string;
+  speedDistance: string;
 };
 
 function buildUpdateFormFromUser(user: User): UpdateRegistrantForm {
@@ -88,7 +87,7 @@ function buildUpdateFormFromUser(user: User): UpdateRegistrantForm {
     birthday: birthdayToDateInputValue(user.birthday),
     promoCode: user.promoCode || '',
     raceCategory: user.raceCategory || '',
-    patronSpeedDistance: user.patronSpeedDistance || '',
+    speedDistance: user.speedDistance || '',
   };
 }
 
@@ -329,7 +328,7 @@ async function exportToExcel(
     const rows = allUsers.map((user: User) => [
       formatRegistrantProfileName(user),
       user.promoCode || '',
-      formatRaceCategoryLabel(user.raceCategory, user.patronSpeedDistance),
+      formatRaceCategoryLabel(user.raceCategory, user.speedDistance),
       user.email,
       user.contact,
       user.birthday || '',
@@ -417,7 +416,7 @@ export default function DashboardPage() {
     birthday: '',
     promoCode: '',
     raceCategory: '',
-    patronSpeedDistance: '',
+    speedDistance: '',
   });
   const [updateSaving, setUpdateSaving] = useState(false);
   const [clubAffiliationOptions, setClubAffiliationOptions] = useState<string[]>([]);
@@ -962,10 +961,10 @@ export default function DashboardPage() {
       });
       return;
     }
-    if (updateForm.raceCategory === 'Patron' && !updateForm.patronSpeedDistance) {
+    if (!updateForm.speedDistance) {
       await Swal.fire({
-        title: 'Patron speed required',
-        text: 'Please select a Patron speed distance (2KM, 5KM, 10KM, or 21KM).',
+        title: 'Speed option required',
+        text: 'Please select a speed distance (2KM, 5KM, 10KM, or 21KM).',
         icon: 'warning',
         confirmButtonColor: '#ea580c',
       });
@@ -981,9 +980,7 @@ export default function DashboardPage() {
         promoCode: updateForm.promoCode.trim(),
         raceCategory: updateForm.raceCategory,
       };
-      if (updateForm.raceCategory === 'Patron') {
-        payload.patronSpeedDistance = updateForm.patronSpeedDistance;
-      }
+      payload.speedDistance = updateForm.speedDistance;
 
       const response = await fetch(`/api/users/${updateModalUser._id}`, {
         method: 'PATCH',
@@ -1009,10 +1006,8 @@ export default function DashboardPage() {
                 birthday: data.birthday ?? updateForm.birthday,
                 promoCode: data.promoCode ?? updateForm.promoCode.trim(),
                 raceCategory: data.raceCategory ?? updateForm.raceCategory,
-                patronSpeedDistance:
-                  updateForm.raceCategory === 'Patron'
-                    ? data.patronSpeedDistance ?? updateForm.patronSpeedDistance
-                    : undefined,
+                speedDistance:
+                  data.speedDistance ?? updateForm.speedDistance,
               }
             : u
         )
@@ -1430,7 +1425,7 @@ export default function DashboardPage() {
                   {users.map((user) => {
                     const raceExperience = formatRaceCategoryLabel(
                       user.raceCategory,
-                      user.patronSpeedDistance
+                      user.speedDistance
                     );
                     const abbr = genderLetterAbbrev(user.gender);
                     const ageYears = getAgeYearsFromBirthday(user.birthday);
@@ -1975,7 +1970,6 @@ export default function DashboardPage() {
                     setUpdateForm((f) => ({
                       ...f,
                       raceCategory,
-                      patronSpeedDistance: raceCategory === 'Patron' ? f.patronSpeedDistance : '',
                     }));
                   }}
                   disabled={updateSaving}
@@ -1990,20 +1984,20 @@ export default function DashboardPage() {
                 </select>
               </div>
 
-              {updateForm.raceCategory === 'Patron' && (
+              {updateForm.raceCategory && (
                 <div>
-                  <label htmlFor="update-registrant-patron-speed" className="block text-sm font-medium text-gray-700 mb-1 font-fira-sans">
-                    Patron speed distance
+                  <label htmlFor="update-registrant-speed" className="block text-sm font-medium text-gray-700 mb-1 font-fira-sans">
+                    Speed option
                   </label>
                   <select
-                    id="update-registrant-patron-speed"
-                    value={updateForm.patronSpeedDistance}
-                    onChange={(e) => setUpdateForm((f) => ({ ...f, patronSpeedDistance: e.target.value }))}
+                    id="update-registrant-speed"
+                    value={updateForm.speedDistance}
+                    onChange={(e) => setUpdateForm((f) => ({ ...f, speedDistance: e.target.value }))}
                     disabled={updateSaving}
                     className={dashboardFieldClass}
                   >
                     <option value="">Select distance…</option>
-                    {PATRON_SPEED_DISTANCES.map((d) => (
+                    {SPEED_DISTANCES.map((d) => (
                       <option key={d} value={d}>
                         {d}
                       </option>

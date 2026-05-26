@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import clientPromise from '@/lib/mongodb';
 import {
@@ -132,20 +132,46 @@ function fillLastNDailyCounts(
   return out;
 }
 
-export async function GET() {
+function parseDateRangeFilter(searchParams: URLSearchParams): Record<string, unknown> | null {
+  const startRaw = (searchParams.get('startDate') || '').trim();
+  const endRaw = (searchParams.get('endDate') || '').trim();
+  if (!startRaw && !endRaw) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startRaw) || !/^\d{4}-\d{2}-\d{2}$/.test(endRaw)) {
+    throw new Error('Invalid date range');
+  }
+  const start = new Date(`${startRaw}T00:00:00.000Z`);
+  const end = new Date(`${endRaw}T23:59:59.999Z`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) {
+    throw new Error('Invalid date range');
+  }
+  return { createdAt: { $gte: start, $lte: end } };
+}
+
+function mergeWithDateRange(
+  baseFilter: Record<string, unknown>,
+  dateRangeFilter: Record<string, unknown> | null
+): Record<string, unknown> {
+  if (!dateRangeFilter) return baseFilter;
+  if (Object.keys(baseFilter).length === 0) return dateRangeFilter;
+  return { $and: [baseFilter, dateRangeFilter] };
+}
+
+export async function GET(request: NextRequest) {
   try {
     if (!(await isAuthenticated())) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const dateRangeFilter = parseDateRangeFilter(request.nextUrl.searchParams);
 
     const client = await clientPromise;
     const db = client.db('2xu');
     const users = db.collection('users');
 
-    const totalRegistered = await users.countDocuments({});
+    const totalRegistered = await users.countDocuments(dateRangeFilter ?? {});
 
     const raceRows = (await users
       .aggregate<CountRow>([
+        ...(dateRangeFilter ? [{ $match: dateRangeFilter }] : []),
         {
           $group: {
             _id: { $ifNull: ['$raceCategory', 'Unknown'] },
@@ -158,6 +184,7 @@ export async function GET() {
 
     const genderRows = (await users
       .aggregate<CountRow>([
+        ...(dateRangeFilter ? [{ $match: dateRangeFilter }] : []),
         {
           $group: {
             _id: {
@@ -176,6 +203,7 @@ export async function GET() {
 
     const mailerRowsRaw = await users
       .aggregate<{ _id: string; count: number }>([
+        ...(dateRangeFilter ? [{ $match: dateRangeFilter }] : []),
         {
           $project: {
             status: {
@@ -204,22 +232,21 @@ export async function GET() {
     };
 
     const [withPromoCode, withoutPromoCode] = await Promise.all([
-      users.countDocuments({
-        promoCode: { $type: 'string', $regex: /\S/ },
-      }),
-      users.countDocuments({
-        $nor: [{ promoCode: { $type: 'string', $regex: /\S/ } }],
-      }),
+      users.countDocuments(
+        mergeWithDateRange({ promoCode: { $type: 'string', $regex: /\S/ } }, dateRangeFilter)
+      ),
+      users.countDocuments(mergeWithDateRange({ $nor: [{ promoCode: { $type: 'string', $regex: /\S/ } }] }, dateRangeFilter)),
     ]);
 
-    const teamIds = await users.distinct('teamId', {
-      teamId: { $exists: true, $ne: null },
-    });
+    const teamIds = await users.distinct(
+      'teamId',
+      mergeWithDateRange({ teamId: { $exists: true, $ne: null } }, dateRangeFilter)
+    );
     const distinctGroupRegistrations = teamIds.filter(Boolean).length;
 
-    const soloOrNonTeamRows = await users.countDocuments({
-      $or: [{ teamId: { $exists: false } }, { teamId: null }],
-    });
+    const soloOrNonTeamRows = await users.countDocuments(
+      mergeWithDateRange({ $or: [{ teamId: { $exists: false } }, { teamId: null }] }, dateRangeFilter)
+    );
 
     const start14 = new Date();
     start14.setDate(start14.getDate() - 13);
@@ -227,7 +254,9 @@ export async function GET() {
 
     const dailyAgg = await users
       .aggregate<{ _id: string; count: number }>([
-        { $match: { createdAt: { $gte: start14 } } },
+        {
+          $match: mergeWithDateRange({ createdAt: { $gte: start14 } }, dateRangeFilter),
+        },
         {
           $group: {
             _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
@@ -245,7 +274,9 @@ export async function GET() {
 
     const topClubRows = (await users
       .aggregate<{ _id: string; count: number }>([
-        { $match: { affiliations: { $type: 'string', $regex: /\S/ } } },
+        {
+          $match: mergeWithDateRange({ affiliations: { $type: 'string', $regex: /\S/ } }, dateRangeFilter),
+        },
         { $group: { _id: '$affiliations', count: { $sum: 1 } } },
       ])
       .toArray()) as { _id: string; count: number }[];
@@ -256,6 +287,7 @@ export async function GET() {
 
     const byDeviceType = (await users
       .aggregate<{ _id: string; count: number }>([
+        ...(dateRangeFilter ? [{ $match: dateRangeFilter }] : []),
         {
           $addFields: {
             deviceBucket: {
@@ -279,6 +311,7 @@ export async function GET() {
 
     const byAgeBracketRaw = (await users
       .aggregate<{ _id: string; count: number }>([
+        ...(dateRangeFilter ? [{ $match: dateRangeFilter }] : []),
         {
           $addFields: {
             ageBucketLabel: {
@@ -306,6 +339,7 @@ export async function GET() {
 
     const byLocation = (await users
       .aggregate<{ _id: string; count: number }>([
+        ...(dateRangeFilter ? [{ $match: dateRangeFilter }] : []),
         {
           $addFields: {
             locationBucket: {
@@ -330,7 +364,9 @@ export async function GET() {
       ])
       .toArray()) as { _id: string; count: number }[];
 
-    const promotionalOptIn = await users.countDocuments({ promotional: true });
+    const promotionalOptIn = await users.countDocuments(
+      mergeWithDateRange({ promotional: true }, dateRangeFilter)
+    );
 
     const now = new Date();
     const { start: todayStart, end: todayEnd } = getUtcTodayBounds(now);

@@ -3,11 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Swal from 'sweetalert2';
-import {
-  RACE_CATEGORY_NAMES,
-  RACE_CATEGORY_PRICES,
-  PATRON_SPEED_DISTANCES,
-} from '@/components/RaceCategoriesSection';
+import { PUBLIC_RACE_CATEGORY_NAMES, SPEED_DISTANCES } from '@/components/RaceCategoriesSection';
+import { computeRegistrationPaymentAmount } from '@/lib/registrationPaymentAmount';
+import { PUBLIC_RACE_CATEGORY_SET, usesSpeedBasedPricing } from '@/lib/raceCategories';
 import { normalizePhilippinesContact, PH_MOBILE_PREFIX, isPhilippinesContactIncomplete } from '@/lib/normalizePhilippinesContact';
 
 type RegistrationSectionProps = {
@@ -23,7 +21,6 @@ const T_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const PROMO_FORMAT = /^SPS2XU\d+$/i;
 const SPECIAL_PROMO_FORMAT = /^SPSUAAPELITE\d+$/i;
 const MISSION_STRONG_PROMO = 'MISSIONSTRONG500';
-const MISSION_STRONG_ELIGIBLE_CATEGORIES = new Set(['Youth Category', 'Advocate / Influencer']);
 const PROMO_MAX_LENGTH = 20;
 
 /** Jan 1 of (current calendar year − years), for HTML date inputs (YYYY-MM-DD). */
@@ -41,7 +38,7 @@ function createInitialFormData() {
     gender: '',
     birthday: b,
     raceCategory: '',
-    patronSpeedDistance: '',
+    speedDistance: '',
     affiliations: '',
     promotional: false,
     waiverAccepted: false,
@@ -92,37 +89,32 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
 
   const isTeam = formData.raceCategory === 'Team Category';
   const isDuo = formData.raceCategory === 'The Speed Duo - 2XU pair';
-  const isPatron = formData.raceCategory === 'Patron';
   const isGroupCategory = isTeam || isDuo;
   const memberKeys = (isTeam ? [1, 2, 3, 4] : isDuo ? [1, 2] : []) as Array<1 | 2 | 3 | 4>;
   const isSpecialPromoApplied =
     promoCodeValid === true && SPECIAL_PROMO_FORMAT.test(formData.promoCode.trim());
   const isMissionStrong500Applied =
     promoCodeValid === true &&
-    formData.promoCode.trim().toUpperCase() === MISSION_STRONG_PROMO &&
-    MISSION_STRONG_ELIGIBLE_CATEGORIES.has(formData.raceCategory);
-  const basePrice = formData.raceCategory ? RACE_CATEGORY_PRICES[formData.raceCategory] : undefined;
-  const basePhpAmount = basePrice ? parseInt(basePrice.pricePhp.replace(/[^\d]/g, ''), 10) : 0;
-  const missionStrongDiscountPhp = isMissionStrong500Applied ? 500 : 0;
-  const finalPhpAmount = isSpecialPromoApplied ? 995 : Math.max(0, basePhpAmount - missionStrongDiscountPhp);
-  const finalPricePhpDisplay =
-    isSpecialPromoApplied && basePrice
-      ? '₱995'
-      : finalPhpAmount > 0
-        ? `₱${finalPhpAmount.toLocaleString('en-PH')}`
-        : basePrice?.pricePhp || '';
-  const finalPriceUsdDisplay =
-    isSpecialPromoApplied && basePrice
-      ? '$18'
-      : basePrice?.priceUsd || '';
+    formData.promoCode.trim().toUpperCase() === MISSION_STRONG_PROMO;
+  const promoForPayment = promoCodeValid === true ? formData.promoCode : '';
+  const paymentAmount = formData.raceCategory
+    ? computeRegistrationPaymentAmount(
+        formData.raceCategory,
+        promoForPayment,
+        formData.speedDistance
+      )
+    : null;
+  const needsSpeedForPrice =
+    !!formData.raceCategory && usesSpeedBasedPricing(formData.raceCategory) && !formData.speedDistance;
+  const finalPricePhpDisplay = paymentAmount ? `₱${paymentAmount.phpAmount.toLocaleString('en-PH')}` : '';
+  const finalPriceUsdDisplay = paymentAmount?.usdDisplay ?? '';
 
   // Auto-fill race category when user clicks a category card and scrolls here
   useEffect(() => {
-    if (!selectedCategory) return;
+    if (!selectedCategory || !PUBLIC_RACE_CATEGORY_SET.has(selectedCategory)) return;
     setFormData((prev) => ({
       ...prev,
       raceCategory: selectedCategory,
-      patronSpeedDistance: selectedCategory === 'Patron' ? prev.patronSpeedDistance : '',
     }));
     onCategoryApplied?.();
   }, [selectedCategory, onCategoryApplied]);
@@ -252,9 +244,6 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
     const isRaceCategoryChange = name === 'raceCategory';
     setFormData((prev) => {
       const next = { ...prev, [name]: value };
-      if (isRaceCategoryChange && value !== 'Patron') {
-        next.patronSpeedDistance = '';
-      }
       if (isRaceCategoryChange && prev.promoCode.trim().length > 0) {
         setPromoCodeValid(null);
         setPromoCodeError('');
@@ -346,6 +335,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
             promotional: formData.promotional,
             waiverAccepted: formData.waiverAccepted,
             promoCode: promoToSave || undefined,
+            speedDistance: formData.speedDistance,
             clientContext,
             teamMembers: groupMemberKeys.map((num) => ({
               name: formData[`teamMember${num}Name`],
@@ -478,7 +468,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900 bg-white"
                   >
                     <option value="">Select race experience</option>
-                    {RACE_CATEGORY_NAMES.map((name) => (
+                    {PUBLIC_RACE_CATEGORY_NAMES.map((name) => (
                       <option key={name} value={name}>
                         {name}
                       </option>
@@ -486,24 +476,24 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                   </select>
                 </div>
 
-                {isPatron && (
+                {formData.raceCategory && (
                   <div>
                     <label
-                      htmlFor="patronSpeedDistance"
+                      htmlFor="speedDistance"
                       className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans"
                     >
                       Speed option <span className="text-orange-600">*</span>
                     </label>
                     <select
-                      id="patronSpeedDistance"
-                      name="patronSpeedDistance"
-                      value={formData.patronSpeedDistance}
+                      id="speedDistance"
+                      name="speedDistance"
+                      value={formData.speedDistance}
                       onChange={handleSelectChange}
                       required
                       className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900 bg-white"
                     >
                       <option value="">Select distance (2KM, 5KM, 10KM, 21KM)</option>
-                      {PATRON_SPEED_DISTANCES.map((d) => (
+                      {SPEED_DISTANCES.map((d) => (
                         <option key={d} value={d}>
                           {d}
                         </option>
@@ -905,7 +895,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                   <h3 className="text-lg font-bold text-gray-900 font-fira-sans flex items-center gap-2">
                     <span className="text-orange-600">Payment Instructions</span>
                   </h3>
-                  {formData.raceCategory && RACE_CATEGORY_PRICES[formData.raceCategory] && (
+                  {paymentAmount && (
                     <div className="rounded-lg bg-white border border-orange-200 px-4 py-3">
                       <p className="text-sm font-semibold text-gray-700 font-fira-sans mb-1">Amount to pay</p>
                       <p className="text-xl font-bold text-orange-600 font-druk">
@@ -926,9 +916,11 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                       )}
                     </div>
                   )}
-                  {(!formData.raceCategory || !RACE_CATEGORY_PRICES[formData.raceCategory]) && (
+                  {!paymentAmount && (
                     <p className="text-sm text-gray-600 font-sweet-sans">
-                      Select a race category above to see the amount to pay.
+                      {needsSpeedForPrice
+                        ? 'Select your speed option above to see the registration fee.'
+                        : 'Select a race category above to see the amount to pay.'}
                     </p>
                   )}
                   <div className="flex flex-col sm:flex-row gap-6 items-start flex-wrap">

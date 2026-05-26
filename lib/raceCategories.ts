@@ -1,3 +1,67 @@
+export const TEAM_CATEGORY_NAME = 'Team Category';
+export const FOUNDERS_CATEGORY_NAME = 'Mission Strong Founders Club';
+
+export const TEAM_CATEGORY_PHP = 6000;
+export const TEAM_CATEGORY_USD = '$107';
+export const FOUNDERS_CATEGORY_PHP = 3300;
+export const FOUNDERS_CATEGORY_USD = '$59';
+
+/** Speed distance options (must match API validation and SPEED_DISTANCE_PRICING). */
+export const SPEED_DISTANCES = ['2KM', '5KM', '10KM', '21KM'] as const;
+
+export const SPEED_DISTANCE_PRICING: Record<
+  (typeof SPEED_DISTANCES)[number],
+  { php: number; usd: string }
+> = {
+  '2KM': { php: 1800, usd: '$32' },
+  '5KM': { php: 2000, usd: '$36' },
+  '10KM': { php: 2200, usd: '$40' },
+  '21KM': { php: 2800, usd: '$50' },
+};
+
+export function formatPhp(amount: number): string {
+  return `₱${amount.toLocaleString('en-PH')}`;
+}
+
+export function usesSpeedBasedPricing(raceCategory: string): boolean {
+  const cat = raceCategory.trim();
+  return cat !== '' && cat !== TEAM_CATEGORY_NAME && cat !== FOUNDERS_CATEGORY_NAME;
+}
+
+export function getRegistrationBasePrice(
+  raceCategory: string,
+  speedDistance?: string
+): { phpAmount: number; pricePhp: string; priceUsd: string } | null {
+  const cat = raceCategory.trim();
+  if (!cat) return null;
+
+  if (cat === TEAM_CATEGORY_NAME) {
+    return {
+      phpAmount: TEAM_CATEGORY_PHP,
+      pricePhp: formatPhp(TEAM_CATEGORY_PHP),
+      priceUsd: TEAM_CATEGORY_USD,
+    };
+  }
+
+  if (cat === FOUNDERS_CATEGORY_NAME) {
+    return {
+      phpAmount: FOUNDERS_CATEGORY_PHP,
+      pricePhp: formatPhp(FOUNDERS_CATEGORY_PHP),
+      priceUsd: FOUNDERS_CATEGORY_USD,
+    };
+  }
+
+  const speed = speedDistance?.trim();
+  if (!speed || !(speed in SPEED_DISTANCE_PRICING)) return null;
+
+  const pricing = SPEED_DISTANCE_PRICING[speed as keyof typeof SPEED_DISTANCE_PRICING];
+  return {
+    phpAmount: pricing.php,
+    pricePhp: formatPhp(pricing.php),
+    priceUsd: pricing.usd,
+  };
+}
+
 export type RaceCategoryDefinition = {
   name: string;
   ageGroup: string;
@@ -8,14 +72,16 @@ export type RaceCategoryDefinition = {
   /** Replaces the third entitlement bullet (default: jersey kit disclaimer) */
   kitFooterNote?: string;
   highlight?: 'popular' | 'best-value' | 'youth' | 'community' | 'team' | 'duo' | 'founders';
+  /** Hidden from public race cards and registration form (dashboard still lists all). */
+  hiddenFromRegistration?: boolean;
 };
 
 export const raceCategories: RaceCategoryDefinition[] = [
   {
     name: 'Youth Category',
     ageGroup: 'Ages 12 – 25',
-    pricePhp: '₱1,800',
-    priceUsd: '$32',
+    pricePhp: 'From ₱1,800',
+    priceUsd: 'From $32',
     kitValueLabel: 'Includes $60 worth of 2XU race kit',
     kitDescription: 'Perfect for emerging runners and student athletes stepping into the 2XU experience.',
     highlight: 'youth',
@@ -23,8 +89,8 @@ export const raceCategories: RaceCategoryDefinition[] = [
   {
     name: 'Individual',
     ageGroup: 'Ages 26 and above',
-    pricePhp: '₱1,990',
-    priceUsd: '$40',
+    pricePhp: 'From ₱1,800',
+    priceUsd: 'From $32',
     kitValueLabel: 'Includes $70 worth of 2XU race kit',
     kitDescription: 'For dedicated runners who want a complete 2XU race experience and premium kit value.',
     highlight: 'popular',
@@ -33,16 +99,17 @@ export const raceCategories: RaceCategoryDefinition[] = [
     name: 'Mission Strong Founders Club',
     ageGroup: 'Pre-register for 3 Speed Series legs',
     pricePhp: '₱3,300',
-    priceUsd: '$66',
+    priceUsd: '$59',
     kitDescription: '',
     kitFooterNote: '',
     highlight: 'founders',
+    hiddenFromRegistration: true,
   },
   {
     name: 'Team Category',
     ageGroup: 'Group of 4 runners',
-    pricePhp: '₱6,900',
-    priceUsd: '$120',
+    pricePhp: '₱6,000',
+    priceUsd: '$107',
     kitValueLabel: 'Includes $200 worth of 2XU race kit',
     kitDescription: 'Built for crews, clubs, and friends who want to race, train, and celebrate together.',
     highlight: 'team',
@@ -50,32 +117,32 @@ export const raceCategories: RaceCategoryDefinition[] = [
   {
     name: 'The Speed Duo - 2XU pair',
     ageGroup: 'Group of 2 runners',
-    pricePhp: '₱3,200',
-    priceUsd: '$56',
+    pricePhp: 'From ₱1,800',
+    priceUsd: 'From $32',
     kitDescription: 'For partners who want to race together as a duo and share the 2XU race experience.',
     highlight: 'duo',
   },
   {
     name: 'Athletes Category',
     ageGroup: 'Ages 16 and above',
-    pricePhp: '₱1,800',
-    priceUsd: '$32',
+    pricePhp: 'From ₱1,800',
+    priceUsd: 'From $32',
     kitDescription: 'For competitive and aspiring athletes ready to push performance with 2XU.',
     highlight: 'community',
   },
   {
     name: 'Advocate / Influencer',
     ageGroup: 'Ages 12 and above',
-    pricePhp: '₱1,800',
-    priceUsd: '$32',
+    pricePhp: 'From ₱1,800',
+    priceUsd: 'From $32',
     kitDescription: 'For community leaders, advocates, and creators who amplify the 2XU story.',
     highlight: 'community',
   },
   {
     name: 'Patron',
     ageGroup: 'Ages 18+',
-    pricePhp: '₱2,800',
-    priceUsd: '$47',
+    pricePhp: 'From ₱1,800',
+    priceUsd: 'From $50',
     kitDescription: '',
     kitFooterNote: '',
     highlight: 'community',
@@ -83,8 +150,20 @@ export const raceCategories: RaceCategoryDefinition[] = [
 ];
 
 export const RACE_CATEGORY_NAMES: string[] = raceCategories.map((c) => c.name);
+
+export const publicRaceCategories = raceCategories.filter((c) => !c.hiddenFromRegistration);
+export const PUBLIC_RACE_CATEGORY_NAMES: string[] = publicRaceCategories.map((c) => c.name);
+export const PUBLIC_RACE_CATEGORY_SET = new Set(PUBLIC_RACE_CATEGORY_NAMES);
+/** @deprecated Prefer getRegistrationBasePrice — kept for legacy display strings on cards. */
 export const RACE_CATEGORY_PRICES: Record<string, { pricePhp: string; priceUsd: string }> =
   Object.fromEntries(raceCategories.map((c) => [c.name, { pricePhp: c.pricePhp, priceUsd: c.priceUsd }]));
 
-/** Patron-only speed distances (must match API validation). */
-export const PATRON_SPEED_DISTANCES = ['2KM', '5KM', '10KM', '21KM'] as const;
+export const SPEED_DISTANCES_ALLOWED = new Set<string>(SPEED_DISTANCES);
+
+/** Reads speedDistance; falls back to legacy patronSpeedDistance in stored records. */
+export function getStoredSpeedDistance(
+  record: { speedDistance?: unknown; patronSpeedDistance?: unknown } | null | undefined
+): string {
+  const raw = record?.speedDistance ?? record?.patronSpeedDistance;
+  return raw != null ? String(raw).trim() : '';
+}

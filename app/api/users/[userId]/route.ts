@@ -3,18 +3,15 @@ import { cookies } from 'next/headers';
 import { ObjectId } from 'mongodb';
 import clientPromise from '@/lib/mongodb';
 import { parseBirthdayLocal } from '@/lib/completedAge';
-import { PATRON_SPEED_DISTANCES, RACE_CATEGORY_NAMES } from '@/lib/raceCategories';
+import { RACE_CATEGORY_NAMES, SPEED_DISTANCES_ALLOWED, getStoredSpeedDistance } from '@/lib/raceCategories';
 
 export const dynamic = 'force-dynamic';
 
 const T_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const GENDERS = ['Male', 'Female'] as const;
-const PATRON_SPEED_ALLOWED = new Set<string>(PATRON_SPEED_DISTANCES);
-
 const ADVOCATE_PROMO_REGEX = /^SPS2XU\d+$/i;
 const SPECIAL_PROMO_REGEX = /^SPSUAAPELITE\d+$/i;
 const MISSION_STRONG_PROMO = 'MISSIONSTRONG500';
-const MISSION_STRONG_ELIGIBLE_CATEGORIES = new Set(['YOUTH CATEGORY', 'ADVOCATE / INFLUENCER']);
 
 const RACE_CATEGORY_SET = new Set(RACE_CATEGORY_NAMES);
 
@@ -51,8 +48,7 @@ async function resolvePromoCodeForUpdate(
   const isSpecialPromo = SPECIAL_PROMO_REGEX.test(rawPromo);
   const isMissionStrongPromo = rawPromo === MISSION_STRONG_PROMO;
   const isAthletesCategory = raceUpper === 'ATHLETES CATEGORY';
-  const isEligibleMissionStrongPromo =
-    isMissionStrongPromo && MISSION_STRONG_ELIGIBLE_CATEGORIES.has(raceUpper);
+  const isEligibleMissionStrongPromo = isMissionStrongPromo;
   const isValidFormat =
     isAdvocatePromo || (isSpecialPromo && isAthletesCategory) || isEligibleMissionStrongPromo;
 
@@ -117,7 +113,7 @@ export async function PATCH(
       Object.prototype.hasOwnProperty.call(body, 'birthday') ||
       Object.prototype.hasOwnProperty.call(body, 'promoCode') ||
       Object.prototype.hasOwnProperty.call(body, 'raceCategory') ||
-      Object.prototype.hasOwnProperty.call(body, 'patronSpeedDistance');
+      Object.prototype.hasOwnProperty.call(body, 'speedDistance');
 
     if (!hasTShirt && !hasProfile) {
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
@@ -174,20 +170,15 @@ export async function PATCH(
         return NextResponse.json({ error: 'Invalid race experience category' }, { status: 400 });
       }
 
-      const isPatron = raceCategory === 'Patron';
-      if (isPatron) {
-        const spd =
-          body.patronSpeedDistance != null ? String(body.patronSpeedDistance).trim() : '';
-        if (!PATRON_SPEED_ALLOWED.has(spd)) {
-          return NextResponse.json(
-            { error: 'Patron registrations require a speed option: 2KM, 5KM, 10KM, or 21KM.' },
-            { status: 400 }
-          );
-        }
-        $set.patronSpeedDistance = spd;
-      } else {
-        $unset.patronSpeedDistance = '';
+      const spd = body.speedDistance != null ? String(body.speedDistance).trim() : '';
+      if (!SPEED_DISTANCES_ALLOWED.has(spd)) {
+        return NextResponse.json(
+          { error: 'Please select a speed option: 2KM, 5KM, 10KM, or 21KM.' },
+          { status: 400 }
+        );
       }
+      $set.speedDistance = spd;
+      $unset.patronSpeedDistance = '';
 
       const promoResult = await resolvePromoCodeForUpdate(
         body.promoCode != null ? String(body.promoCode) : '',
@@ -219,7 +210,7 @@ export async function PATCH(
       gender?: string;
       birthday?: string;
       raceCategory?: string;
-      patronSpeedDistance?: string;
+      speedDistance?: string;
       promoCode?: string;
       tShirtSize?: string;
     };
@@ -231,7 +222,7 @@ export async function PATCH(
         gender: doc.gender ?? '',
         birthday: doc.birthday ?? '',
         raceCategory: doc.raceCategory ?? '',
-        patronSpeedDistance: doc.patronSpeedDistance ?? '',
+        speedDistance: getStoredSpeedDistance(doc),
         promoCode: doc.promoCode ?? '',
         tShirtSize: doc.tShirtSize ?? '',
       },

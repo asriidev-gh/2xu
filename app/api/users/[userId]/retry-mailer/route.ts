@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { ObjectId } from 'mongodb';
 import clientPromise from '@/lib/mongodb';
 import { sendRegistrationConfirmation } from '@/lib/sendConfirmationEmail';
+import { getStoredSpeedDistance } from '@/lib/raceCategories';
 
 export const dynamic = 'force-dynamic';
 const MISSION_STRONG_PROMO = 'MISSIONSTRONG500';
@@ -48,9 +49,9 @@ export async function POST(
     const promoCode = String((user as { promoCode?: string }).promoCode || '').trim();
     const tShirtSize = String((user as { tShirtSize?: string }).tShirtSize || '').trim();
     const raceCategory = String((user as { raceCategory?: string }).raceCategory || '').trim();
-    const patronSpeedDistance = String(
-      (user as { patronSpeedDistance?: string }).patronSpeedDistance || ''
-    ).trim();
+    const speedDistance = getStoredSpeedDistance(
+      user as { speedDistance?: string; patronSpeedDistance?: string }
+    );
     const useLegacyTemplate =
       promoCode.length > 0 && promoCode.toUpperCase() !== MISSION_STRONG_PROMO;
 
@@ -61,7 +62,7 @@ export async function POST(
       useLegacyTemplate,
       promoCode,
       raceCategory,
-      patronSpeedDistance
+      speedDistance
     );
 
     await users.updateOne(

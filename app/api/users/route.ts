@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import clientPromise from '@/lib/mongodb';
 import { formatSignupContextView } from '@/lib/registrationContext';
 import { buildRegistrantsListMongoFilterFromSearchParams } from '@/lib/buildRegistrantsListMongoFilter';
+import { getStoredSpeedDistance } from '@/lib/raceCategories';
 
 export const dynamic = 'force-dynamic';
 
@@ -95,7 +96,7 @@ export async function GET(request: NextRequest) {
       gender: user.gender,
       birthday: user.birthday,
       raceCategory: (user as { raceCategory?: string }).raceCategory || '',
-      patronSpeedDistance: (user as { patronSpeedDistance?: string }).patronSpeedDistance || '',
+      speedDistance: getStoredSpeedDistance(user as { speedDistance?: string; patronSpeedDistance?: string }),
       tShirtSize: (user as { tShirtSize?: string }).tShirtSize || '',
       affiliations: user.affiliations || '',
       promotional: user.promotional || false,

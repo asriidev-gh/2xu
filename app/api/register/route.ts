@@ -8,6 +8,7 @@ import {
   normalizePhilippinesContact,
   isPhilippinesContactIncomplete,
 } from '@/lib/normalizePhilippinesContact';
+import { PUBLIC_RACE_CATEGORY_SET, SPEED_DISTANCES_ALLOWED } from '@/lib/raceCategories';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
       tShirtSize,
       promoCode,
       teamMembers,
-      patronSpeedDistance,
+      speedDistance: speedDistanceInput,
       clientContext,
     } = body;
 
@@ -64,19 +65,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const PATRON_SPEED_ALLOWED = new Set(['2KM', '5KM', '10KM', '21KM']);
-    const isPatronCategory = String(raceCategory || '').trim() === 'Patron';
-    if (isPatronCategory) {
-      const spd = patronSpeedDistance != null ? String(patronSpeedDistance).trim() : '';
-      if (!PATRON_SPEED_ALLOWED.has(spd)) {
-        return NextResponse.json(
-          {
-            error:
-              'Patron registrations require a speed option: choose 2KM, 5KM, 10KM, or 21KM.',
-          },
-          { status: 400 }
-        );
-      }
+    const raceCategoryTrimmed = String(raceCategory || '').trim();
+    if (!PUBLIC_RACE_CATEGORY_SET.has(raceCategoryTrimmed)) {
+      return NextResponse.json(
+        { error: 'Invalid or unavailable race experience category.' },
+        { status: 400 }
+      );
+    }
+
+    const speedDistanceRaw =
+      speedDistanceInput ?? (body as { patronSpeedDistance?: unknown }).patronSpeedDistance;
+    const speedDistance =
+      speedDistanceRaw != null ? String(speedDistanceRaw).trim() : '';
+    if (!SPEED_DISTANCES_ALLOWED.has(speedDistance)) {
+      return NextResponse.json(
+        {
+          error:
+            'Please select a speed option: choose 2KM, 5KM, 10KM, or 21KM.',
+        },
+        { status: 400 }
+      );
     }
 
     const isTeam = raceCategory === 'Team Category';
@@ -175,17 +183,14 @@ export async function POST(request: NextRequest) {
     // Promo formats:
     // - Advocate format: SPS2XU + digits (single-use)
     // - Special format: SPSUAAPElite + digits (single-use, Athletes Category only)
-    // - MissionStrong500 (multi-use, Youth Category / Advocate / Influencer only)
+    // - MissionStrong500 (multi-use, available to all categories)
     const PROMO_REGEX = /^SPS2XU\d+$/i;
     const SPECIAL_PROMO_REGEX = /^SPSUAAPELITE\d+$/i;
-    const MISSION_STRONG_ELIGIBLE_CATEGORIES = new Set(['YOUTH CATEGORY', 'ADVOCATE / INFLUENCER']);
     const rawPromo = promoCode != null ? String(promoCode).trim().toUpperCase() : '';
     const isSpecialPromoCode = SPECIAL_PROMO_REGEX.test(rawPromo);
     const isMissionStrongPromo = rawPromo === MISSION_STRONG_PROMO;
     const isAthletesCategory = String(raceCategory || '').trim().toUpperCase() === 'ATHLETES CATEGORY';
-    const isEligibleMissionStrongPromo =
-      isMissionStrongPromo &&
-      MISSION_STRONG_ELIGIBLE_CATEGORIES.has(String(raceCategory || '').trim().toUpperCase());
+    const isEligibleMissionStrongPromo = isMissionStrongPromo;
     const isEligibleSpecialPromo = isSpecialPromoCode && isAthletesCategory;
     const formatOk = PROMO_REGEX.test(rawPromo) || isEligibleSpecialPromo || isEligibleMissionStrongPromo;
     let savedPromo = '';
@@ -224,6 +229,7 @@ export async function POST(request: NextRequest) {
         mailerLastError: null,
         teamId,
         teamMemberIndex: index + 1,
+        speedDistance,
         signupContext,
         createdAt: now,
         updatedAt: now
@@ -239,7 +245,8 @@ export async function POST(request: NextRequest) {
         members.map((m) => m.tShirtSize).join(', '),
         useLegacyTemplate,
         savedPromo,
-        raceCategory
+        raceCategory,
+        speedDistance
       );
       await collection.updateMany(
         { _id: { $in: insertedIds } },
@@ -288,6 +295,7 @@ export async function POST(request: NextRequest) {
             <p>${memberList}</p>
             <p><strong>Email:</strong> ${escapeHtml(email)}</p>
             <p><strong>Race Experience:</strong> ${escapeHtml(raceCategory)}</p>
+            <p><strong>Speed option:</strong> ${escapeHtml(speedDistance)}</p>
             ${affiliations ? `<p><strong>Affiliations:</strong> ${escapeHtml(affiliations)}</p>` : ''}
             <p><strong>Promotional emails:</strong> ${promotional ? 'Yes' : 'No'}</p>
           `,
@@ -330,9 +338,7 @@ export async function POST(request: NextRequest) {
       createdAt: now,
       updatedAt: now,
     };
-    if (isPatronCategory) {
-      doc.patronSpeedDistance = String(patronSpeedDistance).trim();
-    }
+    doc.speedDistance = speedDistance;
     const result = await collection.insertOne(doc);
 
     // Send confirmation email to registrant via SMTP (best-effort)
@@ -344,7 +350,7 @@ export async function POST(request: NextRequest) {
       useLegacyTemplate,
       savedPromo,
       raceCategory,
-      isPatronCategory ? String(patronSpeedDistance || '').trim() : ''
+      speedDistance
     );
     await collection.updateOne(
       { _id: result.insertedId },
@@ -384,11 +390,7 @@ export async function POST(request: NextRequest) {
           <p><strong>Gender:</strong> ${escapeHtml(gender)}</p>
           <p><strong>Birthday:</strong> ${escapeHtml(birthday)}</p>
           <p><strong>Race Experience:</strong> ${escapeHtml(raceCategory)}</p>
-          ${
-            isPatronCategory
-              ? `<p><strong>Patron speed option:</strong> ${escapeHtml(String(patronSpeedDistance || ''))}</p>`
-              : ''
-          }
+          <p><strong>Speed option:</strong> ${escapeHtml(speedDistance)}</p>
           ${affiliations ? `<p><strong>Affiliations:</strong> ${escapeHtml(affiliations)}</p>` : ''}
           <p><strong>T-shirt Size:</strong> ${escapeHtml(String(tShirtSize || ''))}</p>
           <p><strong>Promotional emails:</strong> ${promotional ? 'Yes' : 'No'}</p>

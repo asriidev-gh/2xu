@@ -1,6 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import ApparelImageModal from './ApparelImageModal';
+
+const AYALA_RESULTS_IMAGE = '/images/results/speed_series_ayala_makati_results.jpg';
+const AYALA_FACEBOOK_EMBED_SRC =
+  'https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fweb.facebook.com%2FPHathletesclub%2Fposts%2Fpfbid02aYNHHqNFzfyPW3QJUPDKo5G5q2wKgcSggaLaLS6GGkVcaSsjJBgv5SGNfSrLqR3Pl&show_text=true&width=500';
 
 type UpdateItem = {
   id: number;
@@ -31,8 +36,9 @@ const UPDATES: UpdateItem[] = [
 ];
 
 export default function UpdatesSection() {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+  const AYALA_LAUNCH_INDEX = 0;
+  const [activeIndex, setActiveIndex] = useState(AYALA_LAUNCH_INDEX);
+  const [resultsModalOpen, setResultsModalOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLElement | null>(null);
 
@@ -55,15 +61,13 @@ export default function UpdatesSection() {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    if (isPaused) return;
+  const goToPrevUpdate = () => {
+    setActiveIndex((prev) => (prev - 1 + UPDATES.length) % UPDATES.length);
+  };
 
-    const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % UPDATES.length);
-    }, 3500);
-
-    return () => clearInterval(interval);
-  }, [isPaused]);
+  const goToNextUpdate = () => {
+    setActiveIndex((prev) => (prev + 1) % UPDATES.length);
+  };
 
   return (
     <section
@@ -93,11 +97,7 @@ export default function UpdatesSection() {
           </div>
         </div>
 
-        <div
-          className="relative overflow-hidden rounded-xl border border-white/10 bg-white/5 backdrop-blur-md"
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-        >
+        <div className="relative overflow-hidden rounded-xl border border-white/10 bg-white/5 backdrop-blur-md">
           {/* Faux ticker strip */}
           <div className="flex items-center gap-2 border-b border-white/10 bg-black/40 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-[0.3em] text-gray-300 font-fira-sans">
             <span className="inline-flex h-5 items-center rounded-full bg-orange-600 px-2 text-[10px] font-bold text-white">
@@ -107,7 +107,7 @@ export default function UpdatesSection() {
           </div>
 
           {/* Vertical ticker */}
-          <div className="relative h-32 sm:h-36 overflow-hidden">
+          <div className="relative h-[380px] sm:h-[280px] overflow-hidden">
             <div
               className="absolute inset-0 transition-transform duration-600 ease-out"
               style={{
@@ -117,25 +117,59 @@ export default function UpdatesSection() {
               {UPDATES.map((item) => (
                 <div
                   key={item.id}
-                  className="flex h-32 sm:h-36 items-center px-4 sm:px-6 lg:px-8"
+                  className="flex h-[380px] sm:h-[280px] items-center px-4 sm:px-6 lg:px-8"
                 >
-                  <div className="flex w-full items-center justify-between gap-4">
-                    <div>
+                  <div
+                    className={`flex w-full gap-4 ${
+                      item.id === 1
+                        ? 'flex-col sm:flex-row sm:items-center sm:justify-between'
+                        : 'items-center justify-between'
+                    }`}
+                  >
+                    <div className={item.id === 1 ? 'min-w-0 shrink-0 sm:max-w-[45%]' : ''}>
                       <p className="text-[11px] sm:text-xs uppercase tracking-[0.25em] text-yellow-400 font-fira-sans mb-1">
                         {item.label}
                       </p>
                       <h3 className="text-lg sm:text-xl font-druk font-bold text-white leading-snug">
                         {item.title}
                       </h3>
-                      <p className="mt-1 text-xs sm:text-sm text-gray-300 font-sweet-sans">
-                        {item.meta}
+                      <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm text-gray-300 font-sweet-sans">
+                        <span>{item.meta}</span>
+                        {item.id === 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setResultsModalOpen(true)}
+                            className="rounded-full border border-yellow-400/60 bg-yellow-400/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-yellow-400 transition-colors hover:bg-yellow-400/20 hover:text-yellow-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                          >
+                            See Results
+                          </button>
+                        )}
                       </p>
                     </div>
-                    <div className="hidden sm:flex flex-col items-end text-right gap-1 text-[11px] text-gray-400 font-sweet-sans">
-                      <span className="rounded-full border border-white/20 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-white/80">
-                        Series Leg {item.id.toString().padStart(2, '0')}
-                      </span>
-                    </div>
+                    {item.id === 1 ? (
+                      <div className="min-w-0 w-full sm:flex-1 sm:flex sm:justify-end">
+                        <div className="mx-auto sm:mx-0 w-full max-w-[500px] overflow-hidden rounded-lg bg-white shadow-lg">
+                          <iframe
+                            src={AYALA_FACEBOOK_EMBED_SRC}
+                            width="500"
+                            height="250"
+                            style={{ border: 'none', overflow: 'hidden' }}
+                            scrolling="no"
+                            frameBorder="0"
+                            allowFullScreen
+                            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                            title="Ayala Triangle Launch Facebook post"
+                            className="w-full max-w-full"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="hidden sm:flex flex-col items-end text-right gap-1 text-[11px] text-gray-400 font-sweet-sans shrink-0">
+                        <span className="rounded-full border border-white/20 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-white/80">
+                          Series Leg {item.id.toString().padStart(2, '0')}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -144,6 +178,14 @@ export default function UpdatesSection() {
 
           {/* Progress dots */}
           <div className="flex items-center justify-center gap-2 border-t border-white/10 bg-black/40 px-4 py-3">
+            <button
+              type="button"
+              onClick={goToPrevUpdate}
+              className="rounded-full border border-white/30 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+              aria-label="Go to previous update"
+            >
+              Prev
+            </button>
             {UPDATES.map((item, index) => (
               <button
                 key={item.id}
@@ -157,9 +199,23 @@ export default function UpdatesSection() {
                 aria-label={`Go to update ${index + 1}`}
               />
             ))}
+            <button
+              type="button"
+              onClick={goToNextUpdate}
+              className="rounded-full border border-white/30 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+              aria-label="Go to next update"
+            >
+              Next
+            </button>
           </div>
         </div>
       </div>
+
+      <ApparelImageModal
+        isOpen={resultsModalOpen}
+        imageSrc={AYALA_RESULTS_IMAGE}
+        onClose={() => setResultsModalOpen(false)}
+      />
     </section>
   );
 }

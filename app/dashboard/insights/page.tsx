@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
+import { DateRangePicker } from 'rsuite';
+import 'rsuite/dist/rsuite-no-reset.min.css';
 import DashboardAdminHeader from '@/components/DashboardAdminHeader';
 import { getAgeYearsFromBirthday } from '@/lib/completedAge';
 import { formatRegistrantProfileName, genderLetterAbbrev } from '@/lib/registrantProfileName';
@@ -57,7 +59,7 @@ type DetailUser = {
   gender: string;
   birthday: string;
   raceCategory: string;
-  patronSpeedDistance?: string;
+  speedDistance?: string;
   tShirtSize: string;
   affiliations: string;
   promotional: boolean;
@@ -72,11 +74,10 @@ type DetailUser = {
   createdAt: string | null;
 };
 
-function formatRaceCategoryLabel(raceCategory: string, patronSpeedDistance?: string) {
+function formatRaceCategoryLabel(raceCategory: string, speedDistance?: string) {
   const base = raceCategory?.trim() || '';
-  if (base !== 'Patron') return base;
-  const speed = patronSpeedDistance?.trim();
-  return speed ? `Patron (${speed})` : base;
+  const speed = speedDistance?.trim();
+  return speed ? `${base} (${speed})` : base;
 }
 
 type DetailSortField =
@@ -142,6 +143,27 @@ function formatDateForExport(iso: string | null | undefined): string {
   }
 }
 
+type DateRangeValue = [Date, Date] | null;
+
+function defaultInsightsDateRange(): DateRangeValue {
+  const now = new Date();
+  const year = now.getUTCFullYear();
+  const start = new Date(Date.UTC(year, 4, 23, 0, 0, 0, 0)); // May is month 4 (0-based)
+  const end = new Date(Date.UTC(year, now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+  return [start, end];
+}
+
+function formatYmd(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function appendDateRangeParams(q: URLSearchParams, dateRange: DateRangeValue) {
+  if (!dateRange) return;
+  const [start, end] = dateRange;
+  q.set('startDate', formatYmd(start));
+  q.set('endDate', formatYmd(end));
+}
+
 async function fetchAllInsightDetailUsers(
   onUnauthorized: () => void,
   metric: DetailMetric,
@@ -149,7 +171,8 @@ async function fetchAllInsightDetailUsers(
   total: number,
   sortBy: DetailSortField,
   sortDir: 'asc' | 'desc',
-  nameSearch = ''
+  nameSearch = '',
+  dateRange: DateRangeValue = null
 ): Promise<DetailUser[]> {
   const limit = 100;
   const pages = Math.max(1, Math.ceil(total / limit));
@@ -165,6 +188,7 @@ async function fetchAllInsightDetailUsers(
     });
     if (value) q.set('value', value);
     if (ns) q.set('nameSearch', ns);
+    appendDateRangeParams(q, dateRange);
     const res = await fetch(`/api/users/insights/details?${q}`);
     if (res.status === 401) {
       onUnauthorized();
@@ -268,6 +292,7 @@ export default function InsightsPage() {
   const [detailSortDir, setDetailSortDir] = useState<'asc' | 'desc'>('desc');
   const [detailNameQuery, setDetailNameQuery] = useState('');
   const [detailNameApplied, setDetailNameApplied] = useState('');
+  const [dateRange, setDateRange] = useState<DateRangeValue>(() => defaultInsightsDateRange());
 
   const loadDetailsPage = useCallback(
     async (
@@ -293,6 +318,7 @@ export default function InsightsPage() {
           .trim()
           .slice(0, 120);
         if (nameQ) q.set('nameSearch', nameQ);
+        appendDateRangeParams(q, dateRange);
         const res = await fetch(`/api/users/insights/details?${q}`);
         if (res.status === 401) {
           router.push('/login');
@@ -315,7 +341,7 @@ export default function InsightsPage() {
         setDetailLoading(false);
       }
     },
-    [router, detailNameApplied]
+    [router, detailNameApplied, dateRange]
   );
 
   const openDetails = useCallback(
@@ -395,7 +421,8 @@ export default function InsightsPage() {
         detailTotal,
         detailSortBy,
         detailSortDir,
-        detailNameApplied
+        detailNameApplied,
+        dateRange
       );
       if (allUsers.length === 0) {
         await Swal.fire({
@@ -429,7 +456,7 @@ export default function InsightsPage() {
         u.contact,
         u.promoCode || '',
         u.birthday || '',
-        formatRaceCategoryLabel(u.raceCategory, u.patronSpeedDistance),
+        formatRaceCategoryLabel(u.raceCategory, u.speedDistance),
         u.tShirtSize || '',
         u.affiliations || '',
         u.teamMemberIndex != null ? String(u.teamMemberIndex) : '',
@@ -475,14 +502,28 @@ export default function InsightsPage() {
     } finally {
       setExportingExcel(false);
     }
-  }, [detailTotal, detailMetric, detailValue, detailSortBy, detailSortDir, detailNameApplied, router]);
+  }, [
+    detailTotal,
+    detailMetric,
+    detailValue,
+    detailSortBy,
+    detailSortDir,
+    detailNameApplied,
+    dateRange,
+    router,
+  ]);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
+        const insightsQuery = new URLSearchParams();
+        appendDateRangeParams(insightsQuery, dateRange);
+        const insightsUrl = insightsQuery.toString()
+          ? `/api/users/insights?${insightsQuery.toString()}`
+          : '/api/users/insights';
         const [insightsRes, configRes] = await Promise.all([
-          fetch('/api/users/insights'),
+          fetch(insightsUrl),
           fetch('/api/users/config'),
         ]);
         if (insightsRes.status === 401) {
@@ -513,7 +554,7 @@ export default function InsightsPage() {
       }
     };
     load();
-  }, [router]);
+  }, [router, dateRange]);
 
   const maxRace = data ? Math.max(1, ...data.byRaceCategory.map((r) => r.count)) : 1;
   const raceExperienceTotal = data
@@ -541,10 +582,32 @@ export default function InsightsPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-12">
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 font-druk">Registration insights</h2>
-          <p className="text-sm text-gray-600 font-sweet-sans mt-1">
-            Snapshot across all stored registrations.
-          </p>
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 font-druk">Registration insights</h2>
+              <p className="text-sm text-gray-600 font-sweet-sans mt-1">
+                Snapshot across all stored registrations.
+              </p>
+            </div>
+            <div className="w-full md:w-auto">
+              <label className="block text-xs font-medium text-gray-500 font-fira-sans mb-1">
+                Insights date range (UTC)
+              </label>
+              <DateRangePicker
+                value={dateRange}
+                onChange={(next: DateRangeValue) => {
+                  setDateRange(next);
+                }}
+                cleanable
+                editable={false}
+                format="yyyy-MM-dd"
+                character=" to "
+                placeholder="All time"
+                placement="bottomEnd"
+                className="w-full md:min-w-[320px]"
+              />
+            </div>
+          </div>
           {data?.generatedAt && (
             <p className="text-xs text-gray-400 font-sweet-sans mt-1">
               Generated {new Date(data.generatedAt).toLocaleString()}
@@ -560,7 +623,7 @@ export default function InsightsPage() {
 
         {!loading && data && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
               <div className="bg-white rounded-lg shadow-sm p-5 border border-gray-100 border-l-4 border-l-orange-500">
                 <p className="text-sm font-medium text-gray-500 font-fira-sans">Today</p>
                 <p className="text-3xl font-bold text-orange-600 font-druk mt-1">
@@ -586,18 +649,6 @@ export default function InsightsPage() {
                 <p className="text-xs text-gray-500 font-sweet-sans mt-2">
                   Monday 00:00 UTC through now (ISO week)
                 </p>
-              </div>
-              <div className="bg-white rounded-lg shadow-sm p-5 border border-gray-100 border-l-4 border-l-amber-500">
-                <p className="text-sm font-medium text-gray-500 font-fira-sans">This month</p>
-                <p className="text-3xl font-bold text-orange-600 font-druk mt-1">
-                  <ClickableStat
-                    count={data.registrationsThisMonth ?? 0}
-                    label="Registrations · this month so far (UTC)"
-                    onClick={() => openDetails('Registrations · this month so far (UTC)', 'period_month')}
-                    className="font-druk font-bold text-3xl text-orange-600"
-                  />
-                </p>
-                <p className="text-xs text-gray-500 font-sweet-sans mt-2">1st 00:00 UTC through now</p>
               </div>
             </div>
 
@@ -1068,7 +1119,7 @@ export default function InsightsPage() {
                       {detailUsers.map((u) => {
                         const raceExperience = formatRaceCategoryLabel(
                           u.raceCategory,
-                          u.patronSpeedDistance
+                          u.speedDistance
                         );
                         const abbr = genderLetterAbbrev(u.gender);
                         const ageYears = getAgeYearsFromBirthday(u.birthday || '');

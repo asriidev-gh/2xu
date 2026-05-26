@@ -6,7 +6,6 @@ export const dynamic = 'force-dynamic';
 const ADVOCATE_PROMO_REGEX = /^SPS2XU\d+$/i;
 const SPECIAL_PROMO_REGEX = /^SPSUAAPELITE\d+$/i;
 const MISSION_STRONG_PROMO = 'MISSIONSTRONG500';
-const MISSION_STRONG_ELIGIBLE_CATEGORIES = new Set(['YOUTH CATEGORY', 'ADVOCATE / INFLUENCER']);
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,8 +21,7 @@ export async function POST(request: NextRequest) {
     const isSpecialPromo = SPECIAL_PROMO_REGEX.test(rawPromo);
     const isMissionStrongPromo = rawPromo === MISSION_STRONG_PROMO;
     const isAthletesCategory = raceCategory === 'ATHLETES CATEGORY';
-    const isEligibleMissionStrongPromo =
-      isMissionStrongPromo && MISSION_STRONG_ELIGIBLE_CATEGORIES.has(raceCategory);
+    const isEligibleMissionStrongPromo = isMissionStrongPromo;
     const isValidFormat =
       isAdvocatePromo || (isSpecialPromo && isAthletesCategory) || isEligibleMissionStrongPromo;
 

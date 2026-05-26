@@ -1,7 +1,6 @@
-import { RACE_CATEGORY_PRICES } from '@/lib/raceCategories';
+import { getRegistrationBasePrice } from '@/lib/raceCategories';
 
 const MISSION_STRONG_PROMO = 'MISSIONSTRONG500';
-const MISSION_STRONG_ELIGIBLE_CATEGORIES = new Set(['Youth Category', 'Advocate / Influencer']);
 const SPECIAL_PROMO_REGEX = /^SPSUAAPELITE\d+$/i;
 
 export type RegistrationPaymentAmount = {
@@ -10,21 +9,21 @@ export type RegistrationPaymentAmount = {
   promoCodeLabel?: string;
 };
 
-export function formatRaceCategoryLabel(raceCategory: string, patronSpeedDistance?: string) {
+export function formatRaceCategoryLabel(raceCategory: string, speedDistance?: string) {
   const base = raceCategory?.trim() || '';
-  if (base !== 'Patron') return base;
-  const speed = patronSpeedDistance?.trim();
-  return speed ? `Patron (${speed})` : base;
+  const speed = speedDistance?.trim();
+  return speed ? `${base} (${speed})` : base;
 }
 
 export function computeRegistrationPaymentAmount(
   raceCategory: string,
-  promoCode = ''
+  promoCode = '',
+  speedDistance = ''
 ): RegistrationPaymentAmount | null {
-  const basePrice = RACE_CATEGORY_PRICES[raceCategory];
+  const basePrice = getRegistrationBasePrice(raceCategory, speedDistance);
   if (!basePrice) return null;
 
-  const basePhpAmount = parseInt(basePrice.pricePhp.replace(/[^\d]/g, ''), 10) || 0;
+  const basePhpAmount = basePrice.phpAmount;
   const normalizedPromo = promoCode.trim().toUpperCase();
 
   if (SPECIAL_PROMO_REGEX.test(normalizedPromo)) {
@@ -35,10 +34,7 @@ export function computeRegistrationPaymentAmount(
     };
   }
 
-  if (
-    normalizedPromo === MISSION_STRONG_PROMO &&
-    MISSION_STRONG_ELIGIBLE_CATEGORIES.has(raceCategory)
-  ) {
+  if (normalizedPromo === MISSION_STRONG_PROMO) {
     return {
       phpAmount: Math.max(0, basePhpAmount - 500),
       usdDisplay: basePrice.priceUsd,

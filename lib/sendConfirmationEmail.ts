@@ -20,7 +20,7 @@ type BuildRegistrationConfirmationEmailInput = {
   useLegacyTemplate?: boolean;
   promoCode?: string;
   raceCategory?: string;
-  patronSpeedDistance?: string;
+  speedDistance?: string;
 };
 
 function escapeHtml(text: string): string {
@@ -70,7 +70,7 @@ export function buildRegistrationConfirmationEmail({
   useLegacyTemplate = false,
   promoCode = '',
   raceCategory = '',
-  patronSpeedDistance = '',
+  speedDistance = '',
 }: BuildRegistrationConfirmationEmailInput): RegistrationConfirmationEmailPreview {
   const signOffName =
     process.env.SMTP_SIGNOFF_NAME?.trim() || 'One of a Kind Asia';
@@ -111,10 +111,10 @@ export function buildRegistrationConfirmationEmail({
   `;
   const paymentAmount =
     showPaymentDetails && raceCategory
-      ? computeRegistrationPaymentAmount(raceCategory, promoCode)
+      ? computeRegistrationPaymentAmount(raceCategory, promoCode, speedDistance)
       : null;
   const raceExperienceLabel = raceCategory
-    ? formatRaceCategoryLabel(raceCategory, patronSpeedDistance)
+    ? formatRaceCategoryLabel(raceCategory, speedDistance)
     : '';
   const amountDuePhp = paymentAmount
     ? paymentAmount.phpAmount.toLocaleString('en-PH')
@@ -248,7 +248,7 @@ export async function sendRegistrationConfirmation(
   useLegacyTemplate = false,
   promoCode = '',
   raceCategory = '',
-  patronSpeedDistance = ''
+  speedDistance = ''
 ): Promise<MailerSendResult> {
   void tShirtSizeInfo;
 
@@ -265,7 +265,7 @@ export async function sendRegistrationConfirmation(
     useLegacyTemplate,
     promoCode,
     raceCategory,
-    patronSpeedDistance,
+    speedDistance,
   });
 
   const ccRecipients = [
