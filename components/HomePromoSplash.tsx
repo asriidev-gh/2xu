@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import ImageLoadProgress from '@/components/ImageLoadProgress';
+import { useImageWithProgress } from '@/lib/useImageWithProgress';
 
 const AUTO_DISMISS_MS = 30_000;
 const IMAGE_SRC = '/images/baguio_leg.jpg';
@@ -12,6 +14,7 @@ type HomePromoSplashProps = {
 
 export default function HomePromoSplash({ onPatronImageClick }: HomePromoSplashProps) {
   const [open, setOpen] = useState(false);
+  const { displaySrc, loadPercent, status } = useImageWithProgress(IMAGE_SRC, open);
 
   useEffect(() => {
     setOpen(true);
@@ -50,10 +53,9 @@ export default function HomePromoSplash({ onPatronImageClick }: HomePromoSplashP
   return (
     <div className="fixed inset-0 z-[100]" role="dialog" aria-modal="true" aria-labelledby="home-promo-title">
       <h2 id="home-promo-title" className="sr-only">
-        Promotional message
+        Baguio leg promotion
       </h2>
 
-      {/* Full-screen tap target behind content (Shopee-style dim dismiss) */}
       <button
         type="button"
         className="absolute inset-0 z-0 bg-black/75"
@@ -62,7 +64,6 @@ export default function HomePromoSplash({ onPatronImageClick }: HomePromoSplashP
       />
 
       <div className="pointer-events-none relative z-10 flex h-full min-h-0 flex-col items-center justify-center px-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
-        {/* Top close — large touch target */}
         <button
           type="button"
           onClick={dismiss}
@@ -74,27 +75,35 @@ export default function HomePromoSplash({ onPatronImageClick }: HomePromoSplashP
           </svg>
         </button>
 
-        <div className="pointer-events-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center">
-          <button
-            type="button"
-            onClick={() => {
-              dismiss();
-              onPatronImageClick?.();
-            }}
-            className="group relative max-w-full rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black/50"
-            aria-label="Continue to Patron registration"
-          >
-            <img
-              src={IMAGE_SRC}
-              alt=""
-              className="max-h-[min(72vh,72dvh)] w-auto max-w-full rounded-lg object-contain shadow-2xl ring-1 ring-white/10 transition group-hover:brightness-105 group-active:scale-[0.99]"
-              loading="eager"
-              decoding="async"
-            />
-            <span className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-black/55 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur-sm font-fira-sans sm:text-xs">
-              Tap to register · Patron
-            </span>
-          </button>
+        <div className="pointer-events-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center min-h-[240px]">
+          {status === 'loading' && <ImageLoadProgress percent={loadPercent} size="lg" />}
+
+          {status === 'error' && (
+            <p className="text-sm text-red-300 font-sweet-sans px-4 text-center">
+              Could not load promotion. You can close and continue browsing.
+            </p>
+          )}
+
+          {status === 'ready' && displaySrc && (
+            <button
+              type="button"
+              onClick={() => {
+                dismiss();
+                onPatronImageClick?.();
+              }}
+              className="group relative max-w-full rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black/50"
+              aria-label="Continue to Patron registration"
+            >
+              <img
+                src={displaySrc}
+                alt="Speed Series Baguio leg promotion"
+                className="max-h-[min(72vh,72dvh)] w-auto max-w-full rounded-lg object-contain shadow-2xl ring-1 ring-white/10 transition group-hover:brightness-105 group-active:scale-[0.99]"
+              />
+              <span className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-black/55 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur-sm font-fira-sans sm:text-xs">
+                Tap to register · Patron
+              </span>
+            </button>
+          )}
         </div>
       </div>
     </div>
