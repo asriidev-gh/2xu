@@ -3,7 +3,14 @@ import { ObjectId } from 'mongodb';
 import { Resend } from 'resend';
 import clientPromise from '@/lib/mongodb';
 import { buildSignupContext, type ClientSignupContext } from '@/lib/registrationContext';
-import { sendRegistrationConfirmation } from '@/lib/sendConfirmationEmail';
+import {
+  sendRegistrationConfirmation,
+  isAdvocatePromoCode,
+  buildPaymentProofAdminNotificationHtml,
+  getRegistrationNotificationCc,
+} from '@/lib/sendConfirmationEmail';
+import { generateBibNumber } from '@/lib/generateBibNumber';
+import { isPaymentProofUrlFromCloudinary } from '@/lib/cloudinary';
 import {
   normalizePhilippinesContact,
   isPhilippinesContactIncomplete,
@@ -14,11 +21,6 @@ export const dynamic = 'force-dynamic';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const MISSION_STRONG_PROMO = 'MISSIONSTRONG500';
-
-function shouldUseLegacyTemplate(promoCode: string): boolean {
-  const normalizedPromo = String(promoCode || '').trim().toUpperCase();
-  return normalizedPromo.length > 0 && normalizedPromo !== MISSION_STRONG_PROMO;
-}
 
 function escapeHtml(text: string): string {
   const map: Record<string, string> = {
@@ -48,8 +50,14 @@ export async function POST(request: NextRequest) {
       promoCode,
       teamMembers,
       speedDistance: speedDistanceInput,
+      paymentProofSent: paymentProofSentInput,
+      paymentProofUrl: paymentProofUrlInput,
       clientContext,
     } = body;
+
+    const paymentProofSent = paymentProofSentInput === true;
+    const paymentProofUrlRaw =
+      paymentProofUrlInput != null ? String(paymentProofUrlInput).trim() : '';
 
     // Validate required fields
     if (!email || !raceCategory) {
@@ -209,11 +217,35 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    let paymentProofUrl = '';
+    if (paymentProofUrlRaw) {
+      if (!isPaymentProofUrlFromCloudinary(paymentProofUrlRaw)) {
+        return NextResponse.json(
+          { error: 'Invalid payment proof upload. Please upload your screenshot again.' },
+          { status: 400 }
+        );
+      }
+      paymentProofUrl = paymentProofUrlRaw;
+    }
+
+    const isAdvocateRegistrant = isAdvocatePromoCode(savedPromo);
+    if (!isAdvocateRegistrant && !paymentProofSent && !paymentProofUrl) {
+      return NextResponse.json(
+        {
+          error:
+            'Please confirm you sent proof of payment by email, or upload your payment screenshot before submitting.',
+        },
+        { status: 400 }
+      );
+    }
+
     if (isGroupCategory) {
       // Insert one record per group member (same contact email, own personal fields)
       const teamId = new ObjectId();
       const members = teamMembers as Array<{ name: string; birthday: string; gender: string; contact: string; tShirtSize: string }>;
+      const memberIds = members.map(() => new ObjectId());
       const docs = members.map((m: { name: string; birthday: string; gender: string; contact: string; tShirtSize: string }, index: number) => ({
+        _id: memberIds[index],
         name: String(m.name).trim(),
         email,
         contact: normalizePhilippinesContact(m.contact),
@@ -224,6 +256,9 @@ export async function POST(request: NextRequest) {
         affiliations: affiliations || '',
         promotional: promotional || false,
         promoCode: savedPromo,
+        paymentProofSent,
+        paymentProofUrl,
+        bibNumber: generateBibNumber(speedDistance, memberIds[index]),
         mailerStatus: 'pending',
         mailerLastAttemptAt: null,
         mailerLastError: null,
@@ -236,17 +271,21 @@ export async function POST(request: NextRequest) {
       }));
       const result = await collection.insertMany(docs);
       const insertedIds = Object.values(result.insertedIds);
+      const primaryId = memberIds[0];
 
       // Send confirmation email once to the group contact
-      const useLegacyTemplate = shouldUseLegacyTemplate(savedPromo || rawPromo);
       const mailResult = await sendRegistrationConfirmation(
         members[0].name,
         email,
-        members.map((m) => m.tShirtSize).join(', '),
-        useLegacyTemplate,
-        savedPromo,
-        raceCategory,
-        speedDistance
+        {
+          promoCode: savedPromo,
+          raceCategory,
+          speedDistance,
+          paymentProofSent,
+          paymentProofUrl,
+          orderNumber: String(primaryId),
+          bibNumber: generateBibNumber(speedDistance, primaryId),
+        }
       );
       await collection.updateMany(
         { _id: { $in: insertedIds } },
@@ -285,9 +324,11 @@ export async function POST(request: NextRequest) {
           )
           .join('<br/>');
         const groupLabel = isDuo ? 'duo' : 'team';
+        const notificationCc = getRegistrationNotificationCc(notificationTo);
         const { data, error } = await resend.emails.send({
           from,
           to: [notificationTo],
+          ...(notificationCc.length > 0 ? { cc: notificationCc } : {}),
           subject: `New ${groupLabel} registration: ${escapeHtml(members.map((m: { name: string }) => m.name).join(', '))}`,
           html: `
             <h2>New ${groupLabel} registration submitted (${requiredMemberCount} members)</h2>
@@ -297,6 +338,11 @@ export async function POST(request: NextRequest) {
             <p><strong>Race Experience:</strong> ${escapeHtml(raceCategory)}</p>
             <p><strong>Speed option:</strong> ${escapeHtml(speedDistance)}</p>
             ${affiliations ? `<p><strong>Affiliations:</strong> ${escapeHtml(affiliations)}</p>` : ''}
+            ${buildPaymentProofAdminNotificationHtml({
+              paymentProofSent,
+              paymentProofUrl,
+              promoCode: savedPromo,
+            })}
             <p><strong>Promotional emails:</strong> ${promotional ? 'Yes' : 'No'}</p>
           `,
         });
@@ -320,7 +366,10 @@ export async function POST(request: NextRequest) {
 
     // Insert single record for non-team
     const contactForDb = normalizePhilippinesContact(contact);
+    const registrationId = new ObjectId();
+    const bibNumber = generateBibNumber(speedDistance, registrationId);
     const doc: Record<string, unknown> = {
+      _id: registrationId,
       name,
       email,
       contact: contactForDb,
@@ -331,6 +380,9 @@ export async function POST(request: NextRequest) {
       affiliations: affiliations || '',
       promotional: promotional || false,
       promoCode: savedPromo,
+      paymentProofSent,
+      paymentProofUrl,
+      bibNumber,
       mailerStatus: 'pending',
       mailerLastAttemptAt: null,
       mailerLastError: null,
@@ -342,16 +394,15 @@ export async function POST(request: NextRequest) {
     const result = await collection.insertOne(doc);
 
     // Send confirmation email to registrant via SMTP (best-effort)
-    const useLegacyTemplate = shouldUseLegacyTemplate(savedPromo || rawPromo);
-    const mailResult = await sendRegistrationConfirmation(
-      name,
-      email,
-      String(tShirtSize || '').trim(),
-      useLegacyTemplate,
-      savedPromo,
+    const mailResult = await sendRegistrationConfirmation(name, email, {
+      promoCode: savedPromo,
       raceCategory,
-      speedDistance
-    );
+      speedDistance,
+      paymentProofSent,
+      paymentProofUrl,
+      orderNumber: String(registrationId),
+      bibNumber,
+    });
     await collection.updateOne(
       { _id: result.insertedId },
       {
@@ -378,9 +429,11 @@ export async function POST(request: NextRequest) {
       console.warn('[Register] Resend skipped: RESEND_API_KEY is not set in .env.local');
     } else {
       const from = process.env.RESEND_FROM_EMAIL?.trim() || '2XU Speed Run <onboarding@resend.dev>';
+      const notificationCc = getRegistrationNotificationCc(notificationTo);
       const { data, error } = await resend.emails.send({
         from,
         to: [notificationTo],
+        ...(notificationCc.length > 0 ? { cc: notificationCc } : {}),
         subject: `New registration: ${escapeHtml(name)}`,
         html: `
           <h2>New registration submitted</h2>
@@ -393,6 +446,11 @@ export async function POST(request: NextRequest) {
           <p><strong>Speed option:</strong> ${escapeHtml(speedDistance)}</p>
           ${affiliations ? `<p><strong>Affiliations:</strong> ${escapeHtml(affiliations)}</p>` : ''}
           <p><strong>T-shirt Size:</strong> ${escapeHtml(String(tShirtSize || ''))}</p>
+          ${buildPaymentProofAdminNotificationHtml({
+            paymentProofSent,
+            paymentProofUrl,
+            promoCode: savedPromo,
+          })}
           <p><strong>Promotional emails:</strong> ${promotional ? 'Yes' : 'No'}</p>
         `,
       });

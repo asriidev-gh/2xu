@@ -101,6 +101,8 @@ export async function GET(request: NextRequest) {
       affiliations: user.affiliations || '',
       promotional: user.promotional || false,
       promoCode: (user as { promoCode?: string }).promoCode || '',
+      paymentProofSent: (user as { paymentProofSent?: boolean }).paymentProofSent === true,
+      paymentProofUrl: (user as { paymentProofUrl?: string }).paymentProofUrl || '',
       mailerStatus:
         (user as { mailerStatus?: 'success' | 'failed' | 'pending' }).mailerStatus || 'pending',
       mailerLastAttemptAt: (user as { mailerLastAttemptAt?: Date | string | null }).mailerLastAttemptAt

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
-import { DateRangePicker } from 'rsuite';
+import DashboardDateRangePicker from '@/components/DashboardDateRangePicker';
 import { RACE_CATEGORY_NAMES } from '@/components/RaceCategoriesSection';
 import DashboardAdminHeader from '@/components/DashboardAdminHeader';
 import { getAgeYearsFromBirthday, parseBirthdayLocal } from '@/lib/completedAge';
@@ -35,6 +35,8 @@ interface User {
   affiliations: string;
   promotional: boolean;
   promoCode?: string;
+  paymentProofSent?: boolean;
+  paymentProofUrl?: string;
   tShirtSize?: string;
   teamId?: string;
   teamMemberIndex?: number;
@@ -69,6 +71,24 @@ function formatRaceCategoryLabel(raceCategory: string, speedDistance?: string) {
   const base = raceCategory?.trim() || '';
   const speed = speedDistance?.trim();
   return speed ? `${base} (${speed})` : base;
+}
+
+type PaymentProofStatus = 'none' | 'email' | 'upload';
+
+function getPaymentProofStatus(user: {
+  paymentProofSent?: boolean;
+  paymentProofUrl?: string;
+}): PaymentProofStatus {
+  if (user.paymentProofUrl?.trim()) return 'upload';
+  if (user.paymentProofSent) return 'email';
+  return 'none';
+}
+
+function formatPaymentProofExport(user: User): string {
+  const status = getPaymentProofStatus(user);
+  if (status === 'upload') return user.paymentProofUrl || '';
+  if (status === 'email') return 'Sent thru email';
+  return 'No payment';
 }
 
 function birthdayToDateInputValue(birthday: string): string {
@@ -322,6 +342,7 @@ async function exportToExcel(
       'Advocate Code',
       'Race Experience',
       'Email',
+      'Payment',
       'Contact',
       'Birthday',
       'T-shirt Size',
@@ -339,6 +360,7 @@ async function exportToExcel(
       user.promoCode || '',
       formatRaceCategoryLabel(user.raceCategory, user.speedDistance),
       user.email,
+      formatPaymentProofExport(user),
       user.contact,
       user.birthday || '',
       user.tShirtSize || '',
@@ -1245,7 +1267,7 @@ export default function DashboardPage() {
               <label className="block text-sm font-medium text-gray-600 mb-1.5 font-fira-sans">
                 Registration date range (UTC)
               </label>
-              <DateRangePicker
+              <DashboardDateRangePicker
                 value={dateRangeFromFilterStrings(filters.dateFrom, filters.dateTo)}
                 onChange={(next: DateRangeValue) => {
                   const { dateFrom, dateTo } = filterStringsFromDateRange(next);
@@ -1396,6 +1418,9 @@ export default function DashboardPage() {
                       onSort={handleSortColumn}
                     />
                     <SortableTh field="email" label="Email" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-fira-sans">
+                      Payment
+                    </th>
                     {showExtraTableColumns && (
                       <SortableTh field="contact" label="Contact" sortBy={sortBy} sortDir={sortDir} onSort={handleSortColumn} />
                     )}
@@ -1494,6 +1519,39 @@ export default function DashboardPage() {
                         title={user.email}
                       >
                         {user.email}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500 font-sweet-sans">
+                        {(() => {
+                          const paymentStatus = getPaymentProofStatus(user);
+                          if (paymentStatus === 'upload' && user.paymentProofUrl) {
+                            return (
+                              <a
+                                href={user.paymentProofUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-block group"
+                                title="Open payment proof"
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={user.paymentProofUrl}
+                                  alt="Payment proof"
+                                  className="h-14 w-auto max-w-[5.5rem] rounded-md border border-gray-200 object-cover shadow-sm group-hover:border-orange-400 transition-colors"
+                                />
+                              </a>
+                            );
+                          }
+                          if (paymentStatus === 'email') {
+                            return (
+                              <span className="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-sky-100 text-sky-800 font-fira-sans">
+                                Sent thru email
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="text-gray-400 font-sweet-sans">No payment</span>
+                          );
+                        })()}
                       </td>
                       {showExtraTableColumns && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-sweet-sans">

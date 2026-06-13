@@ -42,6 +42,7 @@ function createInitialFormData() {
     affiliations: '',
     promotional: false,
     waiverAccepted: false,
+    paymentProofSent: false,
     tShirtSize: '',
     promoCode: '',
     teamMember1Name: '',
@@ -86,6 +87,11 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
   const [promoCodeValid, setPromoCodeValid] = useState<boolean | null>(null);
   const [promoCodeError, setPromoCodeError] = useState('');
   const [isCheckingPromoCode, setIsCheckingPromoCode] = useState(false);
+  const [paymentProofUrl, setPaymentProofUrl] = useState('');
+  const [paymentProofUploading, setPaymentProofUploading] = useState(false);
+  const [paymentProofUploadError, setPaymentProofUploadError] = useState('');
+  const [paymentProofMethod, setPaymentProofMethod] = useState<'email' | 'upload' | null>(null);
+  const paymentProofFileInputRef = useRef<HTMLInputElement>(null);
 
   const isTeam = formData.raceCategory === 'Team Category';
   const isDuo = formData.raceCategory === 'The Speed Duo - 2XU pair';
@@ -108,6 +114,11 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
     !!formData.raceCategory && usesSpeedBasedPricing(formData.raceCategory) && !formData.speedDistance;
   const finalPricePhpDisplay = paymentAmount ? `₱${paymentAmount.phpAmount.toLocaleString('en-PH')}` : '';
   const finalPriceUsdDisplay = paymentAmount?.usdDisplay ?? '';
+  const hasValidAdvocateCode =
+    promoCodeValid === true && PROMO_FORMAT.test(formData.promoCode.trim());
+  const requiresPaymentProof = !hasValidAdvocateCode;
+  const paymentProofComplete = formData.paymentProofSent || paymentProofUrl.trim().length > 0;
+  const submitBlockedByPayment = requiresPaymentProof && !paymentProofComplete;
 
   // Auto-fill race category when user clicks a category card and scrolls here
   useEffect(() => {
@@ -166,6 +177,49 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  const handlePaymentProofUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setPaymentProofUploadError('');
+    setPaymentProofUploading(true);
+    try {
+      const uploadData = new FormData();
+      uploadData.append('file', file);
+      const response = await fetch('/api/upload/payment-proof', {
+        method: 'POST',
+        body: uploadData,
+      });
+      const data = await response.json();
+      if (!response.ok || typeof data.url !== 'string') {
+        throw new Error(data.error || 'Failed to upload payment screenshot');
+      }
+      setPaymentProofUrl(data.url);
+      setPaymentProofMethod('upload');
+      setFormData((prev) => ({ ...prev, paymentProofSent: false }));
+    } catch (error) {
+      setPaymentProofUploadError(
+        error instanceof Error ? error.message : 'Failed to upload payment screenshot'
+      );
+    } finally {
+      setPaymentProofUploading(false);
+    }
+  };
+
+  const selectPaymentProofEmail = () => {
+    setPaymentProofMethod('email');
+    setPaymentProofUrl('');
+    setPaymentProofUploadError('');
+    setFormData((prev) => ({ ...prev, paymentProofSent: false }));
+  };
+
+  const selectPaymentProofUpload = () => {
+    setPaymentProofMethod('upload');
+    setFormData((prev) => ({ ...prev, paymentProofSent: false }));
+    setPaymentProofUploadError('');
   };
 
   const validatePromoCode = async (
@@ -266,6 +320,23 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
       return;
     }
 
+    if (submitBlockedByPayment) {
+      await Swal.fire({
+        title: 'Payment proof required',
+        text:
+          paymentProofMethod == null
+            ? 'Choose Email proof or Upload screenshot in Step 3, then complete that option.'
+            : paymentProofMethod === 'email'
+              ? 'Please check the box confirming you already emailed your proof of payment.'
+              : 'Please upload your payment screenshot before submitting.',
+        icon: 'warning',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#ea580c',
+        customClass: { confirmButton: 'font-fira-sans' },
+      });
+      return;
+    }
+
     const advocateCodeTrimmed = formData.promoCode.trim();
     const isAdvocateCode =
       advocateCodeTrimmed.length > 0 && PROMO_FORMAT.test(advocateCodeTrimmed);
@@ -334,6 +405,8 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
             affiliations: formData.affiliations,
             promotional: formData.promotional,
             waiverAccepted: formData.waiverAccepted,
+            paymentProofSent: formData.paymentProofSent,
+            paymentProofUrl: paymentProofUrl || undefined,
             promoCode: promoToSave || undefined,
             speedDistance: formData.speedDistance,
             clientContext,
@@ -349,6 +422,8 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
             ...formData,
             contact: normalizePhilippinesContact(formData.contact),
             waiverAccepted: formData.waiverAccepted,
+            paymentProofSent: formData.paymentProofSent,
+            paymentProofUrl: paymentProofUrl || undefined,
             promoCode: promoToSave,
             clientContext,
           };
@@ -396,6 +471,11 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
       
       // Reset form
       setFormData(createInitialFormData());
+      setPaymentProofUrl('');
+      setPaymentProofMethod(null);
+      setPaymentProofUploadError('');
+      setPromoCodeValid(null);
+      setPromoCodeError('');
     } catch (error) {
       console.error('Registration error:', error);
       await Swal.fire({
@@ -890,102 +970,284 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                   </div>
                 </div>
 
-                {/* Payment Instructions */}
-                <div className="rounded-xl border-2 border-orange-200 bg-orange-50/80 p-6 space-y-4">
-                  <h3 className="text-lg font-bold text-gray-900 font-fira-sans flex items-center gap-2">
-                    <span className="text-orange-600">Payment Instructions</span>
-                  </h3>
-                  {paymentAmount && (
-                    <div className="rounded-lg bg-white border border-orange-200 px-4 py-3">
-                      <p className="text-sm font-semibold text-gray-700 font-fira-sans mb-1">Amount to pay</p>
-                      <p className="text-xl font-bold text-orange-600 font-druk">
-                        {finalPricePhpDisplay}
-                        <span className="text-base font-sweet-sans font-normal text-gray-600 ml-2">
-                          (approx. {finalPriceUsdDisplay} USD)
-                        </span>
-                      </p>
-                      {isSpecialPromoApplied && (
-                        <p className="mt-1 text-xs text-green-700 font-sweet-sans">
-                          Promo code SPSUAAPElite applied.
-                        </p>
-                      )}
-                      {isMissionStrong500Applied && (
-                        <p className="mt-1 text-xs text-green-700 font-sweet-sans">
-                          Promo code MissionStrong500 applied. ₱500 discount has been deducted.
-                        </p>
-                      )}
-                    </div>
-                  )}
-                  {!paymentAmount && (
-                    <p className="text-sm text-gray-600 font-sweet-sans">
-                      {needsSpeedForPrice
-                        ? 'Select your speed option above to see the registration fee.'
-                        : 'Select a race category above to see the amount to pay.'}
+                {/* Payment Instructions — required unless valid SPS2XU advocate code */}
+                {requiresPaymentProof && (
+                <div className="rounded-xl border-2 border-orange-200 bg-orange-50/80 p-6 space-y-6">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 font-fira-sans">
+                      <span className="text-orange-600">Payment Instructions</span>
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-600 font-sweet-sans">
+                      Scan to pay, then confirm your proof below to complete registration.
                     </p>
-                  )}
-                  <div className="flex flex-col sm:flex-row gap-6 items-start flex-wrap">
-                    <div className="flex-shrink-0 p-3 bg-white rounded-lg border border-orange-100 shadow-sm flex flex-col items-center">
-                      <Image
-                        src="/images/payment-options/gcash.jpg"
-                        alt="GCash QR Code"
-                        width={180}
-                        height={180}
-                        className="w-[180px] h-[180px] object-contain"
-                      />
-                      <p className="text-sm font-semibold text-gray-700 text-center mt-2 font-sweet-sans">GCash</p>
-                      <a
-                        href="/images/payment-options/gcash.jpg"
-                        download="gcash-qr.jpg"
-                        className="md:hidden mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition-colors font-fira-sans"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        Download QR
-                      </a>
-                    </div>
-                    <div className="flex-shrink-0 p-3 bg-white rounded-lg border border-orange-100 shadow-sm flex flex-col items-center">
-                      <Image
-                        src="/images/payment-options/bank-transfer.jpg"
-                        alt="Bank Transfer QR Code"
-                        width={180}
-                        height={180}
-                        className="w-[180px] h-[180px] object-contain"
-                      />
-                      <p className="text-sm font-semibold text-gray-700 text-center mt-2 font-sweet-sans">Gotyme Bank Transfer</p>
-                      <a
-                        href="/images/payment-options/bank-transfer.jpg"
-                        download="gotyme-bank-transfer-qr.jpg"
-                        className="md:hidden mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition-colors font-fira-sans"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        Download QR
-                      </a>
-                    </div>
-                    <div className="flex-1 min-w-[200px] space-y-2">
-                      <p className="text-gray-700 font-sweet-sans">
-                        After completing your registration, please send your proof of payment to complete the process.
+                  </div>
+
+                  {/* Step 1 — Amount */}
+                  <div className="space-y-2">
+                    <p className="text-xs font-bold uppercase tracking-wide text-orange-700 font-fira-sans">
+                      Step 1 · Amount to pay
+                    </p>
+                    {paymentAmount ? (
+                      <div className="rounded-lg bg-white border border-orange-200 px-4 py-3">
+                        <p className="text-xl font-bold text-orange-600 font-druk">
+                          {finalPricePhpDisplay}
+                          <span className="text-base font-sweet-sans font-normal text-gray-600 ml-2">
+                            (approx. {finalPriceUsdDisplay} USD)
+                          </span>
+                        </p>
+                        {isSpecialPromoApplied && (
+                          <p className="mt-1 text-xs text-green-700 font-sweet-sans">
+                            Promo code SPSUAAPElite applied.
+                          </p>
+                        )}
+                        {isMissionStrong500Applied && (
+                          <p className="mt-1 text-xs text-green-700 font-sweet-sans">
+                            Promo code MissionStrong500 applied. ₱500 discount has been deducted.
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-600 font-sweet-sans rounded-lg bg-white/80 border border-orange-100 px-4 py-3">
+                        {needsSpeedForPrice
+                          ? 'Select your speed option above to see the registration fee.'
+                          : 'Select a race category above to see the amount to pay.'}
                       </p>
-                      <p className="text-gray-800 font-semibold font-fira-sans">
-                        Email your proof of payment to:{' '}
+                    )}
+                  </div>
+
+                  {/* Step 2 — Scan to pay */}
+                  <div className="space-y-3">
+                    <p className="text-xs font-bold uppercase tracking-wide text-orange-700 font-fira-sans">
+                      Step 2 · Scan to pay
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="p-4 bg-white rounded-lg border border-orange-100 shadow-sm flex flex-col items-center text-center">
+                        <Image
+                          src="/images/payment-options/gcash.jpg"
+                          alt="GCash QR Code"
+                          width={160}
+                          height={160}
+                          className="w-[160px] h-[160px] object-contain"
+                        />
+                        <p className="text-sm font-semibold text-gray-800 mt-2 font-fira-sans">GCash</p>
                         <a
-                          href="mailto:1@oneofakindasia.com"
-                          className="text-orange-600 hover:text-orange-700 underline"
+                          href="/images/payment-options/gcash.jpg"
+                          download="gcash-qr.jpg"
+                          className="md:hidden mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition-colors font-fira-sans"
                         >
-                          1@oneofakindasia.com
+                          Download QR
                         </a>
-                      </p>
+                      </div>
+                      <div className="p-4 bg-white rounded-lg border border-orange-100 shadow-sm flex flex-col items-center text-center">
+                        <Image
+                          src="/images/payment-options/bank-transfer.jpg"
+                          alt="Bank Transfer QR Code"
+                          width={160}
+                          height={160}
+                          className="w-[160px] h-[160px] object-contain"
+                        />
+                        <p className="text-sm font-semibold text-gray-800 mt-2 font-fira-sans">Gotyme Bank Transfer</p>
+                        <a
+                          href="/images/payment-options/bank-transfer.jpg"
+                          download="gotyme-bank-transfer-qr.jpg"
+                          className="md:hidden mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition-colors font-fira-sans"
+                        >
+                          Download QR
+                        </a>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Step 3 — Proof of payment */}
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wide text-orange-700 font-fira-sans">
+                        Step 3 · Confirm proof of payment
+                      </p>
+                      <p className="mt-2 text-sm text-gray-700 font-sweet-sans leading-relaxed">
+                        After completing your registration, please send your proof of payment to complete the
+                        process. Choose one option below:
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={selectPaymentProofEmail}
+                        className={`text-left rounded-xl border-2 px-4 py-4 transition-all font-fira-sans ${
+                          paymentProofMethod === 'email'
+                            ? 'border-orange-500 bg-white shadow-md ring-2 ring-orange-200'
+                            : 'border-orange-200 bg-white/70 hover:border-orange-400 hover:bg-white'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span
+                            className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                              paymentProofMethod === 'email'
+                                ? 'border-orange-600 bg-orange-600'
+                                : 'border-gray-300 bg-white'
+                            }`}
+                            aria-hidden
+                          >
+                            {paymentProofMethod === 'email' && (
+                              <span className="h-2 w-2 rounded-full bg-white" />
+                            )}
+                          </span>
+                          <span>
+                            <span className="block text-sm font-bold text-gray-900">Email proof</span>
+                            <span className="mt-1 block text-xs text-gray-600 font-sweet-sans leading-snug">
+                              Send to{' '}
+                              <span className="font-semibold text-orange-700">1@oneofakindasia.com</span>
+                            </span>
+                          </span>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={selectPaymentProofUpload}
+                        className={`text-left rounded-xl border-2 px-4 py-4 transition-all font-fira-sans ${
+                          paymentProofMethod === 'upload'
+                            ? 'border-orange-500 bg-white shadow-md ring-2 ring-orange-200'
+                            : 'border-orange-200 bg-white/70 hover:border-orange-400 hover:bg-white'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span
+                            className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                              paymentProofMethod === 'upload'
+                                ? 'border-orange-600 bg-orange-600'
+                                : 'border-gray-300 bg-white'
+                            }`}
+                            aria-hidden
+                          >
+                            {paymentProofMethod === 'upload' && (
+                              <span className="h-2 w-2 rounded-full bg-white" />
+                            )}
+                          </span>
+                          <span>
+                            <span className="block text-sm font-bold text-gray-900">Upload screenshot</span>
+                            <span className="mt-1 block text-xs text-gray-600 font-sweet-sans leading-snug">
+                              Attach your payment receipt here
+                            </span>
+                          </span>
+                        </div>
+                      </button>
+                    </div>
+
+                    {paymentProofMethod === 'email' && (
+                      <div className="rounded-lg border border-orange-200 bg-white p-4 space-y-4">
+                        <p className="text-sm text-gray-700 font-sweet-sans">
+                          Email your proof of payment to:{' '}
+                          <a
+                            href="mailto:1@oneofakindasia.com"
+                            className="font-semibold text-orange-600 hover:text-orange-700 underline"
+                          >
+                            1@oneofakindasia.com
+                          </a>
+                        </p>
+                        <div className="flex items-start rounded-lg bg-orange-50/80 border border-orange-100 px-3 py-3">
+                          <div className="flex items-center h-5 shrink-0">
+                            <input
+                              type="checkbox"
+                              id="paymentProofSent"
+                              name="paymentProofSent"
+                              checked={formData.paymentProofSent}
+                              onChange={(e) => {
+                                handleInputChange(e);
+                                if (e.target.checked) {
+                                  setPaymentProofMethod('email');
+                                }
+                              }}
+                              className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500 focus:ring-2"
+                            />
+                          </div>
+                          <label
+                            htmlFor="paymentProofSent"
+                            className="ml-3 text-sm font-semibold text-gray-800 font-fira-sans cursor-pointer"
+                          >
+                            I already sent proof of payment thru email
+                          </label>
+                        </div>
+                      </div>
+                    )}
+
+                    {paymentProofMethod === 'upload' && (
+                      <div className="rounded-lg border border-orange-200 bg-white p-4 space-y-3">
+                        <p className="text-sm text-gray-700 font-sweet-sans">
+                          Upload a clear screenshot of your GCash or bank transfer receipt.
+                        </p>
+                        <input
+                          ref={paymentProofFileInputRef}
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/gif"
+                          className="hidden"
+                          onChange={(e) => void handlePaymentProofUpload(e)}
+                        />
+                        {paymentProofUrl ? (
+                          <div className="space-y-2">
+                            <div className="inline-block rounded-lg border border-green-200 bg-green-50/50 p-2">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={paymentProofUrl}
+                                alt="Uploaded payment proof"
+                                className="max-h-44 w-auto rounded-md object-contain"
+                              />
+                            </div>
+                            <p className="text-xs text-green-700 font-semibold font-sweet-sans">
+                              Payment screenshot uploaded — you can submit registration.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPaymentProofUrl('');
+                                setPaymentProofUploadError('');
+                              }}
+                              className="text-xs font-semibold text-gray-600 hover:text-orange-600 font-fira-sans underline"
+                            >
+                              Remove and upload a different image
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => paymentProofFileInputRef.current?.click()}
+                            disabled={paymentProofUploading}
+                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-orange-600 text-white text-sm font-semibold hover:bg-orange-700 transition-colors font-fira-sans disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {paymentProofUploading ? 'Uploading…' : 'Choose payment screenshot'}
+                          </button>
+                        )}
+                        {paymentProofUploadError && (
+                          <p className="text-xs text-red-600 font-sweet-sans">{paymentProofUploadError}</p>
+                        )}
+                        <p className="text-xs text-gray-500 font-sweet-sans">JPG, PNG, or WebP · max 5 MB</p>
+                      </div>
+                    )}
+
+                    {!paymentProofComplete && (
+                      <p className="text-xs text-orange-800 font-sweet-sans rounded-lg bg-orange-100/80 border border-orange-200 px-3 py-2">
+                        {paymentProofMethod == null
+                          ? 'Select Email proof or Upload screenshot above, then complete that step to enable registration.'
+                          : paymentProofMethod === 'email'
+                            ? 'Check the box above once you have emailed your proof of payment.'
+                            : 'Upload your payment screenshot to continue.'}
+                      </p>
+                    )}
+                  </div>
                 </div>
+                )}
 
                 {/* Submit Button */}
                 <div className="pt-4">
                   <button
                     type="submit"
-                    disabled={isSubmitting || isCheckingPromoCode}
+                    disabled={isSubmitting || isCheckingPromoCode || paymentProofUploading || submitBlockedByPayment}
+                    title={
+                      submitBlockedByPayment
+                        ? 'Confirm payment by email or upload your payment screenshot first'
+                        : undefined
+                    }
                     className="w-full bg-gradient-to-r from-orange-600 to-orange-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:from-orange-700 hover:to-orange-600 transition-all transform hover:scale-105 shadow-lg font-fira-sans disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   >
                     {isCheckingPromoCode

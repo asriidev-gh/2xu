@@ -6,7 +6,6 @@ import { sendRegistrationConfirmation } from '@/lib/sendConfirmationEmail';
 import { getStoredSpeedDistance } from '@/lib/raceCategories';
 
 export const dynamic = 'force-dynamic';
-const MISSION_STRONG_PROMO = 'MISSIONSTRONG500';
 
 async function isAuthenticated() {
   const cookieStore = await cookies();
@@ -47,23 +46,25 @@ export async function POST(
     }
 
     const promoCode = String((user as { promoCode?: string }).promoCode || '').trim();
-    const tShirtSize = String((user as { tShirtSize?: string }).tShirtSize || '').trim();
     const raceCategory = String((user as { raceCategory?: string }).raceCategory || '').trim();
     const speedDistance = getStoredSpeedDistance(
       user as { speedDistance?: string; patronSpeedDistance?: string }
     );
-    const useLegacyTemplate =
-      promoCode.length > 0 && promoCode.toUpperCase() !== MISSION_STRONG_PROMO;
+    const paymentProofSent =
+      (user as { paymentProofSent?: boolean }).paymentProofSent === true;
+    const bibNumber = String((user as { bibNumber?: string }).bibNumber || '').trim();
 
-    const mailResult = await sendRegistrationConfirmation(
-      name,
-      toEmail,
-      tShirtSize,
-      useLegacyTemplate,
+    const paymentProofUrl = String((user as { paymentProofUrl?: string }).paymentProofUrl || '').trim();
+
+    const mailResult = await sendRegistrationConfirmation(name, toEmail, {
       promoCode,
       raceCategory,
-      speedDistance
-    );
+      speedDistance,
+      paymentProofSent,
+      paymentProofUrl,
+      orderNumber: String(user._id),
+      bibNumber,
+    });
 
     await users.updateOne(
       { _id: user._id },

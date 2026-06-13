@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
-import { DateRangePicker } from 'rsuite';
+import DashboardDateRangePicker from '@/components/DashboardDateRangePicker';
 import 'rsuite/dist/rsuite-no-reset.min.css';
 import DashboardAdminHeader from '@/components/DashboardAdminHeader';
 import { getAgeYearsFromBirthday } from '@/lib/completedAge';
@@ -577,7 +577,7 @@ export default function InsightsPage() {
               <label className="block text-xs font-medium text-gray-500 font-fira-sans mb-1">
                 Insights date range (UTC)
               </label>
-              <DateRangePicker
+              <DashboardDateRangePicker
                 value={dateRange}
                 onChange={(next: DateRangeValue) => {
                   setDateRange(next);
