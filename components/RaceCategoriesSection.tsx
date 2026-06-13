@@ -184,24 +184,26 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
             }}
             className="inline-flex items-center gap-2.5 px-5 py-3 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 rounded-full mb-4 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/40 hover:scale-105 active:scale-100 border-2 border-white/20 hover:border-white/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 focus:ring-offset-gray-900 cursor-pointer"
           >
-            <img
+            <Image
               src="/images/running-man.gif"
               alt=""
               className="h-6 w-auto object-contain"
               width={24}
               height={24}
               aria-hidden
+              unoptimized
             />
             <span className="text-white font-semibold text-sm font-fira-sans uppercase tracking-wide">
               Mission Strong : Speed Series powered by 2XU. Race Event Details
             </span>
-            <img
+            <Image
               src="/images/hand-pointer.gif"
               alt=""
               className="h-8 w-auto object-contain shrink-0"
               width={32}
               height={32}
               aria-hidden
+              unoptimized
             />
           </button>
           <h2 id="race-experience" className="text-4xl lg:text-5xl font-bold text-white mb-4 font-druk drop-shadow-lg scroll-mt-24">

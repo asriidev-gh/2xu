@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import UpdatesSection from '@/components/UpdatesSection';
 
@@ -137,11 +138,12 @@ export default function RaceExperienceGallerySection({
               style={{ animationDelay: `${0.25 + index * 0.1}s` }}
             >
               <div className="relative h-60 sm:h-64 overflow-hidden">
-                <img
+                <Image
                   src={item.imageUrl}
                   alt={item.alt}
-                  loading="lazy"
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, 33vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute left-4 bottom-4">

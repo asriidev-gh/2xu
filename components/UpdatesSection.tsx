@@ -103,7 +103,7 @@ function BaguioPromoUpdatePreview({
 
   const syncBannerWidth = useCallback(() => {
     const width = promoImgRef.current?.getBoundingClientRect().width;
-    if (width > 0) {
+    if (width != null && width > 0) {
       setBannerWidth(Math.round(width));
     }
   }, []);

@@ -40,7 +40,7 @@ export default function ApparelImageModal({
 
   const syncBannerWidth = useCallback(() => {
     const width = promoImgRef.current?.getBoundingClientRect().width;
-    if (width > 0) {
+    if (width != null && width > 0) {
       setBannerWidth(Math.round(width));
     }
   }, []);
@@ -133,6 +133,7 @@ export default function ApparelImageModal({
               />
             </button>
           ) : (
+            /* eslint-disable-next-line @next/next/no-img-element -- blob/object URLs from progressive loader */
             <img
               src={displaySrc}
               alt={imageAlt}
