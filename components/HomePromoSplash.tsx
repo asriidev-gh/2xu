@@ -10,15 +10,16 @@ const IMAGE_SRC = '/images/baguio_leg.jpg';
 type HomePromoSplashProps = {
   /** Called when the promo image is tapped (e.g. scroll to registration as Patron). */
   onPatronImageClick?: () => void;
+  onOpenChange?: (open: boolean) => void;
 };
 
-export default function HomePromoSplash({ onPatronImageClick }: HomePromoSplashProps) {
-  const [open, setOpen] = useState(false);
+export default function HomePromoSplash({ onPatronImageClick, onOpenChange }: HomePromoSplashProps) {
+  const [open, setOpen] = useState(true);
   const { displaySrc, loadPercent, status } = useImageWithProgress(IMAGE_SRC, open);
 
   useEffect(() => {
-    setOpen(true);
-  }, []);
+    onOpenChange?.(open);
+  }, [open, onOpenChange]);
 
   const dismiss = useCallback(() => {
     setOpen(false);

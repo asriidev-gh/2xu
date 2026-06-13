@@ -235,7 +235,7 @@ function buildConfirmedRegistrationEmail({
   const firstName = getFirstName(participantName);
   const categoryLabel = formatDistanceCategoryLabel(speedDistance);
   const orderLabel = formatOrderNumber(orderNumber);
-  const bibLabel = bibNumber.trim() || 'Auto-assigned';
+  const bibLabel = '(to follow)';
   const contactName = process.env.MAILER_CONTACT_NAME?.trim() || 'Pinkee';
   const contactNumber = process.env.MAILER_CONTACT_NUMBER?.trim() || '09053162845';
   const contactLine = formatMailerContactLine(contactName, contactNumber);

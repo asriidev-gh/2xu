@@ -12,6 +12,10 @@ type ExperienceItem = {
   alt: string;
 };
 
+type RaceExperienceGallerySectionProps = {
+  suppressUpdatesPromoPreview?: boolean;
+};
+
 const EXPERIENCES: ExperienceItem[] = [
   {
     name: 'By the City',
@@ -51,7 +55,9 @@ const PARTICLES = [
   { left: '91%', top: '72%', size: 10, delay: 0.8, duration: 6.9 },
 ];
 
-export default function RaceExperienceGallerySection() {
+export default function RaceExperienceGallerySection({
+  suppressUpdatesPromoPreview = false,
+}: RaceExperienceGallerySectionProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -163,7 +169,7 @@ export default function RaceExperienceGallerySection() {
           }`}
           style={{ animationDelay: '0.6s' }}
         >
-          <UpdatesSection />
+          <UpdatesSection suppressPromoPreview={suppressUpdatesPromoPreview} />
         </div>
       </div>
     </section>

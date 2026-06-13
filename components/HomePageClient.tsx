@@ -26,7 +26,14 @@ type HomePageClientProps = {
 export default function HomePageClient({ promoBaguioLegEnabled }: HomePageClientProps) {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [isMechanicsModalOpen, setIsMechanicsModalOpen] = useState(false);
+  const [homePromoDismissed, setHomePromoDismissed] = useState(!promoBaguioLegEnabled);
   const clearSelectedCategory = useCallback(() => setSelectedCategory(''), []);
+
+  const handleHomePromoOpenChange = useCallback((open: boolean) => {
+    if (!open) {
+      setHomePromoDismissed(true);
+    }
+  }, []);
 
   const scrollToRegistration = useCallback(() => {
     const el = document.getElementById('registration');
@@ -44,7 +51,10 @@ export default function HomePageClient({ promoBaguioLegEnabled }: HomePageClient
   return (
     <>
       {promoBaguioLegEnabled && (
-        <HomePromoSplash onPatronImageClick={handlePromoPatronImageClick} />
+        <HomePromoSplash
+          onPatronImageClick={handlePromoPatronImageClick}
+          onOpenChange={handleHomePromoOpenChange}
+        />
       )}
       {/* 
         ============================================
@@ -56,7 +66,9 @@ export default function HomePageClient({ promoBaguioLegEnabled }: HomePageClient
       <main className="min-h-screen scroll-smooth">
         <Header />
         <Hero onOpenRaceEventsDetails={() => setIsMechanicsModalOpen(true)} />
-        <RaceExperienceGallerySection />
+        <RaceExperienceGallerySection
+          suppressUpdatesPromoPreview={promoBaguioLegEnabled && !homePromoDismissed}
+        />
         <EventsSection onOpenMechanicsModal={() => setIsMechanicsModalOpen(true)} />
         <RaceCategoriesSection
           onSelectCategory={setSelectedCategory}
