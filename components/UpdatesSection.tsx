@@ -51,7 +51,6 @@ type BaguioPromoUpdatePreviewProps = {
 const BAGUIO_SLIDE_INDEX = UPDATES.findIndex((item) => item.id === 2);
 const AUTO_PREVIEW_COUNTDOWN_START = 3;
 const COUNTDOWN_STEP_MS = 1000;
-const COUNTDOWN_ZERO_HOLD_MS = 350;
 
 function PromoPreviewTimerIcon({ className }: { className?: string }) {
   return (
@@ -59,6 +58,20 @@ function PromoPreviewTimerIcon({ className }: { className?: string }) {
       <circle cx="12" cy="13" r="8" stroke="currentColor" strokeWidth="1.75" />
       <path d="M12 9v4l2.5 1.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
       <path d="M10 3h4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function FullscreenIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M8 3H5a2 2 0 00-2 2v3M16 3h3a2 2 0 012 2v3M8 21H5a2 2 0 01-2-2v-3M16 21h3a2 2 0 002-2v-3"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -85,6 +98,8 @@ function BaguioPromoUpdatePreview({
   const [thumbnailInView, setThumbnailInView] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [bannerWidth, setBannerWidth] = useState<number | null>(null);
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [thumbnailHovered, setThumbnailHovered] = useState(false);
 
   const syncBannerWidth = useCallback(() => {
     const width = promoImgRef.current?.getBoundingClientRect().width;
@@ -114,7 +129,7 @@ function BaguioPromoUpdatePreview({
   const overlayImageLoading = isOverlayOpen && overlayImageStatus === 'loading';
 
   const showCountdown =
-    autoPreview && overlayImageReady && countdown !== null && countdown >= 0;
+    autoPreview && overlayImageReady && countdown !== null && countdown >= 1;
 
   const clearCountdownInterval = () => {
     if (countdownIntervalRef.current != null) {
@@ -212,28 +227,19 @@ function BaguioPromoUpdatePreview({
     overlayOpenedAtRef.current = Date.now();
     setCountdown(AUTO_PREVIEW_COUNTDOWN_START);
 
-    const endTime =
-      Date.now() +
-      AUTO_PREVIEW_COUNTDOWN_START * COUNTDOWN_STEP_MS +
-      COUNTDOWN_ZERO_HOLD_MS;
+    const endTime = Date.now() + AUTO_PREVIEW_COUNTDOWN_START * COUNTDOWN_STEP_MS;
 
     const tickCountdown = () => {
       const remainingMs = endTime - Date.now();
 
       if (remainingMs <= 0) {
-        setCountdown(0);
         clearCountdownInterval();
         countdownStartedRef.current = false;
         dismissAllPreviews();
         return;
       }
 
-      if (remainingMs <= COUNTDOWN_ZERO_HOLD_MS) {
-        setCountdown(0);
-        return;
-      }
-
-      const secondsLeft = Math.ceil((remainingMs - COUNTDOWN_ZERO_HOLD_MS) / COUNTDOWN_STEP_MS);
+      const secondsLeft = Math.ceil(remainingMs / COUNTDOWN_STEP_MS);
       setCountdown(Math.max(1, Math.min(AUTO_PREVIEW_COUNTDOWN_START, secondsLeft)));
     };
 
@@ -315,16 +321,25 @@ function BaguioPromoUpdatePreview({
               >
                 {showCountdown && (
                   <div
-                    className="absolute -top-3 -right-3 z-10 flex items-center gap-1.5 rounded-full bg-gray-950/95 px-3 py-1.5 text-white shadow-lg ring-2 ring-orange-400/70"
+                    className="absolute -top-3 -left-3 z-10 flex items-center gap-1.5 rounded-full bg-gray-950/95 px-3 py-1.5 text-white shadow-lg ring-2 ring-orange-400/70"
                     aria-live="polite"
-                    aria-label={
-                      countdown === 0 ? 'Closing now' : `Closing in ${countdown} seconds`
-                    }
+                    aria-label={`Closing in ${countdown} seconds`}
                   >
                     <PromoPreviewTimerIcon className="h-4 w-4 shrink-0 text-orange-400" />
                     <span className="min-w-[1ch] font-druk text-lg leading-none tabular-nums">{countdown}</span>
                   </div>
                 )}
+
+                <button
+                  type="button"
+                  onClick={dismissAllPreviews}
+                  className="absolute -top-3 -right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-gray-950/95 text-white shadow-lg ring-2 ring-orange-400/70 transition hover:bg-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black/50"
+                  aria-label="Close promotion preview"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
 
                 <button
                   type="button"
@@ -381,7 +396,9 @@ function BaguioPromoUpdatePreview({
     <>
       <div
         ref={anchorRef}
-        className="relative mx-auto sm:mx-0 h-[250px] w-full max-w-[500px] overflow-hidden rounded-lg bg-white shadow-lg"
+        className="group relative mx-auto sm:mx-0 h-[250px] w-full max-w-[500px] overflow-hidden rounded-lg bg-white shadow-lg"
+        onMouseEnter={() => setThumbnailHovered(true)}
+        onMouseLeave={() => setThumbnailHovered(false)}
       >
         <Image
           src={BAGUIO_PROMO_UPDATES_IMAGE}
@@ -390,13 +407,36 @@ function BaguioPromoUpdatePreview({
           className="object-cover object-top"
           sizes="(max-width: 640px) 100vw, 500px"
         />
-        <button
-          type="button"
-          onClick={openPromoShopLink}
-          className="absolute inset-0 z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-inset"
-          aria-label="Shop 2XU recovery gear — opens in a new tab"
-        />
+        <div
+          className={`absolute inset-0 z-10 flex items-center justify-center transition-colors duration-200 ${
+            thumbnailHovered ? 'bg-black/40' : 'bg-transparent'
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => setImageModalOpen(true)}
+            className={`flex h-12 w-12 items-center justify-center rounded-full bg-white/95 text-gray-900 shadow-lg ring-1 ring-black/10 transition-all duration-200 hover:bg-white hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black/50 ${
+              thumbnailHovered
+                ? 'scale-100 opacity-100'
+                : 'pointer-events-none scale-95 opacity-0 max-sm:pointer-events-auto max-sm:opacity-100'
+            }`}
+            aria-label="View full promotion image"
+          >
+            <FullscreenIcon className="h-6 w-6" />
+          </button>
+        </div>
       </div>
+      <ApparelImageModal
+        isOpen={imageModalOpen}
+        imageSrc={BAGUIO_PROMO_UPDATES_IMAGE}
+        imageAlt="Speed Series Baguio leg promotional update"
+        bannerSrc={BAGUIO_PROMO_BANNER_IMAGE}
+        bannerAlt="2XU Philippines — ph.2xu.com"
+        linkHref={PROMO_UPDATES_2XU_URL}
+        linkAriaLabel="Shop 2XU recovery gear — opens in a new tab"
+        onLinkClick={() => setImageModalOpen(false)}
+        onClose={() => setImageModalOpen(false)}
+      />
       {promoOverlay}
     </>
   );
@@ -488,7 +528,7 @@ export default function UpdatesSection({
               }}
             >
               {UPDATES.map((item) => {
-                const hasSlideMedia = item.id === 1 || item.id === 2;
+                const hasSlideMedia = item.id === 1 || item.id === 2 || item.id === 3;
 
                 return (
                 <div
@@ -522,31 +562,35 @@ export default function UpdatesSection({
                         )}
                       </p>
                     </div>
-                    {(item.id === 1 || item.id === 2) && (
-                      <div className="min-w-0 w-full sm:flex-1 sm:flex sm:justify-end">
-                        {item.id === 1 ? (
-                          <div className="mx-auto sm:mx-0 w-full max-w-[500px] overflow-hidden rounded-lg bg-white shadow-lg">
-                            <iframe
-                              src={AYALA_FACEBOOK_EMBED_SRC}
-                              width="500"
-                              height="250"
-                              style={{ border: 'none', overflow: 'hidden' }}
-                              scrolling="no"
-                              frameBorder="0"
-                              allowFullScreen
-                              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                              title="Ayala Triangle Launch Facebook post"
-                              className="block h-[250px] w-full max-w-full"
-                            />
-                          </div>
-                        ) : (
-                          <BaguioPromoUpdatePreview
-                            isSlideActive={activeIndex === BAGUIO_SLIDE_INDEX}
-                            suppressPromoPreview={suppressPromoPreview}
+                    <div className="min-w-0 w-full sm:flex-1 sm:flex sm:justify-end">
+                      {item.id === 1 ? (
+                        <div className="mx-auto sm:mx-0 w-full max-w-[500px] overflow-hidden rounded-lg bg-white shadow-lg">
+                          <iframe
+                            src={AYALA_FACEBOOK_EMBED_SRC}
+                            width="500"
+                            height="250"
+                            style={{ border: 'none', overflow: 'hidden' }}
+                            scrolling="no"
+                            frameBorder="0"
+                            allowFullScreen
+                            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                            title="Ayala Triangle Launch Facebook post"
+                            className="block h-[250px] w-full max-w-full"
                           />
-                        )}
-                      </div>
-                    )}
+                        </div>
+                      ) : item.id === 2 ? (
+                        <BaguioPromoUpdatePreview
+                          isSlideActive={activeIndex === BAGUIO_SLIDE_INDEX}
+                          suppressPromoPreview={suppressPromoPreview}
+                        />
+                      ) : (
+                        <div className="mx-auto sm:mx-0 flex h-[250px] w-full max-w-[500px] items-center justify-center rounded-lg border border-dashed border-white/20 bg-white/5 px-6 text-center shadow-lg">
+                          <p className="text-sm sm:text-base text-gray-300 font-sweet-sans leading-relaxed">
+                            Updates for this leg is coming soon..
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
