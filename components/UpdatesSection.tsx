@@ -4,9 +4,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import ApparelImageModal from './ApparelImageModal';
+import ImageLoadProgress from '@/components/ImageLoadProgress';
+import { useImageWithProgress } from '@/lib/useImageWithProgress';
 
 const AYALA_RESULTS_IMAGE = '/images/results/speed_series_ayala_makati_results.jpg';
 const BAGUIO_PROMO_UPDATES_IMAGE = '/images/updates/promo_updates.jpg';
+const BAGUIO_PROMO_BANNER_IMAGE = '/images/updates/2xu_promo_banner.jpg';
 const PROMO_UPDATES_2XU_URL =
   'https://ph.2xu.com/?utm_source=facebook&utm_campaign=oneofakindasia&utm_medium=affiliate&fbclid=IwY2xjawSZ80JleHRuA2FlbQIxMABicmlkETE1Wng2TVYzTFViWURuUkZrc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHjJ8vH_C40yRNp93UkbWKJKIu1vQshYZXzIsGjuAdYgRMaei8iYFmsj2kWdW_aem_ZSdXKtcLpLbl1isP-12QZQ';
 const AYALA_FACEBOOK_EMBED_SRC =
@@ -46,8 +49,9 @@ type BaguioPromoUpdatePreviewProps = {
 };
 
 const BAGUIO_SLIDE_INDEX = UPDATES.findIndex((item) => item.id === 2);
-const DESKTOP_AUTO_PREVIEW_MS = 3000;
 const AUTO_PREVIEW_COUNTDOWN_START = 3;
+const COUNTDOWN_STEP_MS = 1000;
+const COUNTDOWN_ZERO_HOLD_MS = 350;
 
 function PromoPreviewTimerIcon({ className }: { className?: string }) {
   return (
@@ -59,72 +63,77 @@ function PromoPreviewTimerIcon({ className }: { className?: string }) {
   );
 }
 
+function SeriesLegBadge({ legId }: { legId: number }) {
+  return (
+    <span className="inline-flex shrink-0 rounded-full border border-white/20 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-white/80 font-sweet-sans">
+      Series Leg {legId.toString().padStart(2, '0')}
+    </span>
+  );
+}
+
 function BaguioPromoUpdatePreview({
   isSlideActive,
   suppressPromoPreview = false,
 }: BaguioPromoUpdatePreviewProps) {
   const anchorRef = useRef<HTMLDivElement>(null);
-  const hideTimeoutRef = useRef<number | null>(null);
-  const autoPreviewTimeoutRef = useRef<number | null>(null);
+  const promoImgRef = useRef<HTMLImageElement>(null);
+  const countdownIntervalRef = useRef<number | null>(null);
+  const countdownStartedRef = useRef(false);
   const overlayOpenedAtRef = useRef(0);
   const [isMobile, setIsMobile] = useState(false);
-  const [hoverPreview, setHoverPreview] = useState(false);
   const [autoPreview, setAutoPreview] = useState(false);
   const [thumbnailInView, setThumbnailInView] = useState(false);
-  const [overlayReady, setOverlayReady] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [bannerWidth, setBannerWidth] = useState<number | null>(null);
+
+  const syncBannerWidth = useCallback(() => {
+    const width = promoImgRef.current?.getBoundingClientRect().width;
+    if (width > 0) {
+      setBannerWidth(Math.round(width));
+    }
+  }, []);
 
   const isOverlayOpen =
     !suppressPromoPreview &&
-    (isMobile ? isSlideActive && thumbnailInView : hoverPreview || autoPreview);
+    (isMobile ? isSlideActive && thumbnailInView : autoPreview);
 
-  const showCountdown = autoPreview && countdown !== null;
+  const shouldPreloadOverlayImage = isSlideActive && !suppressPromoPreview;
+  const {
+    displaySrc: overlayDisplaySrc,
+    loadPercent: overlayLoadPercent,
+    status: overlayImageStatus,
+  } = useImageWithProgress(BAGUIO_PROMO_UPDATES_IMAGE, shouldPreloadOverlayImage);
 
-  const cancelHide = () => {
-    if (hideTimeoutRef.current != null) {
-      window.clearTimeout(hideTimeoutRef.current);
-      hideTimeoutRef.current = null;
+  const {
+    displaySrc: bannerDisplaySrc,
+    status: bannerImageStatus,
+  } = useImageWithProgress(BAGUIO_PROMO_BANNER_IMAGE, shouldPreloadOverlayImage);
+
+  const overlayImageReady = overlayImageStatus === 'ready' && Boolean(overlayDisplaySrc);
+  const bannerImageReady = bannerImageStatus === 'ready' && Boolean(bannerDisplaySrc);
+  const overlayImageLoading = isOverlayOpen && overlayImageStatus === 'loading';
+
+  const showCountdown =
+    autoPreview && overlayImageReady && countdown !== null && countdown >= 0;
+
+  const clearCountdownInterval = () => {
+    if (countdownIntervalRef.current != null) {
+      window.clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
     }
   };
 
   const dismissAllPreviews = useCallback(() => {
-    cancelHide();
-    setHoverPreview(false);
+    clearCountdownInterval();
+    countdownStartedRef.current = false;
     setAutoPreview(false);
     setCountdown(null);
-    if (autoPreviewTimeoutRef.current != null) {
-      window.clearTimeout(autoPreviewTimeoutRef.current);
-      autoPreviewTimeoutRef.current = null;
-    }
   }, []);
 
   const startDesktopAutoPreview = useCallback(() => {
     if (suppressPromoPreview || isMobile || !isSlideActive || !thumbnailInView) return;
-
     setAutoPreview(true);
-    overlayOpenedAtRef.current = Date.now();
-    if (autoPreviewTimeoutRef.current != null) {
-      window.clearTimeout(autoPreviewTimeoutRef.current);
-    }
-    autoPreviewTimeoutRef.current = window.setTimeout(() => {
-      setAutoPreview(false);
-      autoPreviewTimeoutRef.current = null;
-    }, DESKTOP_AUTO_PREVIEW_MS);
   }, [suppressPromoPreview, isMobile, isSlideActive, thumbnailInView]);
-
-  const showPreview = () => {
-    if (suppressPromoPreview) return;
-    cancelHide();
-    setHoverPreview(true);
-  };
-
-  const scheduleHide = () => {
-    cancelHide();
-    hideTimeoutRef.current = window.setTimeout(() => {
-      setOverlayReady(false);
-      setHoverPreview(false);
-    }, 120);
-  };
 
   const openPromoShopLink = useCallback(() => {
     window.open(PROMO_UPDATES_2XU_URL, '_blank', 'noopener,noreferrer');
@@ -175,35 +184,67 @@ function BaguioPromoUpdatePreview({
   }, [isSlideActive, suppressPromoPreview]);
 
   useEffect(() => {
-    if (suppressPromoPreview || !thumbnailInView || !isSlideActive) {
-      if (!hoverPreview) {
-        setAutoPreview(false);
-        if (autoPreviewTimeoutRef.current != null) {
-          window.clearTimeout(autoPreviewTimeoutRef.current);
-          autoPreviewTimeoutRef.current = null;
-        }
+    if (suppressPromoPreview || !isSlideActive || isMobile) return;
+
+    if (!thumbnailInView) {
+      setAutoPreview(false);
+      clearCountdownInterval();
+      countdownStartedRef.current = false;
+      setCountdown(null);
+      return;
+    }
+
+    startDesktopAutoPreview();
+  }, [suppressPromoPreview, thumbnailInView, isSlideActive, isMobile, startDesktopAutoPreview]);
+
+  useEffect(() => {
+    if (!autoPreview || !overlayImageReady) {
+      if (!autoPreview) {
+        clearCountdownInterval();
+        countdownStartedRef.current = false;
+        setCountdown(null);
       }
       return;
     }
 
-    if (isMobile) return;
+    clearCountdownInterval();
+    countdownStartedRef.current = true;
+    overlayOpenedAtRef.current = Date.now();
+    setCountdown(AUTO_PREVIEW_COUNTDOWN_START);
 
-    startDesktopAutoPreview();
+    const endTime =
+      Date.now() +
+      AUTO_PREVIEW_COUNTDOWN_START * COUNTDOWN_STEP_MS +
+      COUNTDOWN_ZERO_HOLD_MS;
+
+    const tickCountdown = () => {
+      const remainingMs = endTime - Date.now();
+
+      if (remainingMs <= 0) {
+        setCountdown(0);
+        clearCountdownInterval();
+        countdownStartedRef.current = false;
+        dismissAllPreviews();
+        return;
+      }
+
+      if (remainingMs <= COUNTDOWN_ZERO_HOLD_MS) {
+        setCountdown(0);
+        return;
+      }
+
+      const secondsLeft = Math.ceil((remainingMs - COUNTDOWN_ZERO_HOLD_MS) / COUNTDOWN_STEP_MS);
+      setCountdown(Math.max(1, Math.min(AUTO_PREVIEW_COUNTDOWN_START, secondsLeft)));
+    };
+
+    tickCountdown();
+    countdownIntervalRef.current = window.setInterval(tickCountdown, 100);
 
     return () => {
-      if (autoPreviewTimeoutRef.current != null) {
-        window.clearTimeout(autoPreviewTimeoutRef.current);
-        autoPreviewTimeoutRef.current = null;
-      }
+      clearCountdownInterval();
+      countdownStartedRef.current = false;
     };
-  }, [
-    suppressPromoPreview,
-    thumbnailInView,
-    isSlideActive,
-    isMobile,
-    hoverPreview,
-    startDesktopAutoPreview,
-  ]);
+  }, [autoPreview, overlayImageReady, dismissAllPreviews]);
 
   useEffect(() => {
     if (!isOverlayOpen) return;
@@ -214,7 +255,7 @@ function BaguioPromoUpdatePreview({
     const observer = new IntersectionObserver(
       ([entry]) => {
         const openedRecently = Date.now() - overlayOpenedAtRef.current < 600;
-        if (openedRecently) return;
+        if (openedRecently || overlayImageStatus === 'loading') return;
         if (!entry.isIntersecting || entry.intersectionRatio < 0.15) {
           dismissAllPreviews();
         }
@@ -227,60 +268,41 @@ function BaguioPromoUpdatePreview({
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [isOverlayOpen, dismissAllPreviews]);
-
-  useEffect(() => {
-    if (!hoverPreview) return;
-    overlayOpenedAtRef.current = Date.now();
-  }, [hoverPreview]);
-
-  useEffect(() => {
-    if (!autoPreview) {
-      setCountdown(null);
-      return;
-    }
-
-    setCountdown(AUTO_PREVIEW_COUNTDOWN_START);
-    const step2 = window.setTimeout(() => setCountdown(2), 1000);
-    const step1 = window.setTimeout(() => setCountdown(1), 2000);
-
-    return () => {
-      window.clearTimeout(step2);
-      window.clearTimeout(step1);
-    };
-  }, [autoPreview]);
-
-  useEffect(() => {
-    if (!isOverlayOpen) {
-      setOverlayReady(false);
-      return;
-    }
-    overlayOpenedAtRef.current = Date.now();
-    const raf = requestAnimationFrame(() => setOverlayReady(true));
-    return () => cancelAnimationFrame(raf);
-  }, [isOverlayOpen]);
+  }, [isOverlayOpen, dismissAllPreviews, overlayImageStatus]);
 
   useEffect(
     () => () => {
-      cancelHide();
-      if (autoPreviewTimeoutRef.current != null) {
-        window.clearTimeout(autoPreviewTimeoutRef.current);
-      }
+      clearCountdownInterval();
     },
     []
   );
 
-  const hoverOverlay =
+  useEffect(() => {
+    if (!isOverlayOpen || !overlayImageReady) {
+      setBannerWidth(null);
+      return;
+    }
+
+    syncBannerWidth();
+
+    const el = promoImgRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+
+    const observer = new ResizeObserver(syncBannerWidth);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isOverlayOpen, overlayImageReady, overlayDisplaySrc, syncBannerWidth]);
+
+  const promoOverlay =
     isOverlayOpen && typeof document !== 'undefined'
       ? createPortal(
           <div
             className={`fixed inset-0 z-[9998] ${isMobile ? 'pointer-events-none' : 'pointer-events-auto'}`}
-            onMouseLeave={isMobile ? undefined : scheduleHide}
             role="presentation"
           >
             <div
               className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${
-                overlayReady ? 'opacity-100' : 'opacity-0'
+                isOverlayOpen ? 'opacity-100' : 'opacity-0'
               }`}
               aria-hidden
             />
@@ -288,15 +310,16 @@ function BaguioPromoUpdatePreview({
             <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6 pointer-events-none">
               <div
                 className={`relative pointer-events-auto transition-all duration-500 ease-out ${
-                  overlayReady ? 'scale-100 opacity-100' : 'scale-[0.88] opacity-0'
+                  isOverlayOpen ? 'scale-100 opacity-100' : 'scale-[0.88] opacity-0'
                 }`}
-                onMouseEnter={isMobile ? undefined : showPreview}
               >
                 {showCountdown && (
                   <div
                     className="absolute -top-3 -right-3 z-10 flex items-center gap-1.5 rounded-full bg-gray-950/95 px-3 py-1.5 text-white shadow-lg ring-2 ring-orange-400/70"
                     aria-live="polite"
-                    aria-label={`Closing in ${countdown} seconds`}
+                    aria-label={
+                      countdown === 0 ? 'Closing now' : `Closing in ${countdown} seconds`
+                    }
                   >
                     <PromoPreviewTimerIcon className="h-4 w-4 shrink-0 text-orange-400" />
                     <span className="min-w-[1ch] font-druk text-lg leading-none tabular-nums">{countdown}</span>
@@ -306,16 +329,46 @@ function BaguioPromoUpdatePreview({
                 <button
                   type="button"
                   onClick={openPromoShopLink}
-                  className="group block overflow-hidden rounded-xl bg-white shadow-2xl ring-2 ring-orange-400/50 transition hover:ring-orange-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black/50"
+                  disabled={!overlayImageReady}
+                  className="group inline-flex w-fit max-w-[min(440px,calc(100vw-2rem))] flex-col items-stretch overflow-hidden rounded-xl bg-gray-900 shadow-2xl ring-2 ring-orange-400/50 transition hover:ring-orange-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black/50 disabled:cursor-wait"
                   aria-label="Shop 2XU recovery gear — opens in a new tab"
+                  aria-busy={overlayImageLoading}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={BAGUIO_PROMO_UPDATES_IMAGE}
-                    alt="Speed Series Baguio leg promotional update"
-                    className="block h-auto w-auto max-h-[min(560px,78vh)] max-w-[min(440px,calc(100vw-2rem))] cursor-pointer transition group-hover:brightness-105"
-                    draggable={false}
-                  />
+                  {overlayImageLoading && (
+                    <div className="flex min-h-[min(280px,50vh)] min-w-[min(280px,calc(100vw-2rem))] items-center justify-center">
+                      <ImageLoadProgress percent={overlayLoadPercent} size="lg" label="Loading promotion…" />
+                    </div>
+                  )}
+
+                  {overlayImageStatus === 'error' && (
+                    <p className="px-6 py-8 text-center text-sm text-red-300 font-sweet-sans">
+                      Could not load promotion image.
+                    </p>
+                  )}
+
+                  {overlayImageReady && overlayDisplaySrc && (
+                    <div className="inline-flex flex-col items-start">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        ref={promoImgRef}
+                        src={overlayDisplaySrc}
+                        alt="Speed Series Baguio leg promotional update"
+                        onLoad={syncBannerWidth}
+                        className="block h-auto w-auto max-w-[min(440px,calc(100vw-2rem))] cursor-pointer transition group-hover:brightness-105 group-disabled:cursor-wait"
+                        draggable={false}
+                      />
+                      {bannerImageReady && bannerDisplaySrc && bannerWidth != null && (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={bannerDisplaySrc}
+                          alt="2XU Philippines — ph.2xu.com"
+                          style={{ width: bannerWidth }}
+                          className="block h-auto max-w-none cursor-pointer border-t border-white/10 bg-black transition group-hover:brightness-105 group-disabled:cursor-wait"
+                          draggable={false}
+                        />
+                      )}
+                    </div>
+                  )}
                 </button>
               </div>
             </div>
@@ -329,8 +382,6 @@ function BaguioPromoUpdatePreview({
       <div
         ref={anchorRef}
         className="relative mx-auto sm:mx-0 h-[250px] w-full max-w-[500px] overflow-hidden rounded-lg bg-white shadow-lg"
-        onMouseEnter={isMobile ? undefined : showPreview}
-        onMouseLeave={isMobile ? undefined : scheduleHide}
       >
         <Image
           src={BAGUIO_PROMO_UPDATES_IMAGE}
@@ -346,7 +397,7 @@ function BaguioPromoUpdatePreview({
           aria-label="Shop 2XU recovery gear — opens in a new tab"
         />
       </div>
-      {hoverOverlay}
+      {promoOverlay}
     </>
   );
 }
@@ -418,11 +469,14 @@ export default function UpdatesSection({
 
         <div className="relative overflow-hidden rounded-xl border border-white/10 bg-white/5 backdrop-blur-md">
           {/* Faux ticker strip */}
-          <div className="flex items-center gap-2 border-b border-white/10 bg-black/40 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-[0.3em] text-gray-300 font-fira-sans">
-            <span className="inline-flex h-5 items-center rounded-full bg-orange-600 px-2 text-[10px] font-bold text-white">
-              Updates
-            </span>
-            <span className="text-gray-400">Speed Series Legs • City • Mountain • Sea</span>
+          <div className="flex items-center justify-between gap-3 bg-black/40 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-[0.3em] text-gray-300 font-fira-sans">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="inline-flex h-5 shrink-0 items-center rounded-full bg-orange-600 px-2 text-[10px] font-bold text-white">
+                Updates
+              </span>
+              <span className="truncate text-gray-400">Speed Series Legs • City • Mountain • Sea</span>
+            </div>
+            <SeriesLegBadge legId={UPDATES[activeIndex].id} />
           </div>
 
           {/* Vertical ticker */}
@@ -439,7 +493,7 @@ export default function UpdatesSection({
                 return (
                 <div
                   key={item.id}
-                  className="flex h-[380px] sm:h-[280px] items-center px-4 sm:px-6 lg:px-8"
+                  className="flex h-[380px] sm:h-[280px] items-center overflow-hidden px-4 sm:px-6 lg:px-8"
                 >
                   <div
                     className={`flex w-full gap-4 ${
@@ -468,35 +522,29 @@ export default function UpdatesSection({
                         )}
                       </p>
                     </div>
-                    {item.id === 1 ? (
+                    {(item.id === 1 || item.id === 2) && (
                       <div className="min-w-0 w-full sm:flex-1 sm:flex sm:justify-end">
-                        <div className="mx-auto sm:mx-0 w-full max-w-[500px] overflow-hidden rounded-lg bg-white shadow-lg">
-                          <iframe
-                            src={AYALA_FACEBOOK_EMBED_SRC}
-                            width="500"
-                            height="250"
-                            style={{ border: 'none', overflow: 'hidden' }}
-                            scrolling="no"
-                            frameBorder="0"
-                            allowFullScreen
-                            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                            title="Ayala Triangle Launch Facebook post"
-                            className="w-full max-w-full"
+                        {item.id === 1 ? (
+                          <div className="mx-auto sm:mx-0 w-full max-w-[500px] overflow-hidden rounded-lg bg-white shadow-lg">
+                            <iframe
+                              src={AYALA_FACEBOOK_EMBED_SRC}
+                              width="500"
+                              height="250"
+                              style={{ border: 'none', overflow: 'hidden' }}
+                              scrolling="no"
+                              frameBorder="0"
+                              allowFullScreen
+                              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                              title="Ayala Triangle Launch Facebook post"
+                              className="block h-[250px] w-full max-w-full"
+                            />
+                          </div>
+                        ) : (
+                          <BaguioPromoUpdatePreview
+                            isSlideActive={activeIndex === BAGUIO_SLIDE_INDEX}
+                            suppressPromoPreview={suppressPromoPreview}
                           />
-                        </div>
-                      </div>
-                    ) : item.id === 2 ? (
-                      <div className="min-w-0 w-full sm:flex-1 sm:flex sm:justify-end">
-                        <BaguioPromoUpdatePreview
-                          isSlideActive={activeIndex === BAGUIO_SLIDE_INDEX}
-                          suppressPromoPreview={suppressPromoPreview}
-                        />
-                      </div>
-                    ) : (
-                      <div className="hidden sm:flex flex-col items-end text-right gap-1 text-[11px] text-gray-400 font-sweet-sans shrink-0">
-                        <span className="rounded-full border border-white/20 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-white/80">
-                          Series Leg {item.id.toString().padStart(2, '0')}
-                        </span>
+                        )}
                       </div>
                     )}
                   </div>
