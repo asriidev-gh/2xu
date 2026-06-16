@@ -27,6 +27,9 @@ export default function PartnersSection() {
 
   // Trigger animations when Partners section comes into view
   useEffect(() => {
+    const target = partnersSectionRef.current;
+    if (!target) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -43,14 +46,10 @@ export default function PartnersSection() {
       }
     );
 
-    if (partnersSectionRef.current) {
-      observer.observe(partnersSectionRef.current);
-    }
+    observer.observe(target);
 
     return () => {
-      if (partnersSectionRef.current) {
-        observer.unobserve(partnersSectionRef.current);
-      }
+      observer.unobserve(target);
     };
   }, []);
 

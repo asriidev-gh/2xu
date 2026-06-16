@@ -18,6 +18,16 @@ type BuildRegistrationConfirmationEmailInput = {
   bibNumber?: string;
 };
 
+type SendRegistrationConfirmationOptions = {
+  promoCode?: string;
+  raceCategory?: string;
+  speedDistance?: string;
+  paymentProofSent?: boolean;
+  paymentProofUrl?: string;
+  orderNumber?: string;
+  bibNumber?: string;
+};
+
 function getFirstName(fullName: string): string {
   const trimmed = fullName.trim();
   if (!trimmed) return 'Runner';
@@ -77,6 +87,42 @@ function formatResendError(err: unknown): string {
 function formatMailerContactLine(contactName: string, contactNumber: string): string {
   const parts = [contactName, contactNumber].map((part) => part.trim()).filter(Boolean);
   return parts.join(' — ');
+}
+
+export function isAdvocatePromoCode(promoCode: string): boolean {
+  return /^SPS2XU\d+$/i.test(String(promoCode || '').trim());
+}
+
+export function getRegistrationNotificationCc(notificationTo: string): string[] {
+  const baseCc = ['1@oneofakindasia.com'];
+  const toNorm = String(notificationTo || '').trim().toLowerCase();
+  return baseCc.filter((email) => email.toLowerCase() !== toNorm);
+}
+
+export function buildPaymentProofAdminNotificationHtml({
+  paymentProofSent,
+  paymentProofUrl,
+  promoCode,
+}: {
+  paymentProofSent?: boolean;
+  paymentProofUrl?: string;
+  promoCode?: string;
+}): string {
+  const proofUrl = String(paymentProofUrl || '').trim();
+  const promo = String(promoCode || '').trim();
+  const viaEmail = paymentProofSent === true;
+  const isAdvocate = isAdvocatePromoCode(promo);
+
+  if (proofUrl) {
+    return `<p><strong>Payment proof:</strong> <a href="${escapeHtml(proofUrl)}" target="_blank" rel="noopener noreferrer">View uploaded screenshot</a></p>`;
+  }
+  if (viaEmail) {
+    return '<p><strong>Payment proof:</strong> Sent through email</p>';
+  }
+  if (isAdvocate) {
+    return `<p><strong>Promo code:</strong> ${escapeHtml(promo)} (Advocate registration)</p>`;
+  }
+  return '<p><strong>Payment proof:</strong> Not provided</p>';
 }
 
 export function buildRegistrationConfirmationEmail({
@@ -140,7 +186,7 @@ export function buildRegistrationConfirmationEmail({
     <p style="margin:0 0 16px 0;"><strong>2. Kit Pickup Details</strong><br/>
     Date + venue + schedule will be sent via email 7 days before race day. Please bring a valid ID + this confirmation email.</p>
     <p style="margin:0 0 16px 0;"><strong>3. Race Briefing</strong><br/>
-    Course map, hydration points, cut-off times, and safety reminders will be emailed on July 19. We&rsquo;ll also post updates at <a href="${escapeHtml(facebookUrl)}" style="color:#ea580c;">@SpeedSeriesPH</a>.</p>
+    Course map, hydration points, cut-off times, and safety reminders will be emailed on July 19. We&rsquo;ll also post updates at <a href="${escapeHtml(instagramUrl)}" style="color:#ea580c;">@SpeedSeriesPH</a>.</p>
     <p style="margin:0 0 16px 0;"><strong>4. Train with Us</strong><br/>
     Coach Dan Brown will share weekly prep tips leading to race day. Watch your inbox.</p>
     <p style="margin:24px 0 8px 0; font-weight:bold; color:#1f2937;">IMPORTANT REMINDERS</p>
@@ -151,7 +197,7 @@ export function buildRegistrationConfirmationEmail({
     </ol>
     <p>${escapeHtml(firstName)}, thank you for saying yes to the challenge. Baguio&rsquo;s elevation is tough, but the view — and the finish line feeling — is worth every step.</p>
     <p>This July 26, let&rsquo;s run free. See you at the start line.</p>
-    <p>Run free,<br/><strong>Team Speed Series</strong><br/><a href="${siteUrl}">oneofakindasia.com</a><br/>${contactLineHtml}<a href="${escapeHtml(facebookUrl)}" style="color:#ea580c;">@SpeedSeriesPH</a></p>
+    <p>Run free,<br/><strong>Team Speed Series</strong><br/><a href="${siteUrl}">oneofakindasia.com</a><br/>${contactLineHtml}<a href="${escapeHtml(instagramUrl)}" style="color:#ea580c;">@SpeedSeriesPH</a></p>
     <p style="margin-top:20px; font-size:14px; color:#6b7280;"><em>P.S. Bring your running buddies. The Cordillera is better shared. Final slots for July 26 are moving fast → <a href="${siteUrl}" style="color:#ea580c;">www.oneofakindasia.com</a></em></p>
   `;
 
@@ -215,10 +261,19 @@ P.S. Bring your running buddies. The Cordillera is better shared. Final slots fo
 export async function sendRegistrationConfirmation(
   participantName: string,
   participantEmail: string,
-  speedDistance = '',
+  speedDistanceOrOptions: string | SendRegistrationConfirmationOptions = '',
   orderNumber = '',
   bibNumber = ''
 ): Promise<MailerSendResult> {
+  const options =
+    typeof speedDistanceOrOptions === 'string'
+      ? {
+          speedDistance: speedDistanceOrOptions,
+          orderNumber,
+          bibNumber,
+        }
+      : speedDistanceOrOptions || {};
+
   const host = process.env.SMTP_HOST?.trim();
   const port = process.env.SMTP_PORT?.trim();
   const user = process.env.SMTP_USER?.trim();
@@ -229,9 +284,9 @@ export async function sendRegistrationConfirmation(
 
   const preview = buildRegistrationConfirmationEmail({
     participantName,
-    speedDistance,
-    orderNumber,
-    bibNumber,
+    speedDistance: options.speedDistance || '',
+    orderNumber: options.orderNumber || '',
+    bibNumber: options.bibNumber || '',
   });
 
   const ccRecipients = [
