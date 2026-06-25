@@ -283,7 +283,7 @@ export default function Hero({ onOpenRaceEventsDetails }: HeroProps) {
                 2/5/10/21 KM Speed Run
               </p>
               <p className="text-sm sm:text-base text-gray-200 mb-3">
-                Short-distance, high-intensity course built to test pure speed.
+                From 2K to 21K — distances for every runner, whether you&apos;re easing in or going for a personal best.
               </p>
               <hr className="border-white/40 my-3 w-full" />
               <p className="text-lg sm:text-xl">

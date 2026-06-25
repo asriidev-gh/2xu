@@ -8,10 +8,7 @@ import ImageLoadProgress from '@/components/ImageLoadProgress';
 import { useImageWithProgress } from '@/lib/useImageWithProgress';
 
 const AYALA_RESULTS_IMAGE = '/images/results/speed_series_ayala_makati_results.jpg';
-const BAGUIO_PROMO_UPDATES_IMAGE = '/images/updates/promo_updates.jpg';
-const BAGUIO_PROMO_BANNER_IMAGE = '/images/updates/2xu_promo_banner.jpg';
-const PROMO_UPDATES_2XU_URL =
-  'https://ph.2xu.com/?utm_source=facebook&utm_campaign=oneofakindasia&utm_medium=affiliate&fbclid=IwY2xjawSZ80JleHRuA2FlbQIxMABicmlkETE1Wng2TVYzTFViWURuUkZrc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHjJ8vH_C40yRNp93UkbWKJKIu1vQshYZXzIsGjuAdYgRMaei8iYFmsj2kWdW_aem_ZSdXKtcLpLbl1isP-12QZQ';
+const BAGUIO_LEG_IMAGE = '/images/baguio_leg.jpg';
 const AYALA_FACEBOOK_EMBED_SRC =
   'https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fweb.facebook.com%2FPHathletesclub%2Fposts%2Fpfbid02aYNHHqNFzfyPW3QJUPDKo5G5q2wKgcSggaLaLS6GGkVcaSsjJBgv5SGNfSrLqR3Pl&show_text=true&width=500';
 
@@ -89,7 +86,6 @@ function BaguioPromoUpdatePreview({
   suppressPromoPreview = false,
 }: BaguioPromoUpdatePreviewProps) {
   const anchorRef = useRef<HTMLDivElement>(null);
-  const promoImgRef = useRef<HTMLImageElement>(null);
   const countdownIntervalRef = useRef<number | null>(null);
   const countdownStartedRef = useRef(false);
   const overlayOpenedAtRef = useRef(0);
@@ -97,16 +93,8 @@ function BaguioPromoUpdatePreview({
   const [autoPreview, setAutoPreview] = useState(false);
   const [thumbnailInView, setThumbnailInView] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
-  const [bannerWidth, setBannerWidth] = useState<number | null>(null);
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const [thumbnailHovered, setThumbnailHovered] = useState(false);
-
-  const syncBannerWidth = useCallback(() => {
-    const width = promoImgRef.current?.getBoundingClientRect().width;
-    if (width != null && width > 0) {
-      setBannerWidth(Math.round(width));
-    }
-  }, []);
 
   const isOverlayOpen =
     !suppressPromoPreview &&
@@ -117,15 +105,9 @@ function BaguioPromoUpdatePreview({
     displaySrc: overlayDisplaySrc,
     loadPercent: overlayLoadPercent,
     status: overlayImageStatus,
-  } = useImageWithProgress(BAGUIO_PROMO_UPDATES_IMAGE, shouldPreloadOverlayImage);
-
-  const {
-    displaySrc: bannerDisplaySrc,
-    status: bannerImageStatus,
-  } = useImageWithProgress(BAGUIO_PROMO_BANNER_IMAGE, shouldPreloadOverlayImage);
+  } = useImageWithProgress(BAGUIO_LEG_IMAGE, shouldPreloadOverlayImage);
 
   const overlayImageReady = overlayImageStatus === 'ready' && Boolean(overlayDisplaySrc);
-  const bannerImageReady = bannerImageStatus === 'ready' && Boolean(bannerDisplaySrc);
   const overlayImageLoading = isOverlayOpen && overlayImageStatus === 'loading';
 
   const showCountdown =
@@ -149,11 +131,6 @@ function BaguioPromoUpdatePreview({
     if (suppressPromoPreview || isMobile || !isSlideActive || !thumbnailInView) return;
     setAutoPreview(true);
   }, [suppressPromoPreview, isMobile, isSlideActive, thumbnailInView]);
-
-  const openPromoShopLink = useCallback(() => {
-    window.open(PROMO_UPDATES_2XU_URL, '_blank', 'noopener,noreferrer');
-    dismissAllPreviews();
-  }, [dismissAllPreviews]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 639px)');
@@ -283,22 +260,6 @@ function BaguioPromoUpdatePreview({
     []
   );
 
-  useEffect(() => {
-    if (!isOverlayOpen || !overlayImageReady) {
-      setBannerWidth(null);
-      return;
-    }
-
-    syncBannerWidth();
-
-    const el = promoImgRef.current;
-    if (!el || typeof ResizeObserver === 'undefined') return;
-
-    const observer = new ResizeObserver(syncBannerWidth);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [isOverlayOpen, overlayImageReady, overlayDisplaySrc, syncBannerWidth]);
-
   const promoOverlay =
     isOverlayOpen && typeof document !== 'undefined'
       ? createPortal(
@@ -334,57 +295,39 @@ function BaguioPromoUpdatePreview({
                   type="button"
                   onClick={dismissAllPreviews}
                   className="absolute -top-3 -right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-gray-950/95 text-white shadow-lg ring-2 ring-orange-400/70 transition hover:bg-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black/50"
-                  aria-label="Close promotion preview"
+                  aria-label="Close Baguio leg preview"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={openPromoShopLink}
-                  disabled={!overlayImageReady}
-                  className="group inline-flex w-fit max-w-[min(440px,calc(100vw-2rem))] flex-col items-stretch overflow-hidden rounded-xl bg-gray-900 shadow-2xl ring-2 ring-orange-400/50 transition hover:ring-orange-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black/50 disabled:cursor-wait"
-                  aria-label="Shop 2XU recovery gear — opens in a new tab"
+                <div
+                  className="inline-flex w-fit max-w-[min(440px,calc(100vw-2rem))] flex-col items-stretch overflow-hidden rounded-xl bg-gray-900 shadow-2xl ring-2 ring-orange-400/50"
                   aria-busy={overlayImageLoading}
                 >
                   {overlayImageLoading && (
                     <div className="flex min-h-[min(280px,50vh)] min-w-[min(280px,calc(100vw-2rem))] items-center justify-center">
-                      <ImageLoadProgress percent={overlayLoadPercent} size="lg" label="Loading promotion…" />
+                      <ImageLoadProgress percent={overlayLoadPercent} size="lg" label="Loading Baguio leg visual…" />
                     </div>
                   )}
 
                   {overlayImageStatus === 'error' && (
                     <p className="px-6 py-8 text-center text-sm text-red-300 font-sweet-sans">
-                      Could not load promotion image.
+                      Could not load Baguio leg visual.
                     </p>
                   )}
 
                   {overlayImageReady && overlayDisplaySrc && (
-                    <div className="inline-flex flex-col items-start">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        ref={promoImgRef}
-                        src={overlayDisplaySrc}
-                        alt="Speed Series Baguio leg promotional update"
-                        onLoad={syncBannerWidth}
-                        className="block h-auto w-auto max-w-[min(440px,calc(100vw-2rem))] cursor-pointer transition group-hover:brightness-105 group-disabled:cursor-wait"
-                        draggable={false}
-                      />
-                      {bannerImageReady && bannerDisplaySrc && bannerWidth != null && (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img
-                          src={bannerDisplaySrc}
-                          alt="2XU Philippines — ph.2xu.com"
-                          style={{ width: bannerWidth }}
-                          className="block h-auto max-w-none cursor-pointer border-t border-white/10 bg-black transition group-hover:brightness-105 group-disabled:cursor-wait"
-                          draggable={false}
-                        />
-                      )}
-                    </div>
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={overlayDisplaySrc}
+                      alt="Speed Series Baguio leg"
+                      className="block h-auto w-auto max-h-[min(78vh,900px)] max-w-[min(440px,calc(100vw-2rem))] object-contain"
+                      draggable={false}
+                    />
                   )}
-                </button>
+                </div>
               </div>
             </div>
           </div>,
@@ -401,10 +344,10 @@ function BaguioPromoUpdatePreview({
         onMouseLeave={() => setThumbnailHovered(false)}
       >
         <Image
-          src={BAGUIO_PROMO_UPDATES_IMAGE}
-          alt="Speed Series Baguio leg promotional update"
+          src={BAGUIO_LEG_IMAGE}
+          alt="Speed Series Baguio leg"
           fill
-          className="object-cover object-top"
+          className="object-contain object-center bg-gray-950"
           sizes="(max-width: 640px) 100vw, 500px"
         />
         <div
@@ -420,7 +363,7 @@ function BaguioPromoUpdatePreview({
                 ? 'scale-100 opacity-100'
                 : 'pointer-events-none scale-95 opacity-0 max-sm:pointer-events-auto max-sm:opacity-100'
             }`}
-            aria-label="View full promotion image"
+            aria-label="View full Baguio leg visual"
           >
             <FullscreenIcon className="h-6 w-6" />
           </button>
@@ -428,13 +371,8 @@ function BaguioPromoUpdatePreview({
       </div>
       <ApparelImageModal
         isOpen={imageModalOpen}
-        imageSrc={BAGUIO_PROMO_UPDATES_IMAGE}
-        imageAlt="Speed Series Baguio leg promotional update"
-        bannerSrc={BAGUIO_PROMO_BANNER_IMAGE}
-        bannerAlt="2XU Philippines — ph.2xu.com"
-        linkHref={PROMO_UPDATES_2XU_URL}
-        linkAriaLabel="Shop 2XU recovery gear — opens in a new tab"
-        onLinkClick={() => setImageModalOpen(false)}
+        imageSrc={BAGUIO_LEG_IMAGE}
+        imageAlt="Speed Series Baguio leg"
         onClose={() => setImageModalOpen(false)}
       />
       {promoOverlay}
