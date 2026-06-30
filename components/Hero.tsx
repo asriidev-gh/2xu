@@ -280,11 +280,20 @@ export default function Hero({ onOpenRaceEventsDetails }: HeroProps) {
                 Featured Distance
               </p>
               <p className="text-2xl sm:text-3xl font-druk font-bold tracking-wide mb-1">
-                2/5/10/21 KM Speed Run
+                2/5/10 KM Speed Run
               </p>
-              <p className="text-sm sm:text-base text-gray-200 mb-3">
-                From 2K to 21K — distances for every runner, whether you&apos;re easing in or going for a personal best.
-              </p>
+              <div className="mb-3 text-center">
+                <p className="text-sm sm:text-base font-druk font-bold uppercase tracking-wide text-yellow-400">
+                  Speed Series Basecamp
+                </p>
+                <ul className="mt-2 space-y-1 text-sm text-gray-200 font-sweet-sans">
+                  <li>Trail Run</li>
+                  <li>Green Talk</li>
+                  <li>Recovery Session Coffee</li>
+                  <li>Sports Photography</li>
+                  <li>Navigation Quest</li>
+                </ul>
+              </div>
               <hr className="border-white/40 my-3 w-full" />
               <p className="text-lg sm:text-xl">
                 BAGUIO<br />
@@ -292,14 +301,7 @@ export default function Hero({ onOpenRaceEventsDetails }: HeroProps) {
                   July <span className="text-yellow-500">26th</span> 2026
                 </span>
               </p>
-              <p className="text-gray-300 font-sweet-sans mt-2">
-                Limited to <b>2000</b> runners only
-              </p>
             </div>
-          </motion.div>
-
-          <motion.div className="text-xl sm:text-lg text-white font-sweet-sans" variants={item}>
-            Exclusive Pre-registration for the first <b>200</b> gets 2XU VIP kits! Limited spots, don&apos;t miss out!
           </motion.div>
 
           {/* CTA Buttons */}
@@ -308,9 +310,9 @@ export default function Hero({ onOpenRaceEventsDetails }: HeroProps) {
               type="button"
               onClick={scrollToRegistration}
               className="w-full sm:w-auto bg-yellow-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-orange-700 transition-all transform hover:scale-105 shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-              aria-label="Register for 2/5/10/21 KM Speed Run"
+              aria-label="Register for 2/5/10 KM Speed Run"
             >
-              Register for 2/5/10/21 KM Speed Run
+              Register for 2/5/10 KM Speed Run
             </button>
             <button 
               type="button"

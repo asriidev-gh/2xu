@@ -17,7 +17,7 @@ import {
   type DateRangeValue,
 } from '@/lib/dashboardDateRange';
 import { formatRegistrantProfileName, genderLetterAbbrev } from '@/lib/registrantProfileName';
-import { SPEED_DISTANCES } from '@/lib/raceCategories';
+import { SPEED_DISTANCES, SPEED_DISTANCES_OPTIONS_TEXT } from '@/lib/raceCategories';
 import 'rsuite/dist/rsuite-no-reset.min.css';
 import 'react-quill/dist/quill.snow.css';
 
@@ -998,7 +998,7 @@ export default function DashboardPage() {
     if (!updateForm.speedDistance) {
       await Swal.fire({
         title: 'Speed option required',
-        text: 'Please select a speed distance (2KM, 5KM, 10KM, or 21KM).',
+        text: `Please select a speed distance (${SPEED_DISTANCES_OPTIONS_TEXT}).`,
         icon: 'warning',
         confirmButtonColor: '#ea580c',
       });
@@ -2024,7 +2024,7 @@ export default function DashboardPage() {
                   value={updateForm.promoCode}
                   onChange={(e) => setUpdateForm((f) => ({ ...f, promoCode: e.target.value.toUpperCase() }))}
                   disabled={updateSaving}
-                  placeholder="e.g. SPS2XU1 (leave empty to clear)"
+                  placeholder="e.g. SPS2XU1, FC000001 (leave empty to clear)"
                   className={dashboardFieldClass}
                 />
               </div>

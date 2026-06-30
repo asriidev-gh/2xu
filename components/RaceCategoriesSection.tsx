@@ -10,6 +10,7 @@ import {
   PUBLIC_RACE_CATEGORY_NAMES,
   RACE_CATEGORY_PRICES,
   SPEED_DISTANCES,
+  SPEED_DISTANCES_OPTIONS_TEXT,
   SPEED_DISTANCE_PRICING,
   TEAM_CATEGORY_NAME,
   FOUNDERS_CATEGORY_NAME,
@@ -17,7 +18,7 @@ import {
   type RaceCategoryDefinition,
 } from '@/lib/raceCategories';
 
-export { RACE_CATEGORY_NAMES, PUBLIC_RACE_CATEGORY_NAMES, RACE_CATEGORY_PRICES, SPEED_DISTANCES };
+export { RACE_CATEGORY_NAMES, PUBLIC_RACE_CATEGORY_NAMES, RACE_CATEGORY_PRICES, SPEED_DISTANCES, SPEED_DISTANCES_OPTIONS_TEXT };
 
 function SpeedDistancePricingGrid() {
   return (
@@ -406,7 +407,7 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
           style={{ animationDelay: '1s' }}
         >
           Registration fees: Team Category ₱6,000 (group of 4); all other categories by speed distance (2KM
-          ₱1,800 · 5KM ₱2,000 · 10KM ₱2,200 · 21KM ₱2,800). Pricing may be subject to final confirmation.
+          ₱1,800 · 5KM ₱2,000 · 10KM ₱2,200). Pricing may be subject to final confirmation.
         </p>
 
         {/* Mission Strong image - end of section */}

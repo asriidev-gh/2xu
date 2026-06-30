@@ -3,15 +3,17 @@ import { cookies } from 'next/headers';
 import { ObjectId } from 'mongodb';
 import clientPromise from '@/lib/mongodb';
 import { parseBirthdayLocal } from '@/lib/completedAge';
-import { RACE_CATEGORY_NAMES, SPEED_DISTANCES_ALLOWED, getStoredSpeedDistance } from '@/lib/raceCategories';
+import { RACE_CATEGORY_NAMES, SPEED_DISTANCES_ALLOWED, SPEED_DISTANCES_OPTIONS_TEXT, getStoredSpeedDistance } from '@/lib/raceCategories';
+import {
+  isAcceptedPromoCode,
+  normalizePromoCode,
+  promoRequiresSingleUseCheck,
+} from '@/lib/promoCodes';
 
 export const dynamic = 'force-dynamic';
 
 const T_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const GENDERS = ['Male', 'Female'] as const;
-const ADVOCATE_PROMO_REGEX = /^SPS2XU\d+$/i;
-const SPECIAL_PROMO_REGEX = /^SPSUAAPELITE\d+$/i;
-const MISSION_STRONG_PROMO = 'MISSIONSTRONG500';
 
 const RACE_CATEGORY_SET = new Set(RACE_CATEGORY_NAMES);
 
@@ -38,26 +40,17 @@ async function resolvePromoCodeForUpdate(
   userId: ObjectId,
   collection: { findOne: (filter: object) => Promise<{ _id: ObjectId } | null> }
 ): Promise<{ ok: true; promoCode: string } | { ok: false; error: string; status: number }> {
-  const rawPromo = rawInput.trim().toUpperCase();
+  const rawPromo = normalizePromoCode(rawInput);
   if (!rawPromo) {
     return { ok: true, promoCode: '' };
   }
 
-  const raceUpper = raceCategory.trim().toUpperCase();
-  const isAdvocatePromo = ADVOCATE_PROMO_REGEX.test(rawPromo);
-  const isSpecialPromo = SPECIAL_PROMO_REGEX.test(rawPromo);
-  const isMissionStrongPromo = rawPromo === MISSION_STRONG_PROMO;
-  const isAthletesCategory = raceUpper === 'ATHLETES CATEGORY';
-  const isEligibleMissionStrongPromo = isMissionStrongPromo;
-  const isValidFormat =
-    isAdvocatePromo || (isSpecialPromo && isAthletesCategory) || isEligibleMissionStrongPromo;
-
-  if (!isValidFormat) {
+  const raceUpper = raceCategory.trim();
+  if (!isAcceptedPromoCode(rawPromo, raceUpper)) {
     return { ok: false, error: 'Invalid advocate / promo code for this race category.', status: 400 };
   }
 
-  const requiresSingleUseCheck = !isMissionStrongPromo;
-  if (requiresSingleUseCheck) {
+  if (promoRequiresSingleUseCheck(rawPromo)) {
     const existingWithPromo = await collection.findOne({ promoCode: rawPromo });
     if (existingWithPromo && !existingWithPromo._id.equals(userId)) {
       return {
@@ -173,7 +166,7 @@ export async function PATCH(
       const spd = body.speedDistance != null ? String(body.speedDistance).trim() : '';
       if (!SPEED_DISTANCES_ALLOWED.has(spd)) {
         return NextResponse.json(
-          { error: 'Please select a speed option: 2KM, 5KM, 10KM, or 21KM.' },
+          { error: `Please select a speed option: ${SPEED_DISTANCES_OPTIONS_TEXT}.` },
           { status: 400 }
         );
       }

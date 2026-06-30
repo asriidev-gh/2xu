@@ -3,10 +3,17 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Swal from 'sweetalert2';
-import { PUBLIC_RACE_CATEGORY_NAMES, SPEED_DISTANCES } from '@/components/RaceCategoriesSection';
+import { PUBLIC_RACE_CATEGORY_NAMES, SPEED_DISTANCES, SPEED_DISTANCES_OPTIONS_TEXT } from '@/components/RaceCategoriesSection';
 import { computeRegistrationPaymentAmount } from '@/lib/registrationPaymentAmount';
 import { PUBLIC_RACE_CATEGORY_SET, usesSpeedBasedPricing } from '@/lib/raceCategories';
 import { normalizePhilippinesContact, PH_MOBILE_PREFIX, isPhilippinesContactIncomplete } from '@/lib/normalizePhilippinesContact';
+import {
+  FC_ADVOCATE_DISCOUNT_PERCENT,
+  isAdvocatePromoCode,
+  isFcAdvocatePromoCode,
+  isMissionStrongPromoCode,
+  isSpecialAthletesPromoCode,
+} from '@/lib/promoCodes';
 
 type RegistrationSectionProps = {
   selectedCategory?: string;
@@ -16,11 +23,9 @@ type RegistrationSectionProps = {
 const T_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 // Promo formats:
-// - Advocate code: SPS2XU + one or more digits (e.g. SPS2XU1, SPS2XU2)
-// - Special code: SPSUAAPElite + one or more digits (Athletes Category only)
-const PROMO_FORMAT = /^SPS2XU\d+$/i;
-const SPECIAL_PROMO_FORMAT = /^SPSUAAPELITE\d+$/i;
-const MISSION_STRONG_PROMO = 'MISSIONSTRONG500';
+// - Advocate code: SPS2XU + digits (bypasses payment proof)
+// - Founders Club: FC000001–FC000500 (20% discount, payment still required)
+// - Special code: SPSUAAPElite + digits (Athletes Category only)
 const PROMO_MAX_LENGTH = 20;
 
 /** Jan 1 of (current calendar year − years), for HTML date inputs (YYYY-MM-DD). */
@@ -98,10 +103,11 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
   const isGroupCategory = isTeam || isDuo;
   const memberKeys = (isTeam ? [1, 2, 3, 4] : isDuo ? [1, 2] : []) as Array<1 | 2 | 3 | 4>;
   const isSpecialPromoApplied =
-    promoCodeValid === true && SPECIAL_PROMO_FORMAT.test(formData.promoCode.trim());
+    promoCodeValid === true && isSpecialAthletesPromoCode(formData.promoCode);
   const isMissionStrong500Applied =
-    promoCodeValid === true &&
-    formData.promoCode.trim().toUpperCase() === MISSION_STRONG_PROMO;
+    promoCodeValid === true && isMissionStrongPromoCode(formData.promoCode);
+  const isFcPromoApplied =
+    promoCodeValid === true && isFcAdvocatePromoCode(formData.promoCode);
   const promoForPayment = promoCodeValid === true ? formData.promoCode : '';
   const paymentAmount = formData.raceCategory
     ? computeRegistrationPaymentAmount(
@@ -115,7 +121,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
   const finalPricePhpDisplay = paymentAmount ? `₱${paymentAmount.phpAmount.toLocaleString('en-PH')}` : '';
   const finalPriceUsdDisplay = paymentAmount?.usdDisplay ?? '';
   const hasValidAdvocateCode =
-    promoCodeValid === true && PROMO_FORMAT.test(formData.promoCode.trim());
+    promoCodeValid === true && isAdvocatePromoCode(formData.promoCode);
   const requiresPaymentProof = !hasValidAdvocateCode;
   const paymentProofComplete = formData.paymentProofSent || paymentProofUrl.trim().length > 0;
   const submitBlockedByPayment = requiresPaymentProof && !paymentProofComplete;
@@ -338,10 +344,8 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
     }
 
     const advocateCodeTrimmed = formData.promoCode.trim();
-    const isAdvocateCode =
-      advocateCodeTrimmed.length > 0 && PROMO_FORMAT.test(advocateCodeTrimmed);
 
-    if (isAdvocateCode) {
+    if (advocateCodeTrimmed.length > 0) {
       let advocateValid = promoCodeValid;
       if (advocateValid === null) {
         advocateValid = await validatePromoCode(advocateCodeTrimmed, formData.raceCategory);
@@ -572,7 +576,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                       required
                       className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900 bg-white"
                     >
-                      <option value="">Select distance (2KM, 5KM, 10KM, 21KM)</option>
+                      <option value="">Select distance ({SPEED_DISTANCES_OPTIONS_TEXT})</option>
                       {SPEED_DISTANCES.map((d) => (
                         <option key={d} value={d}>
                           {d}
@@ -873,10 +877,10 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                   />
                 </div>
 
-                {/* Advocate Code (Optional) — format SPS2XU + number; shows check when valid */}
+                {/* Advocate / promo code (optional) */}
                 <div>
                   <label htmlFor="promoCode" className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
-                    Advocate code <span className="text-gray-400 text-xs font-normal">(Optional)</span>
+                    Advocate / promo code <span className="text-gray-400 text-xs font-normal">(Optional)</span>
                   </label>
                   <div className="relative">
                     <input
@@ -887,7 +891,7 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                       onChange={handleInputChange}
                       onBlur={handlePromoBlur}
                       maxLength={PROMO_MAX_LENGTH}
-                      placeholder="e.g. SPS2XU1"
+                      placeholder="e.g. SPS2XU1 or FC000001"
                       className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900 pr-12 ${
                         promoCodeValid === true
                           ? 'border-green-500 bg-green-50/50'
@@ -998,6 +1002,11 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                         {isSpecialPromoApplied && (
                           <p className="mt-1 text-xs text-green-700 font-sweet-sans">
                             Promo code SPSUAAPElite applied.
+                          </p>
+                        )}
+                        {isFcPromoApplied && (
+                          <p className="mt-1 text-xs text-green-700 font-sweet-sans">
+                            Promo code {formData.promoCode.trim().toUpperCase()} applied. {FC_ADVOCATE_DISCOUNT_PERCENT}% discount has been applied.
                           </p>
                         )}
                         {isMissionStrong500Applied && (

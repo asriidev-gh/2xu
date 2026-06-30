@@ -16,8 +16,6 @@ export default function PartnersSection() {
 
   const partners: Partner[] = [
     { name: '2XU', image: '/images/2xu-logo.avif', url: 'https://ph.2xu.com/' },
-    { name: 'Ayalaland', image: '/images/ayalaland.png' },
-    { name: 'Make It Makati', image: '/images/makeitmakati.png' },
     { name: 'Mastercard', image: '/images/partner-mastercard.png' },
     { name: 'Pocari Sweat', image: '/images/partner-pocarisweat.webp' },
     { name: 'Without Limits', image: '/images/partner-withoutlimits.jpg' },

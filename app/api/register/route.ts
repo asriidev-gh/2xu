@@ -5,7 +5,6 @@ import clientPromise from '@/lib/mongodb';
 import { buildSignupContext, type ClientSignupContext } from '@/lib/registrationContext';
 import {
   sendRegistrationConfirmation,
-  isAdvocatePromoCode,
   buildPaymentProofAdminNotificationHtml,
   getRegistrationNotificationCc,
 } from '@/lib/sendConfirmationEmail';
@@ -15,12 +14,17 @@ import {
   normalizePhilippinesContact,
   isPhilippinesContactIncomplete,
 } from '@/lib/normalizePhilippinesContact';
-import { PUBLIC_RACE_CATEGORY_SET, SPEED_DISTANCES_ALLOWED } from '@/lib/raceCategories';
+import { PUBLIC_RACE_CATEGORY_SET, SPEED_DISTANCES_ALLOWED, SPEED_DISTANCES_OPTIONS_TEXT } from '@/lib/raceCategories';
+import {
+  isAcceptedPromoCode,
+  isAdvocatePromoCode,
+  normalizePromoCode,
+  promoRequiresSingleUseCheck,
+} from '@/lib/promoCodes';
 
 export const dynamic = 'force-dynamic';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const MISSION_STRONG_PROMO = 'MISSIONSTRONG500';
 
 function escapeHtml(text: string): string {
   const map: Record<string, string> = {
@@ -89,7 +93,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            'Please select a speed option: choose 2KM, 5KM, 10KM, or 21KM.',
+            `Please select a speed option: choose ${SPEED_DISTANCES_OPTIONS_TEXT}.`,
         },
         { status: 400 }
       );
@@ -188,23 +192,13 @@ export async function POST(request: NextRequest) {
     const now = new Date();
     const signupContext = buildSignupContext(request, clientContext as ClientSignupContext | undefined);
 
-    // Promo formats:
-    // - Advocate format: SPS2XU + digits (single-use)
-    // - Special format: SPSUAAPElite + digits (single-use, Athletes Category only)
-    // - MissionStrong500 (multi-use, available to all categories)
-    const PROMO_REGEX = /^SPS2XU\d+$/i;
-    const SPECIAL_PROMO_REGEX = /^SPSUAAPELITE\d+$/i;
-    const rawPromo = promoCode != null ? String(promoCode).trim().toUpperCase() : '';
-    const isSpecialPromoCode = SPECIAL_PROMO_REGEX.test(rawPromo);
-    const isMissionStrongPromo = rawPromo === MISSION_STRONG_PROMO;
-    const isAthletesCategory = String(raceCategory || '').trim().toUpperCase() === 'ATHLETES CATEGORY';
-    const isEligibleMissionStrongPromo = isMissionStrongPromo;
-    const isEligibleSpecialPromo = isSpecialPromoCode && isAthletesCategory;
-    const formatOk = PROMO_REGEX.test(rawPromo) || isEligibleSpecialPromo || isEligibleMissionStrongPromo;
+    // Promo formats: SPS2XU, FC000001–FC000500, SPSUAAPElite (Athletes only), MissionStrong500 (multi-use)
+    const rawPromo = promoCode != null ? normalizePromoCode(String(promoCode)) : '';
+    const raceCategoryForPromo = String(raceCategory || '').trim();
+    const formatOk = rawPromo.length > 0 && isAcceptedPromoCode(rawPromo, raceCategoryForPromo);
     let savedPromo = '';
     if (formatOk) {
-      const requiresSingleUseCheck = !isMissionStrongPromo;
-      const existingWithPromo = requiresSingleUseCheck
+      const existingWithPromo = promoRequiresSingleUseCheck(rawPromo)
         ? await collection.findOne({ promoCode: rawPromo })
         : null;
       if (existingWithPromo) {

@@ -1,5 +1,8 @@
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
+import { isAdvocatePromoCode, isFcAdvocatePromoCode, FC_ADVOCATE_DISCOUNT_PERCENT } from '@/lib/promoCodes';
+
+export { isAdvocatePromoCode } from '@/lib/promoCodes';
 
 export type RegistrationConfirmationEmailPreview = {
   subject: string;
@@ -89,9 +92,6 @@ function formatMailerContactLine(contactName: string, contactNumber: string): st
   return parts.join(' — ');
 }
 
-export function isAdvocatePromoCode(promoCode: string): boolean {
-  return /^SPS2XU\d+$/i.test(String(promoCode || '').trim());
-}
 
 export function getRegistrationNotificationCc(notificationTo: string): string[] {
   const baseCc = ['1@oneofakindasia.com'];
@@ -112,12 +112,16 @@ export function buildPaymentProofAdminNotificationHtml({
   const promo = String(promoCode || '').trim();
   const viaEmail = paymentProofSent === true;
   const isAdvocate = isAdvocatePromoCode(promo);
+  const isFcPromo = isFcAdvocatePromoCode(promo);
+  const promoNote = isFcPromo
+    ? `<p><strong>Promo code:</strong> ${escapeHtml(promo)} (${FC_ADVOCATE_DISCOUNT_PERCENT}% discount applied)</p>`
+    : '';
 
   if (proofUrl) {
-    return `<p><strong>Payment proof:</strong> <a href="${escapeHtml(proofUrl)}" target="_blank" rel="noopener noreferrer">View uploaded screenshot</a></p>`;
+    return `<p><strong>Payment proof:</strong> <a href="${escapeHtml(proofUrl)}" target="_blank" rel="noopener noreferrer">View uploaded screenshot</a></p>${promoNote}`;
   }
   if (viaEmail) {
-    return '<p><strong>Payment proof:</strong> Sent through email</p>';
+    return `<p><strong>Payment proof:</strong> Sent through email</p>${promoNote}`;
   }
   if (isAdvocate) {
     return `<p><strong>Promo code:</strong> ${escapeHtml(promo)} (Advocate registration)</p>`;

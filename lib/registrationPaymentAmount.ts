@@ -1,7 +1,11 @@
 import { getRegistrationBasePrice } from '@/lib/raceCategories';
-
-const MISSION_STRONG_PROMO = 'MISSIONSTRONG500';
-const SPECIAL_PROMO_REGEX = /^SPSUAAPELITE\d+$/i;
+import {
+  FC_ADVOCATE_DISCOUNT_PERCENT,
+  isFcAdvocatePromoCode,
+  isMissionStrongPromoCode,
+  isSpecialAthletesPromoCode,
+  normalizePromoCode,
+} from '@/lib/promoCodes';
 
 export type RegistrationPaymentAmount = {
   phpAmount: number;
@@ -24,9 +28,9 @@ export function computeRegistrationPaymentAmount(
   if (!basePrice) return null;
 
   const basePhpAmount = basePrice.phpAmount;
-  const normalizedPromo = promoCode.trim().toUpperCase();
+  const normalizedPromo = normalizePromoCode(promoCode);
 
-  if (SPECIAL_PROMO_REGEX.test(normalizedPromo)) {
+  if (isSpecialAthletesPromoCode(normalizedPromo)) {
     return {
       phpAmount: 995,
       usdDisplay: '$18',
@@ -34,11 +38,20 @@ export function computeRegistrationPaymentAmount(
     };
   }
 
-  if (normalizedPromo === MISSION_STRONG_PROMO) {
+  if (isMissionStrongPromoCode(normalizedPromo)) {
     return {
       phpAmount: Math.max(0, basePhpAmount - 500),
       usdDisplay: basePrice.priceUsd,
-      promoCodeLabel: MISSION_STRONG_PROMO,
+      promoCodeLabel: normalizedPromo,
+    };
+  }
+
+  if (isFcAdvocatePromoCode(normalizedPromo)) {
+    const discountMultiplier = 1 - FC_ADVOCATE_DISCOUNT_PERCENT / 100;
+    return {
+      phpAmount: Math.max(0, Math.round(basePhpAmount * discountMultiplier)),
+      usdDisplay: basePrice.priceUsd,
+      promoCodeLabel: normalizedPromo,
     };
   }
 
