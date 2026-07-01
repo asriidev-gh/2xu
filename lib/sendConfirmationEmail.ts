@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 import { isAdvocatePromoCode, isFcAdvocatePromoCode, getFcAdvocatePricing } from '@/lib/promoCodes';
+import { FC_PROMO_DAY_SINGLET_LABEL } from '@/lib/basecampExperience';
 
 export { isAdvocatePromoCode } from '@/lib/promoCodes';
 
@@ -19,6 +20,8 @@ type BuildRegistrationConfirmationEmailInput = {
   speedDistance?: string;
   orderNumber?: string;
   bibNumber?: string;
+  raceCategory?: string;
+  promoCode?: string;
 };
 
 type SendRegistrationConfirmationOptions = {
@@ -35,12 +38,6 @@ function getFirstName(fullName: string): string {
   const trimmed = fullName.trim();
   if (!trimmed) return 'Runner';
   return trimmed.split(/\s+/)[0];
-}
-
-function formatDistanceCategory(speedDistance: string): string {
-  const normalized = speedDistance.trim().toUpperCase();
-  if (!normalized) return '—';
-  return normalized.replace(/KM$/i, 'K');
 }
 
 function formatOrderNumber(id: string | undefined): string {
@@ -87,12 +84,6 @@ function formatResendError(err: unknown): string {
   return [name || null, msg || null].filter(Boolean).join(' | ').slice(0, 400) || 'Unknown Resend error';
 }
 
-function formatMailerContactLine(contactName: string, contactNumber: string): string {
-  const parts = [contactName, contactNumber].map((part) => part.trim()).filter(Boolean);
-  return parts.join(' — ');
-}
-
-
 export function getRegistrationNotificationCc(notificationTo: string): string[] {
   const baseCc = ['1@oneofakindasia.com'];
   const toNorm = String(notificationTo || '').trim().toLowerCase();
@@ -136,41 +127,71 @@ export function buildPaymentProofAdminNotificationHtml({
   return '<p><strong>Payment proof:</strong> Not provided</p>';
 }
 
+function formatRaceDistanceLabel(speedDistance: string): string {
+  const normalized = speedDistance.trim().toUpperCase();
+  if (!normalized) return '2KM / 5KM';
+  return normalized;
+}
+
+function formatRegistrationType(raceCategory: string, promoCode: string): string {
+  if (isFcAdvocatePromoCode(promoCode)) {
+    return "VIP — Mission Strong Founder's Card";
+  }
+  const category = raceCategory.trim();
+  if (category === 'Patron') return 'VIP Patron';
+  if (category) return category;
+  return 'Basecamp';
+}
+
+const DEFAULT_2XU_SHOP_URL =
+  'https://ph.2xu.com/?utm_source=SpeedSeries&utm_medium=referral&utm_campaign=SpeedSeries_20Off&utm_id=SPEEDSERIES20&utm_content=event_registration';
+
 export function buildRegistrationConfirmationEmail({
   participantName,
   speedDistance = '',
   orderNumber = '',
   bibNumber = '',
+  raceCategory = '',
+  promoCode = '',
 }: BuildRegistrationConfirmationEmailInput): RegistrationConfirmationEmailPreview {
   const firstName = getFirstName(participantName);
-  const categoryLabel = formatDistanceCategory(speedDistance);
+  const raceDistanceLabel = formatRaceDistanceLabel(speedDistance);
   const orderLabel = formatOrderNumber(orderNumber);
   const bibLabel = bibNumber.trim() || 'Auto-assigned (we generate random number)';
-  const contactName = process.env.MAILER_CONTACT_NAME?.trim() || 'Pinkee';
+  const registrationType = formatRegistrationType(raceCategory, promoCode);
+  const showSingletAddOn = isFcAdvocatePromoCode(promoCode);
+
   const contactNumber = process.env.MAILER_CONTACT_NUMBER?.trim() || '09053162845';
-  const contactLine = formatMailerContactLine(contactName, contactNumber);
-  const contactLineHtml = contactLine ? `${escapeHtml(contactLine)} | ` : '';
-  const contactLineText = contactLine ? `${contactLine} | ` : '';
+  const eventDate =
+    process.env.MAILER_BASECAMP_EVENT_DATE?.trim() || 'Saturday, July 26, 2026';
+  const assemblyTime = process.env.MAILER_BASECAMP_ASSEMBLY_TIME?.trim() || 'TBA';
+  const kitPickupDetails =
+    process.env.MAILER_BASECAMP_KIT_PICKUP?.trim() || 'Details to follow';
+  const instagramHandle =
+    process.env.MAILER_INSTAGRAM_HANDLE?.trim() || '@SpeedSeriespoweredby2XU';
   const instagramUrl =
     process.env.MAILER_INSTAGRAM_URL?.trim() || 'https://www.instagram.com/speedseriesph/';
-  const facebookUrl =
-    process.env.MAILER_FACEBOOK_URL?.trim() || 'https://www.facebook.com/PHathletesclub';
-  const socialLinksHtml = `<a href="${escapeHtml(facebookUrl)}" style="color:#ea580c;">Facebook</a>`;
-  const socialLinksText = `Facebook (${facebookUrl})`;
-  const siteUrl = 'https://www.oneofakindasia.com';
-  const preheader =
-    'Your slot is secured. Next: race details, kit pickup, + Independence Day treats for early birds.';
+  const shopUrl = process.env.MAILER_2XU_SHOP_URL?.trim() || DEFAULT_2XU_SHOP_URL;
+  const preheader = 'Your Basecamp registration is confirmed. Save this email.';
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL?.trim() ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
-    siteUrl;
+    'https://www.oneofakindasia.com';
 
   const headerBanner = baseUrl
     ? `
     <div style="margin:0 0 20px 0;">
-      <img src="${escapeHtml(baseUrl)}/images/2xu-event-mail-banner.jpg" alt="Speed Series — Powered by 2XU" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;" />
+      <img src="${escapeHtml(baseUrl)}/images/2xu-event-mail-banner.jpg" alt="2XU Speed Series Basecamp" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;" />
     </div>
   `
+    : '';
+
+  const singletAddOnHtml = showSingletAddOn
+    ? `<li style="margin-bottom:6px;"><strong>Add-On:</strong> ${escapeHtml(FC_PROMO_DAY_SINGLET_LABEL)}</li>`
+    : '';
+
+  const singletAddOnText = showSingletAddOn
+    ? `\nAdd-On: ${FC_PROMO_DAY_SINGLET_LABEL}`
     : '';
 
   const html = `
@@ -178,94 +199,103 @@ export function buildRegistrationConfirmationEmail({
       ${escapeHtml(preheader)}
     </div>
     ${headerBanner}
+    <p style="margin:0 0 8px 0; font-size:12px; font-weight:bold; letter-spacing:0.08em; color:#ea580c;">REGISTRATION CONFIRMED</p>
     <p>Hi ${escapeHtml(firstName)},</p>
-    <p>Congratulations — you&rsquo;re registered for Speed Series Baguio! 🇵🇭<br/>We&rsquo;re thrilled you&rsquo;ll be running with us in the City of Pines.</p>
+    <p>You&rsquo;re in. Your spot for <strong>2XU Speed Series Basecamp</strong> is secured.</p>
+    <p><strong>Save this email.</strong></p>
     <div style="margin:20px 0; padding:16px; background:#f0fdf4; border-radius:8px; border:1px solid #86efac;">
-      <p style="margin:0 0 12px 0; font-weight:bold; color:#166534; font-size:13px; letter-spacing:0.05em;">YOUR REGISTRATION CONFIRMED</p>
-      <p style="margin:0 0 6px 0; font-size:14px; color:#374151;"><strong>Event:</strong> Speed Series Baguio</p>
-      <p style="margin:0 0 6px 0; font-size:14px; color:#374151;"><strong>Date:</strong> Saturday, July 26, 2026</p>
-      <p style="margin:0 0 6px 0; font-size:14px; color:#374151;"><strong>Category:</strong> ${escapeHtml(categoryLabel)}</p>
-      <p style="margin:0 0 6px 0; font-size:14px; color:#374151;"><strong>Bib #:</strong> ${escapeHtml(bibLabel)}</p>
-      <p style="margin:0; font-size:14px; color:#374151;"><strong>Order #:</strong> ${escapeHtml(orderLabel)}</p>
+      <p style="margin:0 0 12px 0; font-weight:bold; color:#166534; font-size:13px; letter-spacing:0.05em;">YOUR REGISTRATION DETAILS</p>
+      <p style="margin:0 0 6px 0; font-size:14px; color:#374151;"><strong>Event:</strong> 2XU Speed Series Basecamp</p>
+      <p style="margin:0 0 6px 0; font-size:14px; color:#374151;"><strong>Location:</strong> Mt. Camisong, Baguio | 1450 MASL</p>
+      <p style="margin:0 0 6px 0; font-size:14px; color:#374151;"><strong>Date:</strong> ${escapeHtml(eventDate)} | <strong>Assembly Time:</strong> ${escapeHtml(assemblyTime)}</p>
+      <p style="margin:0 0 6px 0; font-size:14px; color:#374151;"><strong>Race Distance:</strong> ${escapeHtml(raceDistanceLabel)}</p>
+      <p style="margin:0 0 6px 0; font-size:14px; color:#374151;"><strong>Order #:</strong> ${escapeHtml(orderLabel)} | <strong>Bib #:</strong> ${escapeHtml(bibLabel)}</p>
+      <p style="margin:0; font-size:14px; color:#374151;"><strong>Registration Type:</strong> ${escapeHtml(registrationType)}</p>
     </div>
-    <p><strong>Save this email.</strong> It&rsquo;s your proof of registration.</p>
-    <p style="margin:24px 0 8px 0; font-weight:bold; color:#1f2937;">WHAT HAPPENS NEXT</p>
-    <p style="margin:0 0 16px 0;"><strong>1. Race Kit &amp; Independence Day Treat</strong><br/>
-    If you registered June 12&ndash;14 and were among the first 100 per category, you unlocked our Independence Day Treat:<br/>
-    2XU Aero Apparel + Your choice of bonus gear: Visor, Cap, OR 2XU Speed Belt.<br/>
-    We&rsquo;ll send your &ldquo;Choose Your Gear&rdquo; email separately. If you registered after June 14, your kit follows the standard entitlement.</p>
-    <p style="margin:0 0 16px 0;"><strong>2. Kit Pickup Details</strong><br/>
-    Date + venue + schedule will be sent via email 7 days before race day. Please bring a valid ID + this confirmation email.</p>
-    <p style="margin:0 0 16px 0;"><strong>3. Race Briefing</strong><br/>
-    Course map, hydration points, cut-off times, and safety reminders will be emailed on July 19. We&rsquo;ll also post updates at <a href="${escapeHtml(instagramUrl)}" style="color:#ea580c;">@SpeedSeriesPH</a>.</p>
-    <p style="margin:0 0 16px 0;"><strong>4. Train with Us</strong><br/>
-    Coach Dan Brown will share weekly prep tips leading to race day. Watch your inbox.</p>
-    <p style="margin:24px 0 8px 0; font-weight:bold; color:#1f2937;">IMPORTANT REMINDERS</p>
+    <p style="margin:24px 0 8px 0; font-weight:bold; color:#1f2937;">YOUR BASECAMP INCLUDES:</p>
     <ol style="margin:0 0 20px 0; padding-left:20px; color:#374151;">
-      <li style="margin-bottom:6px;">Slots are non-transferable and non-refundable.</li>
-      <li style="margin-bottom:6px;">Race day registration is not available. All entries must be done online.</li>
-      <li style="margin-bottom:0;">For concerns, reply to this email or message us at ${socialLinksHtml}. We reply within 24 hours.</li>
+      <li style="margin-bottom:6px;">2KM / 5KM Altitude Trail Run</li>
+      <li style="margin-bottom:6px;">2XU Recovery Session</li>
+      <li style="margin-bottom:6px;">Coffee Camp</li>
+      <li style="margin-bottom:6px;">Sports Photography</li>
+      <li style="margin-bottom:6px;">Prospex Navigation Quest</li>
+      <li style="margin-bottom:6px;">Green Talk</li>
+      <li style="margin-bottom:6px;">Music + After Run Party</li>
+      ${singletAddOnHtml}
     </ol>
-    <p>${escapeHtml(firstName)}, thank you for saying yes to the challenge. Baguio&rsquo;s elevation is tough, but the view — and the finish line feeling — is worth every step.</p>
-    <p>This July 26, let&rsquo;s run free. See you at the start line.</p>
-    <p>Run free,<br/><strong>Team Speed Series</strong><br/><a href="${siteUrl}">oneofakindasia.com</a><br/>${contactLineHtml}<a href="${escapeHtml(instagramUrl)}" style="color:#ea580c;">@SpeedSeriesPH</a></p>
-    <p style="margin-top:20px; font-size:14px; color:#6b7280;"><em>P.S. Bring your running buddies. The Cordillera is better shared. Final slots for July 26 are moving fast → <a href="${siteUrl}" style="color:#ea580c;">www.oneofakindasia.com</a></em></p>
+    <p style="margin:24px 0 8px 0; font-weight:bold; color:#1f2937;">YOUR 20% GEAR DISCOUNT</p>
+    <p style="margin:0 0 16px 0; color:#374151;">To prepare, perform, and recover like a Basecamp athlete:</p>
+    <p style="margin:0 0 24px 0;">
+      <a href="${escapeHtml(shopUrl)}" style="display:inline-block; background:#ea580c; color:#ffffff; padding:12px 24px; text-decoration:none; font-weight:bold; border-radius:6px; font-size:14px;">SHOP BASECAMP20 NOW &rarr;</a>
+    </p>
+    <p style="margin:24px 0 8px 0; font-weight:bold; color:#1f2937;">WHAT HAPPENS NEXT</p>
+    <ol style="margin:0 0 20px 0; padding-left:20px; color:#374151;">
+      <li style="margin-bottom:8px;"><strong>Kit Pickup:</strong> Basecamp 1 at 2XU Opus | ${escapeHtml(kitPickupDetails)}</li>
+      <li style="margin-bottom:8px;"><strong>Race Day:</strong> Basecamp 2 at Mt. Camisong, Baguio | ${escapeHtml(eventDate)}</li>
+      <li style="margin-bottom:0;"><strong>Updates:</strong> We&rsquo;ll email you final race brief 3 days before</li>
+    </ol>
+    <p style="margin:0 0 20px 0; color:#374151;"><strong>Important:</strong> Bring your ID + this confirmation email for kit pickup.</p>
+    <p style="margin:0 0 20px 0; color:#374151;">Questions? Reply here or message <a href="${escapeHtml(instagramUrl)}" style="color:#ea580c;">${escapeHtml(instagramHandle)}</a> or WhatsApp ${escapeHtml(contactNumber)}.</p>
+    <p style="margin:0 0 8px 0; font-weight:bold; color:#1f2937;">Train High. Start at Basecamp. Be 2X Better.</p>
+    <p>See you on the mountain, ${escapeHtml(firstName)}.</p>
+    <p><strong>2XU Philippines</strong><br/>#2XUSpeedSeries #BasecampVIP</p>
+    <p style="margin-top:20px; font-size:14px; color:#6b7280;"><em>P.S. Get an exclusive 20% discount for the full experience of the brand at <a href="${escapeHtml(shopUrl)}" style="color:#ea580c;">ph.2xu.com</a> (<a href="${escapeHtml(shopUrl)}" style="color:#ea580c;">click here</a>).</em></p>
   `;
 
   const plainBody = `${preheader}
 
+REGISTRATION CONFIRMED
+
 Hi ${firstName},
 
-Congratulations — you're registered for Speed Series Baguio! 🇵🇭
-We're thrilled you'll be running with us in the City of Pines.
+You're in. Your spot for 2XU Speed Series Basecamp is secured.
 
-YOUR REGISTRATION CONFIRMED
-Event: Speed Series Baguio
-Date: Saturday, July 26, 2026
-Category: ${categoryLabel}
-Bib #: ${bibLabel}
-Order #: ${orderLabel}
+Save this email.
 
-Save this email. It's your proof of registration.
+YOUR REGISTRATION DETAILS
+Event: 2XU Speed Series Basecamp
+Location: Mt. Camisong, Baguio | 1450 MASL
+Date: ${eventDate} | Assembly Time: ${assemblyTime}
+Race Distance: ${raceDistanceLabel}
+Order #: ${orderLabel} | Bib #: ${bibLabel}
+Registration Type: ${registrationType}
+
+YOUR BASECAMP INCLUDES:
+1. 2KM / 5KM Altitude Trail Run
+2. 2XU Recovery Session
+3. Coffee Camp
+4. Sports Photography
+5. Prospex Navigation Quest
+6. Green Talk
+7. Music + After Run Party${singletAddOnText}
+
+YOUR 20% GEAR DISCOUNT
+To prepare, perform, and recover like a Basecamp athlete:
+SHOP BASECAMP20 NOW → ${shopUrl}
 
 WHAT HAPPENS NEXT
+1. Kit Pickup: Basecamp 1 at 2XU Opus | ${kitPickupDetails}
+2. Race Day: Basecamp 2 at Mt. Camisong, Baguio | ${eventDate}
+3. Updates: We'll email you final race brief 3 days before
 
-1. Race Kit & Independence Day Treat
-If you registered June 12-14 and were among the first 100 per category, you unlocked our Independence Day Treat:
-2XU Aero Apparel + Your choice of bonus gear: Visor, Cap, OR 2XU Speed Belt.
-We'll send your "Choose Your Gear" email separately. If you registered after June 14, your kit follows the standard entitlement.
+Important: Bring your ID + this confirmation email for kit pickup.
 
-2. Kit Pickup Details
-Date + venue + schedule will be sent via email 7 days before race day. Please bring a valid ID + this confirmation email.
+Questions? Reply here or message ${instagramHandle} or WhatsApp ${contactNumber}.
 
-3. Race Briefing
-Course map, hydration points, cut-off times, and safety reminders will be emailed on July 19. We'll also post updates at @SpeedSeriesPH.
+Train High. Start at Basecamp. Be 2X Better.
+See you on the mountain, ${firstName}.
 
-4. Train with Us
-Coach Dan Brown will share weekly prep tips leading to race day. Watch your inbox.
+2XU Philippines
+#2XUSpeedSeries #BasecampVIP
 
-IMPORTANT REMINDERS
-1. Slots are non-transferable and non-refundable.
-2. Race day registration is not available. All entries must be done online.
-3. For concerns, reply to this email or message us at ${socialLinksText}. We reply within 24 hours.
+P.S. Get an exclusive 20% discount for the full experience of the brand at ph.2xu.com (${shopUrl})`;
 
-${firstName}, thank you for saying yes to the challenge. Baguio's elevation is tough, but the view — and the finish line feeling — is worth every step.
-
-This July 26, let's run free. See you at the start line.
-
-Run free,
-Team Speed Series
-${siteUrl}
-${contactLineText}@SpeedSeriesPH
-
-P.S. Bring your running buddies. The Cordillera is better shared. Final slots for July 26 are moving fast → ${siteUrl}`;
-
-  const subject = 'You\u2019re Officially In! \uD83C\uDF89 Speed Series Baguio - July 26, 2026';
+  const subject = 'Basecamp Slot Secured + 20% Gear Code Inside';
 
   return {
     subject,
     html,
-    text: `Speed Series — Powered by 2XU\n\n${plainBody}`,
+    text: `2XU Speed Series Basecamp\n\n${plainBody}`,
   };
 }
 
@@ -298,6 +328,8 @@ export async function sendRegistrationConfirmation(
     speedDistance: options.speedDistance || '',
     orderNumber: options.orderNumber || '',
     bibNumber: options.bibNumber || '',
+    raceCategory: options.raceCategory || '',
+    promoCode: options.promoCode || '',
   });
 
   const ccRecipients = [
