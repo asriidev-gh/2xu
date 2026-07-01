@@ -7,7 +7,7 @@ export const FOUNDERS_CATEGORY_PHP = 3300;
 export const FOUNDERS_CATEGORY_USD = '$59';
 
 /** Speed distance options (must match API validation and SPEED_DISTANCE_PRICING). */
-export const SPEED_DISTANCES = ['2KM', '5KM', '10KM'] as const;
+export const SPEED_DISTANCES = ['2KM', '5KM'] as const;
 
 export const SPEED_DISTANCE_PRICING: Record<
   (typeof SPEED_DISTANCES)[number],
@@ -15,7 +15,6 @@ export const SPEED_DISTANCE_PRICING: Record<
 > = {
   '2KM': { php: 1800, usd: '$32' },
   '5KM': { php: 2000, usd: '$36' },
-  '10KM': { php: 2200, usd: '$40' },
 };
 
 export const SPEED_DISTANCES_OPTIONS_TEXT = SPEED_DISTANCES.join(', ');

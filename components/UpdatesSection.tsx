@@ -90,7 +90,7 @@ function BaguioPromoUpdatePreview({
   const countdownIntervalRef = useRef<number | null>(null);
   const countdownStartedRef = useRef(false);
   const overlayOpenedAtRef = useRef(0);
-  const [isMobile, setIsMobile] = useState(false);
+  const previewDismissedRef = useRef(false);
   const [autoPreview, setAutoPreview] = useState(false);
   const [thumbnailInView, setThumbnailInView] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -114,9 +114,7 @@ function BaguioPromoUpdatePreview({
     setImageIndex((prev) => (prev + 1) % imageCount);
   };
 
-  const isOverlayOpen =
-    !suppressPromoPreview &&
-    (isMobile ? isSlideActive && thumbnailInView : autoPreview);
+  const isOverlayOpen = !suppressPromoPreview && autoPreview;
 
   const shouldPreloadOverlayImage = isSlideActive && !suppressPromoPreview;
   const {
@@ -138,7 +136,7 @@ function BaguioPromoUpdatePreview({
     }
   };
 
-  const dismissAllPreviews = useCallback(() => {
+  const dismissOverlay = useCallback(() => {
     clearCountdownInterval();
     countdownStartedRef.current = false;
     setAutoPreview(false);
@@ -146,32 +144,32 @@ function BaguioPromoUpdatePreview({
     setCountdown(null);
   }, []);
 
-  const startDesktopAutoPreview = useCallback(() => {
-    if (suppressPromoPreview || isMobile || !isSlideActive || !thumbnailInView) return;
+  const dismissPreviewPermanently = useCallback(() => {
+    previewDismissedRef.current = true;
+    dismissOverlay();
+  }, [dismissOverlay]);
+
+  const startAutoPreview = useCallback(() => {
+    if (suppressPromoPreview || !isSlideActive || !thumbnailInView || previewDismissedRef.current) return;
     setAutoPreviewImageIndex(0);
     setImageIndex(0);
+    overlayOpenedAtRef.current = Date.now();
     setAutoPreview(true);
-  }, [suppressPromoPreview, isMobile, isSlideActive, thumbnailInView]);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(max-width: 639px)');
-    const updateMobile = () => setIsMobile(mediaQuery.matches);
-    updateMobile();
-    mediaQuery.addEventListener('change', updateMobile);
-    return () => mediaQuery.removeEventListener('change', updateMobile);
-  }, []);
+  }, [suppressPromoPreview, isSlideActive, thumbnailInView]);
 
   useEffect(() => {
     if (!isSlideActive) {
-      dismissAllPreviews();
+      previewDismissedRef.current = false;
+      dismissOverlay();
     }
-  }, [isSlideActive, dismissAllPreviews]);
+  }, [isSlideActive, dismissOverlay]);
 
   useEffect(() => {
     if (suppressPromoPreview) {
-      dismissAllPreviews();
+      previewDismissedRef.current = false;
+      dismissOverlay();
     }
-  }, [suppressPromoPreview, dismissAllPreviews]);
+  }, [suppressPromoPreview, dismissOverlay]);
 
   useEffect(() => {
     if (!isSlideActive || suppressPromoPreview) {
@@ -197,18 +195,16 @@ function BaguioPromoUpdatePreview({
   }, [isSlideActive, suppressPromoPreview]);
 
   useEffect(() => {
-    if (suppressPromoPreview || !isSlideActive || isMobile) return;
+    if (suppressPromoPreview || !isSlideActive) return;
 
     if (!thumbnailInView) {
-      setAutoPreview(false);
-      clearCountdownInterval();
-      countdownStartedRef.current = false;
-      setCountdown(null);
+      previewDismissedRef.current = false;
+      dismissOverlay();
       return;
     }
 
-    startDesktopAutoPreview();
-  }, [suppressPromoPreview, thumbnailInView, isSlideActive, isMobile, startDesktopAutoPreview]);
+    startAutoPreview();
+  }, [suppressPromoPreview, thumbnailInView, isSlideActive, startAutoPreview, dismissOverlay]);
 
   useEffect(() => {
     if (!shouldPreloadOverlayImage) return;
@@ -249,7 +245,7 @@ function BaguioPromoUpdatePreview({
           return;
         }
 
-        dismissAllPreviews();
+        dismissPreviewPermanently();
         return;
       }
 
@@ -264,7 +260,7 @@ function BaguioPromoUpdatePreview({
       clearCountdownInterval();
       countdownStartedRef.current = false;
     };
-  }, [autoPreview, overlayImageReady, autoPreviewImageIndex, imageCount, dismissAllPreviews]);
+  }, [autoPreview, overlayImageReady, autoPreviewImageIndex, imageCount, dismissPreviewPermanently]);
 
   useEffect(() => {
     if (!isOverlayOpen) return;
@@ -277,7 +273,7 @@ function BaguioPromoUpdatePreview({
         const openedRecently = Date.now() - overlayOpenedAtRef.current < 600;
         if (openedRecently || overlayImageStatus === 'loading') return;
         if (!entry.isIntersecting || entry.intersectionRatio < 0.15) {
-          dismissAllPreviews();
+          dismissOverlay();
         }
       },
       {
@@ -288,7 +284,7 @@ function BaguioPromoUpdatePreview({
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [isOverlayOpen, dismissAllPreviews, overlayImageStatus]);
+  }, [isOverlayOpen, dismissOverlay, overlayImageStatus]);
 
   useEffect(
     () => () => {
@@ -300,15 +296,14 @@ function BaguioPromoUpdatePreview({
   const promoOverlay =
     isOverlayOpen && typeof document !== 'undefined'
       ? createPortal(
-          <div
-            className={`fixed inset-0 z-[9998] ${isMobile ? 'pointer-events-none' : 'pointer-events-auto'}`}
-            role="presentation"
-          >
-            <div
+          <div className="fixed inset-0 z-[9998] pointer-events-auto" role="presentation">
+            <button
+              type="button"
               className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${
                 isOverlayOpen ? 'opacity-100' : 'opacity-0'
               }`}
-              aria-hidden
+              aria-label="Close Baguio leg preview"
+              onClick={dismissPreviewPermanently}
             />
 
             <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6 pointer-events-none">
@@ -330,7 +325,7 @@ function BaguioPromoUpdatePreview({
 
                 <button
                   type="button"
-                  onClick={dismissAllPreviews}
+                  onClick={dismissPreviewPermanently}
                   className="absolute -top-3 -right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-gray-950/95 text-white shadow-lg ring-2 ring-orange-400/70 transition hover:bg-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black/50"
                   aria-label="Close Baguio leg preview"
                 >
