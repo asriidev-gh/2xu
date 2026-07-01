@@ -11,7 +11,8 @@ import {
   RACE_CATEGORY_PRICES,
   SPEED_DISTANCES,
   SPEED_DISTANCES_OPTIONS_TEXT,
-  SPEED_DISTANCE_PRICING,
+  SPEED_RUN_FLAT_RATE_PHP,
+  SPEED_RUN_FLAT_RATE_USD,
   TEAM_CATEGORY_NAME,
   FOUNDERS_CATEGORY_NAME,
   formatPhp,
@@ -21,29 +22,20 @@ import { getFcPromoFootnote } from '@/lib/basecampExperience';
 
 export { RACE_CATEGORY_NAMES, PUBLIC_RACE_CATEGORY_NAMES, RACE_CATEGORY_PRICES, SPEED_DISTANCES, SPEED_DISTANCES_OPTIONS_TEXT };
 
-function SpeedDistancePricingGrid() {
+function SpeedRunFlatPricing() {
   return (
     <div className="space-y-2">
       <p className="text-xs font-semibold uppercase tracking-wider text-orange-300 font-fira-sans">
-        Fee by distance
+        Registration fee
       </p>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-        {SPEED_DISTANCES.map((distance) => {
-          const pricing = SPEED_DISTANCE_PRICING[distance];
-          return (
-            <div key={distance} className="min-w-0">
-              <p className="text-[11px] uppercase tracking-wide text-gray-400 font-fira-sans leading-none mb-1">
-                {distance}
-              </p>
-              <p className="text-xl lg:text-2xl font-bold text-yellow-400 font-druk tabular-nums leading-none">
-                {formatPhp(pricing.php)}
-              </p>
-            </div>
-          );
-        })}
+      <div className="flex items-baseline gap-2">
+        <p className="text-xl lg:text-2xl font-bold text-yellow-400 font-druk tabular-nums leading-none">
+          {formatPhp(SPEED_RUN_FLAT_RATE_PHP)}
+        </p>
+        <p className="text-sm text-gray-400 font-sweet-sans">2KM or 5KM</p>
       </div>
       <p className="text-xs text-gray-400 font-sweet-sans pt-0.5">
-        Approx. USD varies by distance at checkout.
+        Approx. {SPEED_RUN_FLAT_RATE_USD} at checkout.
       </p>
     </div>
   );
@@ -290,7 +282,7 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
                         priceUsd={category.priceUsd}
                       />
                     ) : (
-                      <SpeedDistancePricingGrid />
+                      <SpeedRunFlatPricing />
                     )}
                   </div>
 
@@ -407,8 +399,8 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
           }`}
           style={{ animationDelay: '1s' }}
         >
-          Registration fees: Team Category ₱6,000 (group of 4); all other categories by speed distance (2KM
-          ₱1,800 · 5KM ₱2,000). {getFcPromoFootnote()} Pricing may be subject to final confirmation.
+          Registration fees: Team Category ₱6,000 (group of 4); all other categories ₱1,500 (2KM or 5KM).{' '}
+          {getFcPromoFootnote()} Pricing may be subject to final confirmation.
         </p>
 
         {/* Mission Strong image - end of section */}
