@@ -180,15 +180,6 @@ export async function POST(request: NextRequest) {
     const db = client.db('2xu');
     const collection = db.collection('users');
 
-    // Check if email already exists (for individual) or already used in a team registration
-    const existingUser = await collection.findOne({ email });
-    if (existingUser) {
-      return NextResponse.json(
-        { error: 'Email already registered' },
-        { status: 409 }
-      );
-    }
-
     const now = new Date();
     const signupContext = buildSignupContext(request, clientContext as ClientSignupContext | undefined);
 

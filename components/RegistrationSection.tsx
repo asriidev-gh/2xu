@@ -130,10 +130,20 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
   // Auto-fill race category when user clicks a category card and scrolls here
   useEffect(() => {
     if (!selectedCategory || !PUBLIC_RACE_CATEGORY_SET.has(selectedCategory)) return;
-    setFormData((prev) => ({
-      ...prev,
-      raceCategory: selectedCategory,
-    }));
+    let categoryChanged = false;
+    setFormData((prev) => {
+      categoryChanged = prev.raceCategory !== selectedCategory;
+      if (!categoryChanged) return prev;
+      return {
+        ...prev,
+        raceCategory: selectedCategory,
+        promoCode: '',
+      };
+    });
+    if (categoryChanged) {
+      setPromoCodeValid(null);
+      setPromoCodeError('');
+    }
     onCategoryApplied?.();
   }, [selectedCategory, onCategoryApplied]);
 
@@ -302,15 +312,19 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
-    const isRaceCategoryChange = name === 'raceCategory';
+    let categoryChanged = false;
     setFormData((prev) => {
-      const next = { ...prev, [name]: value };
-      if (isRaceCategoryChange && prev.promoCode.trim().length > 0) {
-        setPromoCodeValid(null);
-        setPromoCodeError('');
-      }
-      return next;
+      categoryChanged = name === 'raceCategory' && value !== prev.raceCategory;
+      return {
+        ...prev,
+        [name]: value,
+        ...(categoryChanged ? { promoCode: '' } : {}),
+      };
     });
+    if (categoryChanged) {
+      setPromoCodeValid(null);
+      setPromoCodeError('');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
