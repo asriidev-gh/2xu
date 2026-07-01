@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
 import { Resend } from 'resend';
 import clientPromise from '@/lib/mongodb';
+import { ensureUserIndexes } from '@/lib/ensureUserIndexes';
 import { buildSignupContext, type ClientSignupContext } from '@/lib/registrationContext';
 import {
   sendRegistrationConfirmation,
@@ -177,6 +178,7 @@ export async function POST(request: NextRequest) {
 
     // Connect to MongoDB
     const client = await clientPromise;
+    await ensureUserIndexes(client);
     const db = client.db('2xu');
     const collection = db.collection('users');
 
