@@ -6,7 +6,7 @@ import Image from 'next/image';
 import ApparelImageModal from './ApparelImageModal';
 import ImageLoadProgress from '@/components/ImageLoadProgress';
 import { useImageWithProgress } from '@/lib/useImageWithProgress';
-import { BAGUIO_LEG_IMAGE } from '@/lib/promoImages';
+import { BAGUIO_UPDATE_IMAGES } from '@/lib/promoImages';
 
 const AYALA_RESULTS_IMAGE = '/images/results/speed_series_ayala_makati_results.jpg';
 const AYALA_FACEBOOK_EMBED_SRC =
@@ -46,7 +46,8 @@ type BaguioPromoUpdatePreviewProps = {
 };
 
 const BAGUIO_SLIDE_INDEX = UPDATES.findIndex((item) => item.id === 2);
-const AUTO_PREVIEW_COUNTDOWN_START = 3;
+const AUTO_PREVIEW_SECONDS_PER_IMAGE = 3;
+const AUTO_PREVIEW_COUNTDOWN_START = AUTO_PREVIEW_SECONDS_PER_IMAGE;
 const COUNTDOWN_STEP_MS = 1000;
 
 function PromoPreviewTimerIcon({ className }: { className?: string }) {
@@ -95,6 +96,23 @@ function BaguioPromoUpdatePreview({
   const [countdown, setCountdown] = useState<number | null>(null);
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const [thumbnailHovered, setThumbnailHovered] = useState(false);
+  const [imageIndex, setImageIndex] = useState(0);
+  const [autoPreviewImageIndex, setAutoPreviewImageIndex] = useState(0);
+
+  const imageCount = BAGUIO_UPDATE_IMAGES.length;
+  const overlayImageIndex = autoPreview ? autoPreviewImageIndex : imageIndex;
+  const activeImage = BAGUIO_UPDATE_IMAGES[imageIndex];
+  const overlayImage = BAGUIO_UPDATE_IMAGES[overlayImageIndex];
+
+  const goToPrevImage = (e?: { stopPropagation: () => void }) => {
+    e?.stopPropagation();
+    setImageIndex((prev) => (prev - 1 + imageCount) % imageCount);
+  };
+
+  const goToNextImage = (e?: { stopPropagation: () => void }) => {
+    e?.stopPropagation();
+    setImageIndex((prev) => (prev + 1) % imageCount);
+  };
 
   const isOverlayOpen =
     !suppressPromoPreview &&
@@ -105,7 +123,7 @@ function BaguioPromoUpdatePreview({
     displaySrc: overlayDisplaySrc,
     loadPercent: overlayLoadPercent,
     status: overlayImageStatus,
-  } = useImageWithProgress(BAGUIO_LEG_IMAGE, shouldPreloadOverlayImage);
+  } = useImageWithProgress(overlayImage, shouldPreloadOverlayImage || isOverlayOpen);
 
   const overlayImageReady = overlayImageStatus === 'ready' && Boolean(overlayDisplaySrc);
   const overlayImageLoading = isOverlayOpen && overlayImageStatus === 'loading';
@@ -124,11 +142,14 @@ function BaguioPromoUpdatePreview({
     clearCountdownInterval();
     countdownStartedRef.current = false;
     setAutoPreview(false);
+    setAutoPreviewImageIndex(0);
     setCountdown(null);
   }, []);
 
   const startDesktopAutoPreview = useCallback(() => {
     if (suppressPromoPreview || isMobile || !isSlideActive || !thumbnailInView) return;
+    setAutoPreviewImageIndex(0);
+    setImageIndex(0);
     setAutoPreview(true);
   }, [suppressPromoPreview, isMobile, isSlideActive, thumbnailInView]);
 
@@ -190,6 +211,14 @@ function BaguioPromoUpdatePreview({
   }, [suppressPromoPreview, thumbnailInView, isSlideActive, isMobile, startDesktopAutoPreview]);
 
   useEffect(() => {
+    if (!shouldPreloadOverlayImage) return;
+    BAGUIO_UPDATE_IMAGES.forEach((src) => {
+      const img = new window.Image();
+      img.src = src;
+    });
+  }, [shouldPreloadOverlayImage]);
+
+  useEffect(() => {
     if (!autoPreview || !overlayImageReady) {
       if (!autoPreview) {
         clearCountdownInterval();
@@ -204,7 +233,7 @@ function BaguioPromoUpdatePreview({
     overlayOpenedAtRef.current = Date.now();
     setCountdown(AUTO_PREVIEW_COUNTDOWN_START);
 
-    const endTime = Date.now() + AUTO_PREVIEW_COUNTDOWN_START * COUNTDOWN_STEP_MS;
+    const endTime = Date.now() + AUTO_PREVIEW_SECONDS_PER_IMAGE * COUNTDOWN_STEP_MS;
 
     const tickCountdown = () => {
       const remainingMs = endTime - Date.now();
@@ -212,6 +241,14 @@ function BaguioPromoUpdatePreview({
       if (remainingMs <= 0) {
         clearCountdownInterval();
         countdownStartedRef.current = false;
+
+        if (autoPreviewImageIndex < imageCount - 1) {
+          const nextIndex = autoPreviewImageIndex + 1;
+          setAutoPreviewImageIndex(nextIndex);
+          setImageIndex(nextIndex);
+          return;
+        }
+
         dismissAllPreviews();
         return;
       }
@@ -227,7 +264,7 @@ function BaguioPromoUpdatePreview({
       clearCountdownInterval();
       countdownStartedRef.current = false;
     };
-  }, [autoPreview, overlayImageReady, dismissAllPreviews]);
+  }, [autoPreview, overlayImageReady, autoPreviewImageIndex, imageCount, dismissAllPreviews]);
 
   useEffect(() => {
     if (!isOverlayOpen) return;
@@ -322,7 +359,7 @@ function BaguioPromoUpdatePreview({
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={overlayDisplaySrc}
-                      alt="Speed Series Baguio leg"
+                      alt={`Speed Series Baguio leg — Basecamp ${overlayImageIndex + 1}`}
                       className="block h-auto w-auto max-h-[min(78vh,900px)] max-w-[min(440px,calc(100vw-2rem))] object-contain"
                       draggable={false}
                     />
@@ -344,12 +381,52 @@ function BaguioPromoUpdatePreview({
         onMouseLeave={() => setThumbnailHovered(false)}
       >
         <Image
-          src={BAGUIO_LEG_IMAGE}
-          alt="Speed Series Baguio leg"
+          src={activeImage}
+          alt={`Speed Series Baguio leg — Basecamp ${imageIndex + 1}`}
           fill
           className="object-contain object-center bg-gray-950"
           sizes="(max-width: 640px) 100vw, 500px"
         />
+        {imageCount > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={goToPrevImage}
+              className="absolute left-2 top-1/2 z-20 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-white shadow-md transition hover:bg-black/75 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+              aria-label="Previous Baguio leg image"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={goToNextImage}
+              className="absolute right-2 top-1/2 z-20 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-white shadow-md transition hover:bg-black/75 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+              aria-label="Next Baguio leg image"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+            <div className="absolute bottom-2 left-1/2 z-20 flex -translate-x-1/2 gap-1.5">
+              {BAGUIO_UPDATE_IMAGES.map((_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setImageIndex(index);
+                  }}
+                  className={`h-1.5 rounded-full transition-all ${
+                    index === imageIndex ? 'w-5 bg-yellow-400' : 'w-1.5 bg-white/50 hover:bg-white/80'
+                  }`}
+                  aria-label={`Show Baguio leg image ${index + 1}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
         <div
           className={`absolute inset-0 z-10 flex items-center justify-center transition-colors duration-200 ${
             thumbnailHovered ? 'bg-black/40' : 'bg-transparent'
@@ -371,8 +448,8 @@ function BaguioPromoUpdatePreview({
       </div>
       <ApparelImageModal
         isOpen={imageModalOpen}
-        imageSrc={BAGUIO_LEG_IMAGE}
-        imageAlt="Speed Series Baguio leg"
+        imageSrc={activeImage}
+        imageAlt={`Speed Series Baguio leg — Basecamp ${imageIndex + 1}`}
         onClose={() => setImageModalOpen(false)}
       />
       {promoOverlay}

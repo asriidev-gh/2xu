@@ -1,7 +1,6 @@
 import { getRegistrationBasePrice } from '@/lib/raceCategories';
 import {
-  FC_ADVOCATE_FIXED_PHP,
-  FC_ADVOCATE_USD_DISPLAY,
+  getFcAdvocatePricing,
   isFcAdvocatePromoCode,
   isMissionStrongPromoCode,
   isSpecialAthletesPromoCode,
@@ -48,9 +47,10 @@ export function computeRegistrationPaymentAmount(
   }
 
   if (isFcAdvocatePromoCode(normalizedPromo)) {
+    const fcPricing = getFcAdvocatePricing();
     return {
-      phpAmount: FC_ADVOCATE_FIXED_PHP,
-      usdDisplay: FC_ADVOCATE_USD_DISPLAY,
+      phpAmount: fcPricing.phpAmount,
+      usdDisplay: fcPricing.usdDisplay,
       promoCodeLabel: normalizedPromo,
     };
   }
