@@ -1,7 +1,6 @@
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 import { isAdvocatePromoCode, isFcAdvocatePromoCode, getFcAdvocatePricing } from '@/lib/promoCodes';
-import { FC_PROMO_DAY_SINGLET_LABEL } from '@/lib/basecampExperience';
 
 export { isAdvocatePromoCode } from '@/lib/promoCodes';
 
@@ -162,11 +161,18 @@ export function buildRegistrationConfirmationEmail({
   const showSingletAddOn = isFcAdvocatePromoCode(promoCode);
 
   const contactNumber = process.env.MAILER_CONTACT_NUMBER?.trim() || '09053162845';
-  const eventDate =
-    process.env.MAILER_BASECAMP_EVENT_DATE?.trim() || 'Saturday, July 26, 2026';
-  const assemblyTime = process.env.MAILER_BASECAMP_ASSEMBLY_TIME?.trim() || 'TBA';
+  const eventDate = process.env.MAILER_BASECAMP_EVENT_DATE?.trim() || 'July 26, 2026';
+  const assemblyTime = process.env.MAILER_BASECAMP_ASSEMBLY_TIME?.trim() || '';
   const kitPickupDetails =
-    process.env.MAILER_BASECAMP_KIT_PICKUP?.trim() || 'Details to follow';
+    process.env.MAILER_BASECAMP_KIT_PICKUP?.trim() || 'July 18 and 25 | 3pm to 7pm';
+  const raceDayDetails =
+    process.env.MAILER_BASECAMP_RACE_DAY?.trim() || 'Basecamp 2 at Baguio | July 26 | 6:30am';
+  const raceBriefNotice =
+    process.env.MAILER_BASECAMP_RACE_BRIEF_NOTICE?.trim() ||
+    "We'll email you final race brief a week before";
+  const locationNotice =
+    process.env.MAILER_BASECAMP_LOCATION_NOTICE?.trim() ||
+    'Final Route will be announced on July 8';
   const instagramHandle =
     process.env.MAILER_INSTAGRAM_HANDLE?.trim() || '@SpeedSeriespoweredby2XU';
   const instagramUrl =
@@ -187,12 +193,14 @@ export function buildRegistrationConfirmationEmail({
     : '';
 
   const singletAddOnHtml = showSingletAddOn
-    ? `<li style="margin-bottom:6px;"><strong>Add-On:</strong> ${escapeHtml(FC_PROMO_DAY_SINGLET_LABEL)}</li>`
+    ? `<li style="margin-bottom:6px;"><strong>Add-On:</strong> Limited Edition 2XU Race Singlet</li>`
     : '';
 
-  const singletAddOnText = showSingletAddOn
-    ? `\nAdd-On: ${FC_PROMO_DAY_SINGLET_LABEL}`
-    : '';
+  const singletAddOnText = showSingletAddOn ? '\nAdd-On: Limited Edition 2XU Race Singlet' : '';
+
+  const dateDetailsLine = assemblyTime
+    ? `${eventDate} | Assembly Time: ${assemblyTime}`
+    : `${eventDate} | Assembly Time:`;
 
   const html = `
     <div style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
@@ -206,8 +214,8 @@ export function buildRegistrationConfirmationEmail({
     <div style="margin:20px 0; padding:16px; background:#f0fdf4; border-radius:8px; border:1px solid #86efac;">
       <p style="margin:0 0 12px 0; font-weight:bold; color:#166534; font-size:13px; letter-spacing:0.05em;">YOUR REGISTRATION DETAILS</p>
       <p style="margin:0 0 6px 0; font-size:14px; color:#374151;"><strong>Event:</strong> 2XU Speed Series Basecamp</p>
-      <p style="margin:0 0 6px 0; font-size:14px; color:#374151;"><strong>Location:</strong> Mt. Camisong, Baguio | 1450 MASL</p>
-      <p style="margin:0 0 6px 0; font-size:14px; color:#374151;"><strong>Date:</strong> ${escapeHtml(eventDate)} | <strong>Assembly Time:</strong> ${escapeHtml(assemblyTime)}</p>
+      <p style="margin:0 0 6px 0; font-size:14px; color:#374151;"><strong>Location:</strong> ${escapeHtml(locationNotice)}</p>
+      <p style="margin:0 0 6px 0; font-size:14px; color:#374151;"><strong>Date:</strong> ${escapeHtml(dateDetailsLine)}</p>
       <p style="margin:0 0 6px 0; font-size:14px; color:#374151;"><strong>Race Distance:</strong> ${escapeHtml(raceDistanceLabel)}</p>
       <p style="margin:0 0 6px 0; font-size:14px; color:#374151;"><strong>Order #:</strong> ${escapeHtml(orderLabel)} | <strong>Bib #:</strong> ${escapeHtml(bibLabel)}</p>
       <p style="margin:0; font-size:14px; color:#374151;"><strong>Registration Type:</strong> ${escapeHtml(registrationType)}</p>
@@ -224,22 +232,23 @@ export function buildRegistrationConfirmationEmail({
       ${singletAddOnHtml}
     </ol>
     <p style="margin:24px 0 8px 0; font-weight:bold; color:#1f2937;">YOUR 20% GEAR DISCOUNT</p>
-    <p style="margin:0 0 16px 0; color:#374151;">To prepare, perform, and recover like a Basecamp athlete:</p>
-    <p style="margin:0 0 24px 0;">
-      <a href="${escapeHtml(shopUrl)}" style="display:inline-block; background:#ea580c; color:#ffffff; padding:12px 24px; text-decoration:none; font-weight:bold; border-radius:6px; font-size:14px;">SHOP BASECAMP20 NOW &rarr;</a>
+    <p style="margin:0 0 8px 0; color:#374151;">To prepare, perform, and recover like a Basecamp athlete:</p>
+    <p style="margin:0 0 24px 0; color:#374151;">
+      Unlock Exclusive 2XU Speed Series discount at 20% <a href="${escapeHtml(shopUrl)}" style="color:#ea580c; font-weight:bold;">here</a>
     </p>
     <p style="margin:24px 0 8px 0; font-weight:bold; color:#1f2937;">WHAT HAPPENS NEXT</p>
     <ol style="margin:0 0 20px 0; padding-left:20px; color:#374151;">
       <li style="margin-bottom:8px;"><strong>Kit Pickup:</strong> Basecamp 1 at 2XU Opus | ${escapeHtml(kitPickupDetails)}</li>
-      <li style="margin-bottom:8px;"><strong>Race Day:</strong> Basecamp 2 at Mt. Camisong, Baguio | ${escapeHtml(eventDate)}</li>
-      <li style="margin-bottom:0;"><strong>Updates:</strong> We&rsquo;ll email you final race brief 3 days before</li>
+      <li style="margin-bottom:8px;"><strong>Race Day:</strong> ${escapeHtml(raceDayDetails)}</li>
+      <li style="margin-bottom:0;"><strong>Updates:</strong> ${escapeHtml(raceBriefNotice)}</li>
     </ol>
     <p style="margin:0 0 20px 0; color:#374151;"><strong>Important:</strong> Bring your ID + this confirmation email for kit pickup.</p>
     <p style="margin:0 0 20px 0; color:#374151;">Questions? Reply here or message <a href="${escapeHtml(instagramUrl)}" style="color:#ea580c;">${escapeHtml(instagramHandle)}</a> or WhatsApp ${escapeHtml(contactNumber)}.</p>
+    <p style="margin:0 0 8px 0; color:#374151; font-style:italic;">Human Performance multiplied</p>
     <p style="margin:0 0 8px 0; font-weight:bold; color:#1f2937;">Train High. Start at Basecamp. Be 2X Better.</p>
-    <p>See you on the mountain, ${escapeHtml(firstName)}.</p>
-    <p><strong>2XU Philippines</strong><br/>#2XUSpeedSeries #BasecampVIP</p>
-    <p style="margin-top:20px; font-size:14px; color:#6b7280;"><em>P.S. Get an exclusive 20% discount for the full experience of the brand at <a href="${escapeHtml(shopUrl)}" style="color:#ea580c;">ph.2xu.com</a> (<a href="${escapeHtml(shopUrl)}" style="color:#ea580c;">click here</a>).</em></p>
+    <p style="margin:0 0 16px 0; color:#374151;">See you on the mountain.</p>
+    <p><strong>2XU Philippines</strong><br/>#2XUSpeedSeries #BasecampVIP #2XUspeedSeries #prospexSpeed</p>
+    <p style="margin-top:20px; font-size:14px; color:#6b7280;"><em>P.S. Get an exclusive 20% discount for full experience of the brand at <a href="${escapeHtml(shopUrl)}" style="color:#ea580c;">ph.2XU.com</a></em></p>
   `;
 
   const plainBody = `${preheader}
@@ -254,8 +263,8 @@ Save this email.
 
 YOUR REGISTRATION DETAILS
 Event: 2XU Speed Series Basecamp
-Location: Mt. Camisong, Baguio | 1450 MASL
-Date: ${eventDate} | Assembly Time: ${assemblyTime}
+Location: ${locationNotice}
+Date: ${dateDetailsLine}
 Race Distance: ${raceDistanceLabel}
 Order #: ${orderLabel} | Bib #: ${bibLabel}
 Registration Type: ${registrationType}
@@ -271,26 +280,27 @@ YOUR BASECAMP INCLUDES:
 
 YOUR 20% GEAR DISCOUNT
 To prepare, perform, and recover like a Basecamp athlete:
-SHOP BASECAMP20 NOW → ${shopUrl}
+Unlock Exclusive 2XU Speed Series discount at 20% here: ${shopUrl}
 
 WHAT HAPPENS NEXT
 1. Kit Pickup: Basecamp 1 at 2XU Opus | ${kitPickupDetails}
-2. Race Day: Basecamp 2 at Mt. Camisong, Baguio | ${eventDate}
-3. Updates: We'll email you final race brief 3 days before
+2. Race Day: ${raceDayDetails}
+3. Updates: ${raceBriefNotice}
 
 Important: Bring your ID + this confirmation email for kit pickup.
 
 Questions? Reply here or message ${instagramHandle} or WhatsApp ${contactNumber}.
 
+Human Performance multiplied
 Train High. Start at Basecamp. Be 2X Better.
-See you on the mountain, ${firstName}.
+See you on the mountain.
 
 2XU Philippines
-#2XUSpeedSeries #BasecampVIP
+#2XUSpeedSeries #BasecampVIP #2XUspeedSeries #prospexSpeed
 
-P.S. Get an exclusive 20% discount for the full experience of the brand at ph.2xu.com (${shopUrl})`;
+P.S. Get an exclusive 20% discount for full experience of the brand at ph.2XU.com (${shopUrl})`;
 
-  const subject = 'Basecamp Slot Secured + 20% Gear Code Inside';
+  const subject = '2XU Speed Series Basecamp Slot Secured + 20% Gear Code Inside';
 
   return {
     subject,
