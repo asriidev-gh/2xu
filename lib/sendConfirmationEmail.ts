@@ -172,7 +172,7 @@ export function buildRegistrationConfirmationEmail({
     "We'll email you final race brief a week before";
   const locationNotice =
     process.env.MAILER_BASECAMP_LOCATION_NOTICE?.trim() ||
-    'Final Route will be announced on July 8';
+    'Cordillera Mountain';
   const instagramHandle =
     process.env.MAILER_INSTAGRAM_HANDLE?.trim() || '@SpeedSeriespoweredby2XU';
   const instagramUrl =
