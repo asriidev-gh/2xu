@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
-import { isAdvocatePromoCode, isFcAdvocatePromoCode, FC_ADVOCATE_DISCOUNT_PERCENT } from '@/lib/promoCodes';
+import { isAdvocatePromoCode, isFcAdvocatePromoCode, FC_ADVOCATE_FIXED_PHP } from '@/lib/promoCodes';
 
 export { isAdvocatePromoCode } from '@/lib/promoCodes';
 
@@ -114,7 +114,7 @@ export function buildPaymentProofAdminNotificationHtml({
   const isAdvocate = isAdvocatePromoCode(promo);
   const isFcPromo = isFcAdvocatePromoCode(promo);
   const promoNote = isFcPromo
-    ? `<p><strong>Promo code:</strong> ${escapeHtml(promo)} (${FC_ADVOCATE_DISCOUNT_PERCENT}% discount applied)</p>`
+    ? `<p><strong>Promo code:</strong> ${escapeHtml(promo)} (fixed registration fee ₱${FC_ADVOCATE_FIXED_PHP.toLocaleString('en-PH')})</p>`
     : '';
 
   if (proofUrl) {

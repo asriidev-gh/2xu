@@ -1,6 +1,8 @@
-export const MISSION_STRONG_PROMO = 'MISSIONSTRONG500';
-export const FC_ADVOCATE_DISCOUNT_PERCENT = 20;
+import { VIP_SPEED_RATE_PHP, VIP_SPEED_RATE_USD_DISPLAY } from '@/lib/basecampExperience';
 
+export const MISSION_STRONG_PROMO = 'MISSIONSTRONG500';
+export const FC_ADVOCATE_FIXED_PHP = VIP_SPEED_RATE_PHP;
+export const FC_ADVOCATE_USD_DISPLAY = VIP_SPEED_RATE_USD_DISPLAY;
 const SPS2XU_ADVOCATE_REGEX = /^SPS2XU\d+$/i;
 const SPECIAL_ATHLETES_REGEX = /^SPSUAAPELITE\d+$/i;
 const ATHLETES_CATEGORY = 'ATHLETES CATEGORY';
@@ -19,7 +21,7 @@ export function isAdvocatePromoCode(promo: string): boolean {
   return isSps2xuAdvocatePromoCode(promo);
 }
 
-/** Founders Club codes FC000001–FC000500 (single-use, 20% discount, payment still required). */
+/** Founders Club codes FC000001–FC000500 (single-use, fixed ₱1,500 fee, payment still required). */
 export function isFcAdvocatePromoCode(promo: string): boolean {
   const normalized = normalizePromoCode(promo);
   const match = /^FC(\d{6})$/.exec(normalized);

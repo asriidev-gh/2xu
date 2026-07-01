@@ -407,7 +407,8 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
           style={{ animationDelay: '1s' }}
         >
           Registration fees: Team Category ₱6,000 (group of 4); all other categories by speed distance (2KM
-          ₱1,800 · 5KM ₱2,000 · 10KM ₱2,200). Pricing may be subject to final confirmation.
+          ₱1,800 · 5KM ₱2,000 · 10KM ₱2,200). ₱1,500 VIP Speed Rate available with Founders Club promo codes
+          (FC000001–FC000500). Pricing may be subject to final confirmation.
         </p>
 
         {/* Mission Strong image - end of section */}

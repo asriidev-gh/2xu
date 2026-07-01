@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import ImageLoadProgress from '@/components/ImageLoadProgress';
 import { useImageWithProgress } from '@/lib/useImageWithProgress';
+import { BAGUIO_LEG_IMAGE } from '@/lib/promoImages';
 
 const AUTO_DISMISS_MS = 30_000;
-const IMAGE_SRC = '/images/baguio_leg.jpg';
+const IMAGE_SRC = BAGUIO_LEG_IMAGE;
 
 type HomePromoSplashProps = {
   /** Called when the promo image is tapped (e.g. scroll to registration as Patron). */

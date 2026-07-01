@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { SPEED_SERIES_PDF_URL } from '@/components/SpeedSeriesMechanicsModal';
+import { BasecampExperienceList } from '@/components/BasecampExperienceList';
 
 // Slot machine count-up component (starts when run becomes true, e.g. when in view)
 function CountUp({ end, suffix = '', duration = 2000, delay = 0, run = true }: { end: number; suffix?: string; duration?: number; delay?: number; run?: boolean }) {
@@ -271,7 +272,7 @@ export default function Hero({ onOpenRaceEventsDetails }: HeroProps) {
             </div>
           </motion.h1>
 
-          <motion.div className="relative inline-block px-6 pt-6 pb-4 mb-4 border-2 border-white rounded-lg bg-white/10 backdrop-blur-sm" variants={item}>
+          <motion.div className="relative inline-block px-6 pt-6 pb-4 mb-4 border-2 border-white rounded-lg bg-white/10 backdrop-blur-sm max-w-xl mx-auto" variants={item}>
             <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 px-3 py-0.5 bg-gray-50 border border-white text-black font-druk text-sm font-bold uppercase tracking-wide whitespace-nowrap">
               2XU Speed Run
             </span>
@@ -279,23 +280,12 @@ export default function Hero({ onOpenRaceEventsDetails }: HeroProps) {
               <p className="text-xs sm:text-sm uppercase tracking-[0.25em] text-yellow-400 mb-1">
                 Featured Distance
               </p>
-              <p className="text-2xl sm:text-3xl font-druk font-bold tracking-wide mb-1">
+              <p className="text-2xl sm:text-3xl font-druk font-bold tracking-wide mb-3">
                 2/5/10 KM Speed Run
               </p>
-              <div className="mb-3 text-center">
-                <p className="text-sm sm:text-base font-druk font-bold uppercase tracking-wide text-yellow-400">
-                  Speed Series Basecamp
-                </p>
-                <ul className="mt-2 space-y-1 text-sm text-gray-200 font-sweet-sans">
-                  <li>Trail Run</li>
-                  <li>Green Talk</li>
-                  <li>Recovery Session Coffee</li>
-                  <li>Sports Photography</li>
-                  <li>Navigation Quest</li>
-                </ul>
-              </div>
+              <BasecampExperienceList variant="hero" />
               <hr className="border-white/40 my-3 w-full" />
-              <p className="text-lg sm:text-xl">
+              <p className="text-lg sm:text-xl text-center">
                 BAGUIO<br />
                 <span>
                   July <span className="text-yellow-500">26th</span> 2026

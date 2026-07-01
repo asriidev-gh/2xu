@@ -4,16 +4,17 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Swal from 'sweetalert2';
 import { PUBLIC_RACE_CATEGORY_NAMES, SPEED_DISTANCES, SPEED_DISTANCES_OPTIONS_TEXT } from '@/components/RaceCategoriesSection';
+import { BasecampExperienceList } from '@/components/BasecampExperienceList';
 import { computeRegistrationPaymentAmount } from '@/lib/registrationPaymentAmount';
 import { PUBLIC_RACE_CATEGORY_SET, usesSpeedBasedPricing } from '@/lib/raceCategories';
 import { normalizePhilippinesContact, PH_MOBILE_PREFIX, isPhilippinesContactIncomplete } from '@/lib/normalizePhilippinesContact';
 import {
-  FC_ADVOCATE_DISCOUNT_PERCENT,
   isAdvocatePromoCode,
   isFcAdvocatePromoCode,
   isMissionStrongPromoCode,
   isSpecialAthletesPromoCode,
 } from '@/lib/promoCodes';
+import { formatVipSpeedRatePhp } from '@/lib/basecampExperience';
 
 type RegistrationSectionProps = {
   selectedCategory?: string;
@@ -24,7 +25,7 @@ const T_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 // Promo formats:
 // - Advocate code: SPS2XU + digits (bypasses payment proof)
-// - Founders Club: FC000001–FC000500 (20% discount, payment still required)
+// - Founders Club: FC000001–FC000500 (₱1,500 VIP Speed Rate, payment still required)
 // - Special code: SPSUAAPElite + digits (Athletes Category only)
 const PROMO_MAX_LENGTH = 20;
 
@@ -1005,9 +1006,15 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                           </p>
                         )}
                         {isFcPromoApplied && (
-                          <p className="mt-1 text-xs text-green-700 font-sweet-sans">
-                            Promo code {formData.promoCode.trim().toUpperCase()} applied. {FC_ADVOCATE_DISCOUNT_PERCENT}% discount has been applied.
-                          </p>
+                          <div className="mt-3 rounded-lg border border-green-200 bg-green-50/80 px-3 py-3 text-left">
+                            <p className="text-xs text-green-800 font-sweet-sans">
+                              Promo code {formData.promoCode.trim().toUpperCase()} applied. Registration fee is{' '}
+                              {formatVipSpeedRatePhp()} VIP Speed Rate.
+                            </p>
+                            <div className="mt-3 border-t border-green-200 pt-3">
+                              <BasecampExperienceList variant="registration" showVipRate={false} />
+                            </div>
+                          </div>
                         )}
                         {isMissionStrong500Applied && (
                           <p className="mt-1 text-xs text-green-700 font-sweet-sans">

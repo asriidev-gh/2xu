@@ -6,9 +6,9 @@ import Image from 'next/image';
 import ApparelImageModal from './ApparelImageModal';
 import ImageLoadProgress from '@/components/ImageLoadProgress';
 import { useImageWithProgress } from '@/lib/useImageWithProgress';
+import { BAGUIO_LEG_IMAGE } from '@/lib/promoImages';
 
 const AYALA_RESULTS_IMAGE = '/images/results/speed_series_ayala_makati_results.jpg';
-const BAGUIO_LEG_IMAGE = '/images/baguio_leg.jpg';
 const AYALA_FACEBOOK_EMBED_SRC =
   'https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fweb.facebook.com%2FPHathletesclub%2Fposts%2Fpfbid02aYNHHqNFzfyPW3QJUPDKo5G5q2wKgcSggaLaLS6GGkVcaSsjJBgv5SGNfSrLqR3Pl&show_text=true&width=500';
 
