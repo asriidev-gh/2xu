@@ -168,7 +168,7 @@ export default function Hero({ onOpenRaceEventsDetails }: HeroProps) {
           }}
           aria-label="Background video: 2XU Speed Run"
         >
-          <source src="/images/2xu_banner_vid.mp4" type="video/mp4" />
+          <source src="/video/2xu_promo_vid001.mp4" type="video/mp4" />
         </video>
         {/* Overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/70" />
