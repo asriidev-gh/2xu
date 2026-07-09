@@ -17,7 +17,7 @@ import HomePromoSplash from '@/components/HomePromoSplash';
 
 const REGISTRATION_SCROLL_OFFSET_PX = 80;
 const BAGUIO_PROMO_2XU_URL =
-  'https://ph.2xu.com/?utm_source=facebook&utm_campaign=oneofakindasia&utm_medium=affiliate&fbclid=IwY2xjawSBD4FleHRuA2FlbQIxMQBzcnRjBmFwcF9pZAEwAAEegNhNRzmBdmgPSXUSWdBktsEi6xJ6ITp_xbg7nwsJCeUyWc1RlEgFeHfrIqY_aem_RlyaNvZI403PIfpSrbxbBg';
+  'https://ph.2xu.com/?utm_source=SpeedSeries&utm_medium=referral&utm_campaign=SpeedSeries_20Off&utm_id=SPEEDSERIES20&utm_content=event_registration&fbclid=IwY2xjawS8BDpleHRuA2FlbQIxMABicmlkETE0bmFLNzhub01FTVhlWjJhc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHi45yvzjCT6M3D9ywI5q6nooj95J3R8ZEf84hxEPbxAk1bggXKmrfKSwAtPq_aem_qsYGkP-U4hTUIQP3MsE3mQ';
 
 type HomePageClientProps = {
   promoBaguioLegEnabled: boolean;

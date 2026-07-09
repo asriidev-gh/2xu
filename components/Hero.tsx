@@ -281,7 +281,7 @@ export default function Hero({ onOpenRaceEventsDetails }: HeroProps) {
                 Featured Distance
               </p>
               <p className="text-2xl sm:text-3xl font-druk font-bold tracking-wide mb-3">
-                2/5 KM Speed Run
+                2/5/10 KM Speed Run
               </p>
               <BasecampExperienceList variant="hero" />
               <hr className="border-white/40 my-3 w-full" />
@@ -300,9 +300,9 @@ export default function Hero({ onOpenRaceEventsDetails }: HeroProps) {
               type="button"
               onClick={scrollToRegistration}
               className="w-full sm:w-auto bg-yellow-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-orange-700 transition-all transform hover:scale-105 shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-              aria-label="Register for 2/5 KM Speed Run"
+              aria-label="Register for 2/5/10 KM Speed Run"
             >
-              Register for 2/5 KM Speed Run
+              Register for 2/5/10 KM Speed Run
             </button>
             <button 
               type="button"

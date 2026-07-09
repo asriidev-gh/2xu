@@ -10,8 +10,12 @@ export const FOUNDERS_CATEGORY_USD = '$59';
 export const SPEED_RUN_FLAT_RATE_PHP = 1500;
 export const SPEED_RUN_FLAT_RATE_USD = '$27';
 
+/** Registration fee for 10KM speed option. */
+export const SPEED_RUN_10KM_RATE_PHP = 2200;
+export const SPEED_RUN_10KM_RATE_USD = '$40';
+
 /** Speed distance options (must match API validation and SPEED_DISTANCE_PRICING). */
-export const SPEED_DISTANCES = ['2KM', '5KM'] as const;
+export const SPEED_DISTANCES = ['2KM', '5KM', '10KM'] as const;
 
 export const SPEED_DISTANCE_PRICING: Record<
   (typeof SPEED_DISTANCES)[number],
@@ -19,6 +23,7 @@ export const SPEED_DISTANCE_PRICING: Record<
 > = {
   '2KM': { php: SPEED_RUN_FLAT_RATE_PHP, usd: SPEED_RUN_FLAT_RATE_USD },
   '5KM': { php: SPEED_RUN_FLAT_RATE_PHP, usd: SPEED_RUN_FLAT_RATE_USD },
+  '10KM': { php: SPEED_RUN_10KM_RATE_PHP, usd: SPEED_RUN_10KM_RATE_USD },
 };
 
 export const SPEED_DISTANCES_OPTIONS_TEXT = SPEED_DISTANCES.join(', ');

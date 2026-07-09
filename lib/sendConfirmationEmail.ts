@@ -128,7 +128,7 @@ export function buildPaymentProofAdminNotificationHtml({
 
 function formatRaceDistanceLabel(speedDistance: string): string {
   const normalized = speedDistance.trim().toUpperCase();
-  if (!normalized) return '2KM / 5KM';
+  if (!normalized) return '2KM / 5KM / 10KM';
   return normalized;
 }
 
@@ -143,7 +143,7 @@ function formatRegistrationType(raceCategory: string, promoCode: string): string
 }
 
 const DEFAULT_2XU_SHOP_URL =
-  'https://ph.2xu.com/?utm_source=SpeedSeries&utm_medium=referral&utm_campaign=SpeedSeries_20Off&utm_id=SPEEDSERIES20&utm_content=event_registration';
+  'https://ph.2xu.com/?utm_source=SpeedSeries&utm_medium=referral&utm_campaign=SpeedSeries_20Off&utm_id=SPEEDSERIES20&utm_content=event_registration&fbclid=IwY2xjawS8BDpleHRuA2FlbQIxMABicmlkETE0bmFLNzhub01FTVhlWjJhc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHi45yvzjCT6M3D9ywI5q6nooj95J3R8ZEf84hxEPbxAk1bggXKmrfKSwAtPq_aem_qsYGkP-U4hTUIQP3MsE3mQ';
 
 export function buildRegistrationConfirmationEmail({
   participantName,
@@ -222,7 +222,7 @@ export function buildRegistrationConfirmationEmail({
     </div>
     <p style="margin:24px 0 8px 0; font-weight:bold; color:#1f2937;">YOUR BASECAMP INCLUDES:</p>
     <ol style="margin:0 0 20px 0; padding-left:20px; color:#374151;">
-      <li style="margin-bottom:6px;">2KM / 5KM Altitude Trail Run</li>
+      <li style="margin-bottom:6px;">2KM / 5KM / 10KM Altitude Trail Run</li>
       <li style="margin-bottom:6px;">2XU Recovery Session</li>
       <li style="margin-bottom:6px;">Coffee Camp</li>
       <li style="margin-bottom:6px;">Sports Photography</li>
@@ -270,7 +270,7 @@ Order #: ${orderLabel} | Bib #: ${bibLabel}
 Registration Type: ${registrationType}
 
 YOUR BASECAMP INCLUDES:
-1. 2KM / 5KM Altitude Trail Run
+1. 2KM / 5KM / 10KM Altitude Trail Run
 2. 2XU Recovery Session
 3. Coffee Camp
 4. Sports Photography

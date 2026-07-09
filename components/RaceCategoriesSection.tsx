@@ -13,6 +13,8 @@ import {
   SPEED_DISTANCES_OPTIONS_TEXT,
   SPEED_RUN_FLAT_RATE_PHP,
   SPEED_RUN_FLAT_RATE_USD,
+  SPEED_RUN_10KM_RATE_PHP,
+  SPEED_RUN_10KM_RATE_USD,
   TEAM_CATEGORY_NAME,
   FOUNDERS_CATEGORY_NAME,
   formatPhp,
@@ -28,14 +30,22 @@ function SpeedRunFlatPricing() {
       <p className="text-xs font-semibold uppercase tracking-wider text-orange-300 font-fira-sans">
         Registration fee
       </p>
-      <div className="flex items-baseline gap-2">
-        <p className="text-xl lg:text-2xl font-bold text-yellow-400 font-druk tabular-nums leading-none">
-          {formatPhp(SPEED_RUN_FLAT_RATE_PHP)}
-        </p>
-        <p className="text-sm text-gray-400 font-sweet-sans">2KM or 5KM</p>
+      <div className="space-y-1.5">
+        <div className="flex items-baseline gap-2">
+          <p className="text-xl lg:text-2xl font-bold text-yellow-400 font-druk tabular-nums leading-none">
+            {formatPhp(SPEED_RUN_FLAT_RATE_PHP)}
+          </p>
+          <p className="text-sm text-gray-400 font-sweet-sans">2KM or 5KM</p>
+        </div>
+        <div className="flex items-baseline gap-2">
+          <p className="text-xl lg:text-2xl font-bold text-yellow-400 font-druk tabular-nums leading-none">
+            {formatPhp(SPEED_RUN_10KM_RATE_PHP)}
+          </p>
+          <p className="text-sm text-gray-400 font-sweet-sans">10KM</p>
+        </div>
       </div>
       <p className="text-xs text-gray-400 font-sweet-sans pt-0.5">
-        Approx. {SPEED_RUN_FLAT_RATE_USD} at checkout.
+        Approx. {SPEED_RUN_FLAT_RATE_USD} (2KM/5KM) · {SPEED_RUN_10KM_RATE_USD} (10KM) at checkout.
       </p>
     </div>
   );
@@ -399,7 +409,7 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
           }`}
           style={{ animationDelay: '1s' }}
         >
-          Registration fees: Team Category ₱6,000 (group of 4); all other categories ₱1,500 (2KM or 5KM).{' '}
+          Registration fees: Team Category ₱6,000 (group of 4); 2KM/5KM ₱1,500 · 10KM ₱2,200.{' '}
           {getFcPromoFootnote()} Pricing may be subject to final confirmation.
         </p>
 
