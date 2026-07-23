@@ -1,10 +1,31 @@
 export const TEAM_CATEGORY_NAME = 'Team Category';
 export const FOUNDERS_CATEGORY_NAME = 'Mission Strong Founders Club';
+export const SPEED_CREW_CATEGORY_NAME = '2XU Speed Crew';
 
 export const TEAM_CATEGORY_PHP = 6000;
 export const TEAM_CATEGORY_USD = '$107';
 export const FOUNDERS_CATEGORY_PHP = 3300;
 export const FOUNDERS_CATEGORY_USD = '$59';
+
+/** Optional 2XU race singlet add-on (Speed Participant only). */
+export const SPEED_CREW_SINGLET_PHP = 1200;
+export const SPEED_CREW_SINGLET_USD = '$22';
+/** Singlet rate when registrant is already a Speed Series registrant. */
+export const SPEED_CREW_SINGLET_REGISTRANT_PHP = 750;
+export const SPEED_CREW_SINGLET_REGISTRANT_USD = '$14';
+export const SPEED_CREW_SINGLET_LABEL =
+  '2XU race singlet: ₱1,200 w/ free 2 speed sessions';
+
+export const SPEED_CREW_ROLES = [
+  'Speed Crew',
+  'Speed Challenger',
+  'Speed Advocate/Volunteer',
+  'Speed Participant',
+] as const;
+
+export type SpeedCrewRole = (typeof SPEED_CREW_ROLES)[number];
+export const SPEED_CREW_PARTICIPANT_ROLE: SpeedCrewRole = 'Speed Participant';
+export const SPEED_CREW_ROLES_SET = new Set<string>(SPEED_CREW_ROLES);
 
 /** Flat registration fee for 2KM / 5KM speed options. */
 export const SPEED_RUN_FLAT_RATE_PHP = 1500;
@@ -32,14 +53,59 @@ export function formatPhp(amount: number): string {
   return `₱${amount.toLocaleString('en-PH')}`;
 }
 
+export function isSpeedCrewCategory(raceCategory: string): boolean {
+  return raceCategory.trim() === SPEED_CREW_CATEGORY_NAME;
+}
+
 export function usesSpeedBasedPricing(raceCategory: string): boolean {
   const cat = raceCategory.trim();
-  return cat !== '' && cat !== TEAM_CATEGORY_NAME && cat !== FOUNDERS_CATEGORY_NAME;
+  return (
+    cat !== '' &&
+    cat !== TEAM_CATEGORY_NAME &&
+    cat !== FOUNDERS_CATEGORY_NAME &&
+    cat !== SPEED_CREW_CATEGORY_NAME
+  );
+}
+
+export type SpeedCrewPaymentOptions = {
+  speedCrewRole?: string;
+  speedCrewSingletAddOn?: boolean;
+  isSpeedSeriesRegistrant?: boolean;
+};
+
+/** Speed Crew base registration is free; optional singlet add-on for Speed Participant. */
+export function getSpeedCrewPaymentAmount(
+  options?: SpeedCrewPaymentOptions
+): { phpAmount: number; pricePhp: string; priceUsd: string } {
+  const role = options?.speedCrewRole?.trim() ?? '';
+  if (
+    role === SPEED_CREW_PARTICIPANT_ROLE &&
+    options?.speedCrewSingletAddOn
+  ) {
+    if (options.isSpeedSeriesRegistrant) {
+      return {
+        phpAmount: SPEED_CREW_SINGLET_REGISTRANT_PHP,
+        pricePhp: formatPhp(SPEED_CREW_SINGLET_REGISTRANT_PHP),
+        priceUsd: SPEED_CREW_SINGLET_REGISTRANT_USD,
+      };
+    }
+    return {
+      phpAmount: SPEED_CREW_SINGLET_PHP,
+      pricePhp: formatPhp(SPEED_CREW_SINGLET_PHP),
+      priceUsd: SPEED_CREW_SINGLET_USD,
+    };
+  }
+  return {
+    phpAmount: 0,
+    pricePhp: 'Free',
+    priceUsd: '$0',
+  };
 }
 
 export function getRegistrationBasePrice(
   raceCategory: string,
-  speedDistance?: string
+  speedDistance?: string,
+  speedCrewOptions?: SpeedCrewPaymentOptions
 ): { phpAmount: number; pricePhp: string; priceUsd: string } | null {
   const cat = raceCategory.trim();
   if (!cat) return null;
@@ -58,6 +124,10 @@ export function getRegistrationBasePrice(
       pricePhp: formatPhp(FOUNDERS_CATEGORY_PHP),
       priceUsd: FOUNDERS_CATEGORY_USD,
     };
+  }
+
+  if (cat === SPEED_CREW_CATEGORY_NAME) {
+    return getSpeedCrewPaymentAmount(speedCrewOptions);
   }
 
   const speed = speedDistance?.trim();
@@ -80,12 +150,21 @@ export type RaceCategoryDefinition = {
   kitDescription: string;
   /** Replaces the third entitlement bullet (default: jersey kit disclaimer) */
   kitFooterNote?: string;
-  highlight?: 'popular' | 'best-value' | 'youth' | 'community' | 'team' | 'duo' | 'founders';
+  highlight?: 'popular' | 'best-value' | 'youth' | 'community' | 'team' | 'duo' | 'founders' | 'crew';
   /** Hidden from public race cards and registration form (dashboard still lists all). */
   hiddenFromRegistration?: boolean;
 };
 
 export const raceCategories: RaceCategoryDefinition[] = [
+  {
+    name: SPEED_CREW_CATEGORY_NAME,
+    ageGroup: 'Crew · Challenger · Advocate · Participant',
+    pricePhp: 'Free',
+    priceUsd: '$0',
+    kitDescription: '',
+    kitFooterNote: '',
+    highlight: 'crew',
+  },
   {
     name: 'Youth Category',
     ageGroup: 'Ages 12 – 25',

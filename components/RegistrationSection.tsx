@@ -6,7 +6,14 @@ import Swal from 'sweetalert2';
 import { PUBLIC_RACE_CATEGORY_NAMES, SPEED_DISTANCES, SPEED_DISTANCES_OPTIONS_TEXT } from '@/components/RaceCategoriesSection';
 import { BasecampExperienceList } from '@/components/BasecampExperienceList';
 import { computeRegistrationPaymentAmount } from '@/lib/registrationPaymentAmount';
-import { PUBLIC_RACE_CATEGORY_SET, usesSpeedBasedPricing } from '@/lib/raceCategories';
+import {
+  PUBLIC_RACE_CATEGORY_SET,
+  SPEED_CREW_PARTICIPANT_ROLE,
+  SPEED_CREW_ROLES,
+  SPEED_CREW_SINGLET_LABEL,
+  isSpeedCrewCategory,
+  usesSpeedBasedPricing,
+} from '@/lib/raceCategories';
 import { normalizePhilippinesContact, PH_MOBILE_PREFIX, isPhilippinesContactIncomplete } from '@/lib/normalizePhilippinesContact';
 import {
   isAdvocatePromoCode,
@@ -45,6 +52,9 @@ function createInitialFormData() {
     birthday: b,
     raceCategory: '',
     speedDistance: '',
+    speedCrewRole: '',
+    speedCrewSingletAddOn: false,
+    isSpeedSeriesRegistrant: false,
     affiliations: '',
     promotional: false,
     waiverAccepted: false,
@@ -101,6 +111,8 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
 
   const isTeam = formData.raceCategory === 'Team Category';
   const isDuo = formData.raceCategory === 'The Speed Duo - 2XU pair';
+  const isSpeedCrew = isSpeedCrewCategory(formData.raceCategory);
+  const isSpeedParticipant = formData.speedCrewRole === SPEED_CREW_PARTICIPANT_ROLE;
   const isGroupCategory = isTeam || isDuo;
   const memberKeys = (isTeam ? [1, 2, 3, 4] : isDuo ? [1, 2] : []) as Array<1 | 2 | 3 | 4>;
   const isSpecialPromoApplied =
@@ -114,16 +126,30 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
     ? computeRegistrationPaymentAmount(
         formData.raceCategory,
         promoForPayment,
-        formData.speedDistance
+        formData.speedDistance,
+        isSpeedCrew
+          ? {
+              speedCrewRole: formData.speedCrewRole,
+              speedCrewSingletAddOn: formData.speedCrewSingletAddOn,
+              isSpeedSeriesRegistrant: formData.isSpeedSeriesRegistrant,
+            }
+          : undefined
       )
     : null;
   const needsSpeedForPrice =
     !!formData.raceCategory && usesSpeedBasedPricing(formData.raceCategory) && !formData.speedDistance;
-  const finalPricePhpDisplay = paymentAmount ? `₱${paymentAmount.phpAmount.toLocaleString('en-PH')}` : '';
+  const finalPricePhpDisplay = paymentAmount
+    ? paymentAmount.phpAmount === 0
+      ? 'Free'
+      : `₱${paymentAmount.phpAmount.toLocaleString('en-PH')}`
+    : '';
   const finalPriceUsdDisplay = paymentAmount?.usdDisplay ?? '';
   const hasValidAdvocateCode =
     promoCodeValid === true && isAdvocatePromoCode(formData.promoCode);
-  const requiresPaymentProof = !hasValidAdvocateCode;
+  // Speed Crew is free unless optional singlet add-on is selected; all other categories require proof.
+  const requiresPaymentProof =
+    !hasValidAdvocateCode &&
+    !(isSpeedCrew && (paymentAmount?.phpAmount ?? 0) === 0);
   const paymentProofComplete = formData.paymentProofSent || paymentProofUrl.trim().length > 0;
   const submitBlockedByPayment = requiresPaymentProof && !paymentProofComplete;
 
@@ -138,6 +164,9 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
         ...prev,
         raceCategory: selectedCategory,
         promoCode: '',
+        speedCrewRole: '',
+        speedCrewSingletAddOn: false,
+        isSpeedSeriesRegistrant: false,
       };
     });
     if (categoryChanged) {
@@ -187,6 +216,15 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
       // Validate on blur only; while typing, clear previous validation state.
       setPromoCodeValid(null);
       setPromoCodeError('');
+      return;
+    }
+
+    if (name === 'speedCrewSingletAddOn') {
+      setFormData((prev) => ({
+        ...prev,
+        speedCrewSingletAddOn: checked,
+        ...(checked ? {} : { isSpeedSeriesRegistrant: false }),
+      }));
       return;
     }
 
@@ -307,7 +345,11 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
 
   const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'isSpeedSeriesRegistrant') {
+      setFormData((prev) => ({ ...prev, isSpeedSeriesRegistrant: value === 'yes' }));
+      return;
+    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -315,10 +357,26 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
     let categoryChanged = false;
     setFormData((prev) => {
       categoryChanged = name === 'raceCategory' && value !== prev.raceCategory;
+      const roleChanged = name === 'speedCrewRole' && value !== prev.speedCrewRole;
+      const leavingParticipant =
+        roleChanged && prev.speedCrewRole === SPEED_CREW_PARTICIPANT_ROLE;
       return {
         ...prev,
         [name]: value,
-        ...(categoryChanged ? { promoCode: '' } : {}),
+        ...(categoryChanged
+          ? {
+              promoCode: '',
+              speedCrewRole: '',
+              speedCrewSingletAddOn: false,
+              isSpeedSeriesRegistrant: false,
+            }
+          : {}),
+        ...(leavingParticipant || (roleChanged && value !== SPEED_CREW_PARTICIPANT_ROLE)
+          ? {
+              speedCrewSingletAddOn: false,
+              isSpeedSeriesRegistrant: false,
+            }
+          : {}),
       };
     });
     if (categoryChanged) {
@@ -350,6 +408,18 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
             : paymentProofMethod === 'email'
               ? 'Please check the box confirming you already emailed your proof of payment.'
               : 'Please upload your payment screenshot before submitting.',
+        icon: 'warning',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#ea580c',
+        customClass: { confirmButton: 'font-fira-sans' },
+      });
+      return;
+    }
+
+    if (isSpeedCrewCategory(formData.raceCategory) && !formData.speedCrewRole.trim()) {
+      await Swal.fire({
+        title: 'Speed Crew category required',
+        text: 'Please select your 2XU Speed Crew category.',
         icon: 'warning',
         confirmButtonText: 'OK',
         confirmButtonColor: '#ea580c',
@@ -598,6 +668,104 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                         </option>
                       ))}
                     </select>
+                  </div>
+                )}
+
+                {isSpeedCrew && (
+                  <div className="space-y-4 rounded-xl border-2 border-orange-200 bg-orange-50/50 p-4 sm:p-5">
+                    <div>
+                      <label
+                        htmlFor="speedCrewRole"
+                        className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans"
+                      >
+                        2XU Speed Crew category <span className="text-orange-600">*</span>
+                      </label>
+                      <select
+                        id="speedCrewRole"
+                        name="speedCrewRole"
+                        value={formData.speedCrewRole}
+                        onChange={handleSelectChange}
+                        required
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all font-sweet-sans text-gray-900 bg-white"
+                      >
+                        <option value="">Select category</option>
+                        {SPEED_CREW_ROLES.map((role) => (
+                          <option key={role} value={role}>
+                            {role}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {isSpeedParticipant && (
+                      <div className="space-y-4">
+                        <div className="flex items-start">
+                          <div className="flex items-center h-5 shrink-0">
+                            <input
+                              type="checkbox"
+                              id="speedCrewSingletAddOn"
+                              name="speedCrewSingletAddOn"
+                              checked={formData.speedCrewSingletAddOn}
+                              onChange={handleInputChange}
+                              className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500 focus:ring-2"
+                            />
+                          </div>
+                          <label
+                            htmlFor="speedCrewSingletAddOn"
+                            className="ml-3 text-sm text-gray-800 font-sweet-sans cursor-pointer"
+                          >
+                            {SPEED_CREW_SINGLET_LABEL}
+                          </label>
+                        </div>
+
+                        {formData.speedCrewSingletAddOn && (
+                          <div>
+                            <p className="block text-sm font-semibold text-gray-700 mb-2 font-fira-sans">
+                              Are you a Speed Series registrant? <span className="text-orange-600">*</span>
+                            </p>
+                            <div className="flex gap-6">
+                              <label className="flex items-center cursor-pointer group">
+                                <input
+                                  type="radio"
+                                  name="isSpeedSeriesRegistrant"
+                                  value="yes"
+                                  checked={formData.isSpeedSeriesRegistrant === true}
+                                  onChange={handleRadioChange}
+                                  className="w-5 h-5 text-orange-600 border-gray-300 focus:ring-orange-500 focus:ring-2"
+                                />
+                                <span className="ml-2 text-gray-700 font-sweet-sans group-hover:text-orange-600 transition-colors">
+                                  Yes
+                                </span>
+                              </label>
+                              <label className="flex items-center cursor-pointer group">
+                                <input
+                                  type="radio"
+                                  name="isSpeedSeriesRegistrant"
+                                  value="no"
+                                  checked={formData.isSpeedSeriesRegistrant === false}
+                                  onChange={handleRadioChange}
+                                  className="w-5 h-5 text-orange-600 border-gray-300 focus:ring-orange-500 focus:ring-2"
+                                />
+                                <span className="ml-2 text-gray-700 font-sweet-sans group-hover:text-orange-600 transition-colors">
+                                  No
+                                </span>
+                              </label>
+                            </div>
+                            <p className="mt-2 text-xs text-gray-600 font-sweet-sans">
+                              {formData.isSpeedSeriesRegistrant
+                                ? 'Singlet add-on: ₱750 for Speed Series registrants.'
+                                : 'Singlet add-on: ₱1,200 (includes free 2 speed sessions).'}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {formData.speedCrewRole && (paymentAmount?.phpAmount ?? 0) === 0 && (
+                      <p className="text-sm text-green-700 font-sweet-sans font-semibold">
+                        Registration fee: Free — no payment required.
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -1010,10 +1178,19 @@ export default function RegistrationSection({ selectedCategory = '', onCategoryA
                       <div className="rounded-lg bg-white border border-orange-200 px-4 py-3">
                         <p className="text-xl font-bold text-orange-600 font-druk">
                           {finalPricePhpDisplay}
-                          <span className="text-base font-sweet-sans font-normal text-gray-600 ml-2">
-                            (approx. {finalPriceUsdDisplay} USD)
-                          </span>
+                          {paymentAmount.phpAmount > 0 && (
+                            <span className="text-base font-sweet-sans font-normal text-gray-600 ml-2">
+                              (approx. {finalPriceUsdDisplay} USD)
+                            </span>
+                          )}
                         </p>
+                        {isSpeedCrew && formData.speedCrewSingletAddOn && (
+                          <p className="mt-1 text-xs text-gray-600 font-sweet-sans">
+                            {formData.isSpeedSeriesRegistrant
+                              ? 'Speed Series registrant singlet rate applied.'
+                              : 'Includes free 2 speed sessions with singlet add-on.'}
+                          </p>
+                        )}
                         {isSpecialPromoApplied && (
                           <p className="mt-1 text-xs text-green-700 font-sweet-sans">
                             Promo code SPSUAAPElite applied.

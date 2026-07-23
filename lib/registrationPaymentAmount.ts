@@ -1,4 +1,4 @@
-import { getRegistrationBasePrice } from '@/lib/raceCategories';
+import { getRegistrationBasePrice, type SpeedCrewPaymentOptions } from '@/lib/raceCategories';
 import {
   getFcAdvocatePricing,
   isFcAdvocatePromoCode,
@@ -22,9 +22,10 @@ export function formatRaceCategoryLabel(raceCategory: string, speedDistance?: st
 export function computeRegistrationPaymentAmount(
   raceCategory: string,
   promoCode = '',
-  speedDistance = ''
+  speedDistance = '',
+  speedCrewOptions?: SpeedCrewPaymentOptions
 ): RegistrationPaymentAmount | null {
-  const basePrice = getRegistrationBasePrice(raceCategory, speedDistance);
+  const basePrice = getRegistrationBasePrice(raceCategory, speedDistance, speedCrewOptions);
   if (!basePrice) return null;
 
   const basePhpAmount = basePrice.phpAmount;

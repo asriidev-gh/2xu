@@ -15,7 +15,7 @@ export default function PartnersSection() {
   const [marqueePaused, setMarqueePaused] = useState(false);
 
   const partners: Partner[] = [
-    { name: '2XU', image: '/images/2xu-logo.avif', url: 'https://ph.2xu.com/' },
+    { name: '2XU', image: '/images/2xu-logo.avif', url: 'https://ph.2xu.com/?utm_source=SpeedSeries&utm_medium=referral&utm_campaign=SpeedSeries_20Off&utm_id=SPEEDSERIES20&utm_content=event_registration&fbclid=IwY2xjawS8BDpleHRuA2FlbQIxMABicmlkETE0bmFLNzhub01FTVhlWjJhc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHi45yvzjCT6M3D9ywI5q6nooj95J3R8ZEf84hxEPbxAk1bggXKmrfKSwAtPq_aem_qsYGkP-U4hTUIQP3MsE3mQ' },
     { name: 'Mastercard', image: '/images/partner-mastercard.png' },
     { name: 'Pocari Sweat', image: '/images/partner-pocarisweat.webp' },
     { name: 'Without Limits', image: '/images/partner-withoutlimits.jpg' },
@@ -81,7 +81,7 @@ export default function PartnersSection() {
               Presented by
             </span> */}
             <a
-              href="https://ph.2xu.com/"
+              href="https://ph.2xu.com/?utm_source=SpeedSeries&utm_medium=referral&utm_campaign=SpeedSeries_20Off&utm_id=SPEEDSERIES20&utm_content=event_registration&fbclid=IwY2xjawS8BDpleHRuA2FlbQIxMABicmlkETE0bmFLNzhub01FTVhlWjJhc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHi45yvzjCT6M3D9ywI5q6nooj95J3R8ZEf84hxEPbxAk1bggXKmrfKSwAtPq_aem_qsYGkP-U4hTUIQP3MsE3mQ"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center rounded-xl transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"

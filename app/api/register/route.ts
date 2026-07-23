@@ -15,7 +15,7 @@ import {
   normalizePhilippinesContact,
   isPhilippinesContactIncomplete,
 } from '@/lib/normalizePhilippinesContact';
-import { PUBLIC_RACE_CATEGORY_SET, SPEED_DISTANCES_ALLOWED, SPEED_DISTANCES_OPTIONS_TEXT } from '@/lib/raceCategories';
+import { PUBLIC_RACE_CATEGORY_SET, SPEED_DISTANCES_ALLOWED, SPEED_DISTANCES_OPTIONS_TEXT, SPEED_CREW_ROLES_SET, SPEED_CREW_PARTICIPANT_ROLE, isSpeedCrewCategory, getSpeedCrewPaymentAmount } from '@/lib/raceCategories';
 import {
   isAcceptedPromoCode,
   isAdvocatePromoCode,
@@ -57,12 +57,19 @@ export async function POST(request: NextRequest) {
       speedDistance: speedDistanceInput,
       paymentProofSent: paymentProofSentInput,
       paymentProofUrl: paymentProofUrlInput,
+      speedCrewRole: speedCrewRoleInput,
+      speedCrewSingletAddOn: speedCrewSingletAddOnInput,
+      isSpeedSeriesRegistrant: isSpeedSeriesRegistrantInput,
       clientContext,
     } = body;
 
     const paymentProofSent = paymentProofSentInput === true;
     const paymentProofUrlRaw =
       paymentProofUrlInput != null ? String(paymentProofUrlInput).trim() : '';
+    const speedCrewRole =
+      speedCrewRoleInput != null ? String(speedCrewRoleInput).trim() : '';
+    const speedCrewSingletAddOn = speedCrewSingletAddOnInput === true;
+    const isSpeedSeriesRegistrant = isSpeedSeriesRegistrantInput === true;
 
     // Validate required fields
     if (!email || !raceCategory) {
@@ -98,6 +105,28 @@ export async function POST(request: NextRequest) {
         },
         { status: 400 }
       );
+    }
+
+    const isSpeedCrew = isSpeedCrewCategory(raceCategoryTrimmed);
+    if (isSpeedCrew) {
+      if (!SPEED_CREW_ROLES_SET.has(speedCrewRole)) {
+        return NextResponse.json(
+          { error: 'Please select a valid 2XU Speed Crew category.' },
+          { status: 400 }
+        );
+      }
+      if (speedCrewRole !== SPEED_CREW_PARTICIPANT_ROLE && speedCrewSingletAddOn) {
+        return NextResponse.json(
+          { error: 'Singlet add-on is only available for Speed Participant.' },
+          { status: 400 }
+        );
+      }
+      if (!speedCrewSingletAddOn && isSpeedSeriesRegistrant) {
+        return NextResponse.json(
+          { error: 'Speed Series registrant option applies only with the singlet add-on.' },
+          { status: 400 }
+        );
+      }
     }
 
     const isTeam = raceCategory === 'Team Category';
@@ -216,7 +245,15 @@ export async function POST(request: NextRequest) {
     }
 
     const isAdvocateRegistrant = isAdvocatePromoCode(savedPromo);
-    if (!isAdvocateRegistrant && !paymentProofSent && !paymentProofUrl) {
+    const speedCrewAmountDue = isSpeedCrew
+      ? getSpeedCrewPaymentAmount({
+          speedCrewRole,
+          speedCrewSingletAddOn,
+          isSpeedSeriesRegistrant,
+        }).phpAmount
+      : null;
+    const isFreeSpeedCrewRegistration = isSpeedCrew && (speedCrewAmountDue ?? 0) === 0;
+    if (!isAdvocateRegistrant && !isFreeSpeedCrewRegistration && !paymentProofSent && !paymentProofUrl) {
       return NextResponse.json(
         {
           error:
@@ -378,6 +415,14 @@ export async function POST(request: NextRequest) {
       updatedAt: now,
     };
     doc.speedDistance = speedDistance;
+    if (isSpeedCrew) {
+      doc.speedCrewRole = speedCrewRole;
+      doc.speedCrewSingletAddOn =
+        speedCrewRole === SPEED_CREW_PARTICIPANT_ROLE && speedCrewSingletAddOn;
+      doc.isSpeedSeriesRegistrant =
+        doc.speedCrewSingletAddOn === true && isSpeedSeriesRegistrant;
+      doc.amountDuePhp = speedCrewAmountDue ?? 0;
+    }
     const result = await collection.insertOne(doc);
 
     // Send confirmation email to registrant via SMTP (best-effort)
@@ -389,6 +434,15 @@ export async function POST(request: NextRequest) {
       paymentProofUrl,
       orderNumber: String(registrationId),
       bibNumber,
+      speedCrewRole: isSpeedCrew ? speedCrewRole : undefined,
+      speedCrewSingletAddOn: isSpeedCrew
+        ? speedCrewRole === SPEED_CREW_PARTICIPANT_ROLE && speedCrewSingletAddOn
+        : undefined,
+      isSpeedSeriesRegistrant:
+        isSpeedCrew && speedCrewRole === SPEED_CREW_PARTICIPANT_ROLE && speedCrewSingletAddOn
+          ? isSpeedSeriesRegistrant
+          : undefined,
+      amountDuePhp: isSpeedCrew ? speedCrewAmountDue ?? 0 : undefined,
     });
     await collection.updateOne(
       { _id: result.insertedId },
@@ -431,6 +485,20 @@ export async function POST(request: NextRequest) {
           <p><strong>Birthday:</strong> ${escapeHtml(birthday)}</p>
           <p><strong>Race Experience:</strong> ${escapeHtml(raceCategory)}</p>
           <p><strong>Speed option:</strong> ${escapeHtml(speedDistance)}</p>
+          ${
+            isSpeedCrew
+              ? `<p><strong>Speed Crew category:</strong> ${escapeHtml(speedCrewRole)}</p>
+          <p><strong>Singlet add-on:</strong> ${
+            speedCrewRole === SPEED_CREW_PARTICIPANT_ROLE && speedCrewSingletAddOn ? 'Yes' : 'No'
+          }</p>
+          ${
+            speedCrewRole === SPEED_CREW_PARTICIPANT_ROLE && speedCrewSingletAddOn
+              ? `<p><strong>Speed Series registrant:</strong> ${isSpeedSeriesRegistrant ? 'Yes' : 'No'}</p>
+          <p><strong>Amount due:</strong> ₱${(speedCrewAmountDue ?? 0).toLocaleString('en-PH')}</p>`
+              : '<p><strong>Amount due:</strong> Free</p>'
+          }`
+              : ''
+          }
           ${affiliations ? `<p><strong>Affiliations:</strong> ${escapeHtml(affiliations)}</p>` : ''}
           <p><strong>T-shirt Size:</strong> ${escapeHtml(String(tShirtSize || ''))}</p>
           ${buildPaymentProofAdminNotificationHtml({

@@ -194,14 +194,22 @@ export default function Hero({ onOpenRaceEventsDetails }: HeroProps) {
           <motion.div className="mb-2 flex justify-center relative" variants={imageBlock}>
             <div className="relative inline-block overflow-hidden">
               <motion.div className="overflow-hidden" variants={rippleReveal}>
-                <Image
-                  src="/images/speed_run2.png"
-                  alt="Speed Run"
-                  width={550}
-                  height={200}
-                  className="h-auto max-w-full block"
-                  priority
-                />
+                <a
+                  href="https://ph.2xu.com/?utm_source=SpeedSeries&utm_medium=referral&utm_campaign=SpeedSeries_20Off&utm_id=SPEEDSERIES20&utm_content=event_registration&fbclid=IwY2xjawS8BDpleHRuA2FlbQIxMABicmlkETE0bmFLNzhub01FTVhlWjJhc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHi45yvzjCT6M3D9ywI5q6nooj95J3R8ZEf84hxEPbxAk1bggXKmrfKSwAtPq_aem_qsYGkP-U4hTUIQP3MsE3mQ"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+                  aria-label="2XU Philippines — opens in new tab"
+                >
+                  <Image
+                    src="/images/speed_run2.png"
+                    alt="Speed Run"
+                    width={550}
+                    height={200}
+                    className="h-auto max-w-full block"
+                    priority
+                  />
+                </a>
               </motion.div>
               {/* Scan line sweep — thin bright line travels down (CodePen-style effect) */}
               <motion.div

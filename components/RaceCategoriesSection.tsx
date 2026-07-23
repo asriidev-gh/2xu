@@ -17,6 +17,7 @@ import {
   SPEED_RUN_10KM_RATE_USD,
   TEAM_CATEGORY_NAME,
   FOUNDERS_CATEGORY_NAME,
+  SPEED_CREW_CATEGORY_NAME,
   formatPhp,
   type RaceCategoryDefinition,
 } from '@/lib/raceCategories';
@@ -48,6 +49,21 @@ function SpeedRunFlatPricing() {
         Approx. {SPEED_RUN_FLAT_RATE_USD} (2KM/5KM) · {SPEED_RUN_10KM_RATE_USD} (10KM) at checkout.
       </p>
     </div>
+  );
+}
+
+function FreeCategoryPricing() {
+  return (
+    <>
+      <div className="flex items-baseline gap-2">
+        <span className="text-3xl lg:text-4xl font-bold text-yellow-400 font-druk tabular-nums">
+          Free
+        </span>
+      </div>
+      <p className="mt-1 text-sm text-gray-300 font-sweet-sans">
+        No registration fee. Optional singlet add-on for Speed Participant.
+      </p>
+    </>
   );
 }
 
@@ -84,13 +100,15 @@ function getHighlightLabel(highlight?: RaceCategoryDefinition['highlight']) {
       return 'Group of 2 runners';
     case 'founders':
       return 'Founders Club';
+    case 'crew':
+      return 'Free Entry';
     default:
       return null;
   }
 }
 
 function isPremiumRaceCardHighlight(h?: RaceCategoryDefinition['highlight']) {
-  return h === 'team' || h === 'duo' || h === 'founders';
+  return h === 'team' || h === 'duo' || h === 'founders' || h === 'crew';
 }
 
 type RaceCategoriesSectionProps = {
@@ -223,6 +241,7 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
           {publicRaceCategories.map((category, index) => {
             const highlightLabel = getHighlightLabel(category.highlight);
+            const isCrewCard = category.name === SPEED_CREW_CATEGORY_NAME;
 
             return (
               <div
@@ -241,7 +260,9 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
                   }
                 }}
                 className={`group relative h-full rounded-2xl border backdrop-blur-md p-6 lg:p-7 shadow-2xl transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:ring-offset-2 focus:ring-offset-gray-900 ${
-                  isPremiumRaceCardHighlight(category.highlight)
+                  isCrewCard
+                    ? 'col-span-1 md:col-span-2 xl:col-span-3 border-orange-400 bg-gradient-to-br from-orange-500/30 via-orange-600/10 to-yellow-500/20 hover:border-yellow-400 hover:shadow-[0_0_40px_rgba(249,115,22,0.35)] ring-2 ring-orange-400/50 hover:scale-[1.01]'
+                    : isPremiumRaceCardHighlight(category.highlight)
                     ? 'border-orange-400/70 bg-gradient-to-br from-orange-500/20 via-white/5 to-yellow-500/15 hover:border-orange-400 hover:shadow-xl'
                     : 'border-white/10 bg-white/5 hover:border-orange-400/80 hover:bg-white/10'
                 } ${isVisible ? 'animate-fade-in' : 'animate-fade-out opacity-0'}`}
@@ -249,25 +270,30 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
               >
                 {/* Glow accent */}
                 <div className={`pointer-events-none absolute inset-0 rounded-2xl transition-opacity duration-300 ${
-                  isPremiumRaceCardHighlight(category.highlight)
+                  isCrewCard
+                    ? 'opacity-100 bg-gradient-to-br from-orange-400/25 via-transparent to-yellow-400/20'
+                    : isPremiumRaceCardHighlight(category.highlight)
                     ? 'opacity-100 bg-gradient-to-br from-orange-500/20 via-transparent to-yellow-400/15'
                     : 'opacity-0 group-hover:opacity-100 bg-gradient-to-br from-orange-500/15 via-transparent to-yellow-400/10'
                 }`} />
 
-                <div className="relative z-10 flex flex-col h-full">
+                <div className={`relative z-10 flex flex-col h-full ${isCrewCard ? 'lg:grid lg:grid-cols-[1fr_1.2fr] lg:gap-8 lg:items-stretch' : ''}`}>
+                  <div className={isCrewCard ? 'flex flex-col' : 'contents'}>
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h3 className="text-xl lg:text-2xl font-bold text-white font-druk">
+                      <h3 className={`font-bold text-white font-druk ${isCrewCard ? 'text-2xl lg:text-3xl' : 'text-xl lg:text-2xl'}`}>
                         {category.name}
                       </h3>
-                      <p className={`mt-1 text-sm font-sweet-sans ${isPremiumRaceCardHighlight(category.highlight) ? 'text-orange-300 font-semibold' : 'text-gray-300'}`}>
+                      <p className={`mt-1 text-sm font-sweet-sans ${isPremiumRaceCardHighlight(category.highlight) || isCrewCard ? 'text-orange-300 font-semibold' : 'text-gray-300'}`}>
                         {category.ageGroup}
                       </p>
                     </div>
                     {highlightLabel && (
                       <span
                         className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold font-fira-sans uppercase tracking-wide shadow-md ${
-                          isPremiumRaceCardHighlight(category.highlight)
+                          isCrewCard
+                            ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 ring-2 ring-yellow-300/60 animate-pulse'
+                            : isPremiumRaceCardHighlight(category.highlight)
                             ? 'bg-gradient-to-r from-orange-500 to-orange-400 text-white ring-2 ring-orange-300/50'
                             : category.highlight === 'best-value'
                             ? 'bg-yellow-400 text-gray-900'
@@ -279,6 +305,11 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
                             <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                           </svg>
                         )}
+                        {category.highlight === 'crew' && (
+                          <svg className="w-3.5 h-3.5 mr-1.5 text-gray-900" fill="currentColor" viewBox="0 0 20 20" aria-hidden>
+                            <path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" />
+                          </svg>
+                        )}
                         {highlightLabel}
                       </span>
                     )}
@@ -286,7 +317,9 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
 
                   {/* Pricing */}
                   <div className="mb-4">
-                    {category.name === TEAM_CATEGORY_NAME || category.name === FOUNDERS_CATEGORY_NAME ? (
+                    {category.name === SPEED_CREW_CATEGORY_NAME ? (
+                      <FreeCategoryPricing />
+                    ) : category.name === TEAM_CATEGORY_NAME || category.name === FOUNDERS_CATEGORY_NAME ? (
                       <FixedCategoryPricing
                         pricePhp={category.pricePhp}
                         priceUsd={category.priceUsd}
@@ -294,6 +327,18 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
                     ) : (
                       <SpeedRunFlatPricing />
                     )}
+                  </div>
+
+                  {isCrewCard && (
+                    <div className="mt-auto hidden lg:block pt-2">
+                      <span className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-yellow-500 px-5 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-lg transition-transform group-hover:scale-[1.02] font-fira-sans">
+                        Sign up now
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                      </span>
+                    </div>
+                  )}
                   </div>
 
                   {/* Entitlements */}
@@ -363,6 +408,42 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
                         </p>
                       </div>
                     </div>
+                  ) : category.name === SPEED_CREW_CATEGORY_NAME ? (
+                    <div className="mt-2 space-y-3 text-left lg:mt-0">
+                      <div className="rounded-xl border border-yellow-400/40 bg-gradient-to-br from-orange-500/25 to-black/50 p-4 shadow-inner h-full">
+                        <p className="text-sm font-bold tracking-wide text-yellow-300 font-druk mb-3">CATEGORIES</p>
+                        <ul className="space-y-2.5 text-sm text-gray-100 font-sweet-sans leading-snug">
+                          <li className="flex gap-2">
+                            <span className="shrink-0 mt-0.5 h-2 w-2 rounded-full bg-yellow-400" aria-hidden />
+                            <span>
+                              <span className="font-semibold text-white">Speed Crew</span>
+                              <span className="text-gray-300"> — free shirt</span>
+                            </span>
+                          </li>
+                          <li className="flex gap-2">
+                            <span className="shrink-0 mt-0.5 h-2 w-2 rounded-full bg-yellow-400" aria-hidden />
+                            <span>
+                              <span className="font-semibold text-white">Speed Challenger</span>
+                              <span className="text-gray-300"> — free shirt</span>
+                            </span>
+                          </li>
+                          <li className="flex gap-2">
+                            <span className="shrink-0 mt-0.5 h-2 w-2 rounded-full bg-orange-400" aria-hidden />
+                            <span>
+                              <span className="font-semibold text-white">Speed Advocate / Volunteer</span>
+                              <span className="text-gray-300"> — free singlet</span>
+                            </span>
+                          </li>
+                          <li className="flex gap-2">
+                            <span className="shrink-0 mt-0.5 h-2 w-2 rounded-full bg-gray-300" aria-hidden />
+                            <span>
+                              <span className="font-semibold text-white">Speed Participant</span>
+                              <span className="text-gray-300"> — optional singlet</span>
+                            </span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
                   ) : (
                     <div className="mt-2 space-y-2">
                       {category.kitValueLabel && (
@@ -390,11 +471,26 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
                   )}
 
                   {/* Subtle footer accent */}
-                  <div className="mt-5 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-gray-400 font-sweet-sans">
-                    <span>Slots are limited per category.</span>
-                    <span className="hidden sm:inline-block text-[11px] uppercase tracking-wide">
-                      Secure your spot early
-                    </span>
+                  <div className={`mt-5 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-gray-400 font-sweet-sans ${isCrewCard ? 'lg:col-span-2' : ''}`}>
+                    {isCrewCard ? (
+                      <>
+                        <span className="lg:hidden">Slots are limited per category.</span>
+                        <span className="hidden lg:inline">Slots are limited per category — join the crew.</span>
+                        <span className="inline-flex lg:hidden items-center gap-1.5 rounded-xl bg-gradient-to-r from-orange-500 to-yellow-500 px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-md font-fira-sans">
+                          Sign up now
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                          </svg>
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Slots are limited per category.</span>
+                        <span className="hidden sm:inline-block text-[11px] uppercase tracking-wide">
+                          Secure your spot early
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -409,7 +505,9 @@ export default function RaceCategoriesSection({ onSelectCategory, onOpenRaceEven
           }`}
           style={{ animationDelay: '1s' }}
         >
-          Registration fees: Team Category ₱6,000 (group of 4); 2KM/5KM ₱1,500 · 10KM ₱2,200.{' '}
+          Registration fees: Team Category ₱6,000 (group of 4); 2KM/5KM ₱1,500 · 10KM ₱2,200.
+          2XU Speed Crew registration is free (optional Speed Participant singlet ₱1,200 / ₱750 for Speed Series
+          registrants).{' '}
           {getFcPromoFootnote()} Pricing may be subject to final confirmation.
         </p>
 

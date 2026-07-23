@@ -32,6 +32,10 @@ interface User {
   birthday: string;
   raceCategory: string;
   speedDistance?: string;
+  speedCrewRole?: string;
+  speedCrewSingletAddOn?: boolean;
+  isSpeedSeriesRegistrant?: boolean;
+  amountDuePhp?: number;
   affiliations: string;
   promotional: boolean;
   promoCode?: string;
@@ -67,10 +71,16 @@ const T_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const dashboardFieldClass =
   'w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 shadow-sm font-sweet-sans text-sm transition-colors hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500/25 focus:border-orange-500';
 
-function formatRaceCategoryLabel(raceCategory: string, speedDistance?: string) {
+function formatRaceCategoryLabel(
+  raceCategory: string,
+  speedDistance?: string,
+  speedCrewRole?: string
+) {
   const base = raceCategory?.trim() || '';
   const speed = speedDistance?.trim();
-  return speed ? `${base} (${speed})` : base;
+  const role = speedCrewRole?.trim();
+  const withSpeed = speed ? `${base} (${speed})` : base;
+  return role ? `${withSpeed} — ${role}` : withSpeed;
 }
 
 type PaymentProofStatus = 'none' | 'email' | 'upload';
@@ -341,6 +351,10 @@ async function exportToExcel(
       'Name',
       'Advocate Code',
       'Race Experience',
+      'Speed Crew Category',
+      'Singlet Add-On',
+      'Speed Series Registrant',
+      'Amount Due',
       'Email',
       'Payment',
       'Contact',
@@ -358,7 +372,17 @@ async function exportToExcel(
     const rows = allUsers.map((user: User) => [
       formatRegistrantProfileName(user),
       user.promoCode || '',
-      formatRaceCategoryLabel(user.raceCategory, user.speedDistance),
+      formatRaceCategoryLabel(user.raceCategory, user.speedDistance, user.speedCrewRole),
+      user.speedCrewRole || '',
+      user.speedCrewSingletAddOn ? 'Yes' : user.raceCategory === '2XU Speed Crew' ? 'No' : '',
+      user.speedCrewSingletAddOn ? (user.isSpeedSeriesRegistrant ? 'Yes' : 'No') : '',
+      user.raceCategory === '2XU Speed Crew'
+        ? user.amountDuePhp != null
+          ? user.amountDuePhp === 0
+            ? 'Free'
+            : `₱${user.amountDuePhp.toLocaleString('en-PH')}`
+          : ''
+        : '',
       user.email,
       formatPaymentProofExport(user),
       user.contact,
@@ -1463,7 +1487,8 @@ export default function DashboardPage() {
                   {users.map((user) => {
                     const raceExperience = formatRaceCategoryLabel(
                       user.raceCategory,
-                      user.speedDistance
+                      user.speedDistance,
+                      user.speedCrewRole
                     );
                     const abbr = genderLetterAbbrev(user.gender);
                     const ageYears = getAgeYearsFromBirthday(user.birthday);

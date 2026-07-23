@@ -21,6 +21,10 @@ type BuildRegistrationConfirmationEmailInput = {
   bibNumber?: string;
   raceCategory?: string;
   promoCode?: string;
+  speedCrewRole?: string;
+  speedCrewSingletAddOn?: boolean;
+  isSpeedSeriesRegistrant?: boolean;
+  amountDuePhp?: number;
 };
 
 type SendRegistrationConfirmationOptions = {
@@ -31,6 +35,10 @@ type SendRegistrationConfirmationOptions = {
   paymentProofUrl?: string;
   orderNumber?: string;
   bibNumber?: string;
+  speedCrewRole?: string;
+  speedCrewSingletAddOn?: boolean;
+  isSpeedSeriesRegistrant?: boolean;
+  amountDuePhp?: number;
 };
 
 function getFirstName(fullName: string): string {
@@ -152,13 +160,35 @@ export function buildRegistrationConfirmationEmail({
   bibNumber = '',
   raceCategory = '',
   promoCode = '',
+  speedCrewRole = '',
+  speedCrewSingletAddOn = false,
+  isSpeedSeriesRegistrant = false,
+  amountDuePhp,
 }: BuildRegistrationConfirmationEmailInput): RegistrationConfirmationEmailPreview {
   const firstName = getFirstName(participantName);
   const raceDistanceLabel = formatRaceDistanceLabel(speedDistance);
   const orderLabel = formatOrderNumber(orderNumber);
   const bibLabel = bibNumber.trim() || 'Auto-assigned (we generate random number)';
   const registrationType = formatRegistrationType(raceCategory, promoCode);
-  const showSingletAddOn = isFcAdvocatePromoCode(promoCode);
+  const showSingletAddOn = isFcAdvocatePromoCode(promoCode) || speedCrewSingletAddOn;
+  const speedCrewDetailsHtml = speedCrewRole
+    ? `<p style="margin:6px 0 0 0; font-size:14px; color:#374151;"><strong>Speed Crew category:</strong> ${escapeHtml(speedCrewRole)}${
+        speedCrewSingletAddOn
+          ? ` · Singlet add-on (${isSpeedSeriesRegistrant ? 'Speed Series registrant ₱750' : '₱1,200'})`
+          : amountDuePhp === 0
+            ? ' · Free registration'
+            : ''
+      }</p>`
+    : '';
+  const speedCrewDetailsText = speedCrewRole
+    ? `\nSpeed Crew category: ${speedCrewRole}${
+        speedCrewSingletAddOn
+          ? ` | Singlet add-on (${isSpeedSeriesRegistrant ? 'Speed Series registrant ₱750' : '₱1,200'})`
+          : amountDuePhp === 0
+            ? ' | Free registration'
+            : ''
+      }`
+    : '';
 
   const contactNumber = process.env.MAILER_CONTACT_NUMBER?.trim() || '09053162845';
   const eventDate = process.env.MAILER_BASECAMP_EVENT_DATE?.trim() || 'July 26, 2026';
@@ -219,6 +249,7 @@ export function buildRegistrationConfirmationEmail({
       <p style="margin:0 0 6px 0; font-size:14px; color:#374151;"><strong>Race Distance:</strong> ${escapeHtml(raceDistanceLabel)}</p>
       <p style="margin:0 0 6px 0; font-size:14px; color:#374151;"><strong>Order #:</strong> ${escapeHtml(orderLabel)} | <strong>Bib #:</strong> ${escapeHtml(bibLabel)}</p>
       <p style="margin:0; font-size:14px; color:#374151;"><strong>Registration Type:</strong> ${escapeHtml(registrationType)}</p>
+      ${speedCrewDetailsHtml}
     </div>
     <p style="margin:24px 0 8px 0; font-weight:bold; color:#1f2937;">YOUR BASECAMP INCLUDES:</p>
     <ol style="margin:0 0 20px 0; padding-left:20px; color:#374151;">
@@ -267,7 +298,7 @@ Location: ${locationNotice}
 Date: ${dateDetailsLine}
 Race Distance: ${raceDistanceLabel}
 Order #: ${orderLabel} | Bib #: ${bibLabel}
-Registration Type: ${registrationType}
+Registration Type: ${registrationType}${speedCrewDetailsText}
 
 YOUR BASECAMP INCLUDES:
 1. 2KM / 5KM / 10KM Altitude Trail Run
@@ -340,6 +371,10 @@ export async function sendRegistrationConfirmation(
     bibNumber: options.bibNumber || '',
     raceCategory: options.raceCategory || '',
     promoCode: options.promoCode || '',
+    speedCrewRole: options.speedCrewRole || '',
+    speedCrewSingletAddOn: options.speedCrewSingletAddOn === true,
+    isSpeedSeriesRegistrant: options.isSpeedSeriesRegistrant === true,
+    amountDuePhp: options.amountDuePhp,
   });
 
   const ccRecipients = [
