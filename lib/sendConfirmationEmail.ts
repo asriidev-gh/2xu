@@ -191,12 +191,12 @@ export function buildRegistrationConfirmationEmail({
     : '';
 
   const contactNumber = process.env.MAILER_CONTACT_NUMBER?.trim() || '09053162845';
-  const eventDate = process.env.MAILER_BASECAMP_EVENT_DATE?.trim() || 'July 26, 2026';
+  const eventDate = process.env.MAILER_BASECAMP_EVENT_DATE?.trim() || 'September 19, 2026';
   const assemblyTime = process.env.MAILER_BASECAMP_ASSEMBLY_TIME?.trim() || '';
   const kitPickupDetails =
     process.env.MAILER_BASECAMP_KIT_PICKUP?.trim() || 'July 18 and 25 | 3pm to 7pm';
   const raceDayDetails =
-    process.env.MAILER_BASECAMP_RACE_DAY?.trim() || 'Basecamp 2 at Baguio | July 26 | 6:30am';
+    process.env.MAILER_BASECAMP_RACE_DAY?.trim() || 'Basecamp 2 at Baguio | September 19 | 6:30am';
   const raceBriefNotice =
     process.env.MAILER_BASECAMP_RACE_BRIEF_NOTICE?.trim() ||
     "We'll email you final race brief a week before";

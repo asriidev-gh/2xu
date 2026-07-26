@@ -296,7 +296,7 @@ export default function Hero({ onOpenRaceEventsDetails }: HeroProps) {
               <p className="text-lg sm:text-xl text-center">
                 BAGUIO<br />
                 <span>
-                  July <span className="text-yellow-500">26th</span> 2026
+                  September <span className="text-yellow-500">19th</span> 2026
                 </span>
               </p>
             </div>

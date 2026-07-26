@@ -30,7 +30,7 @@ const UPDATES: UpdateItem[] = [
     id: 2,
     label: 'Speed Series by the Mountain',
     title: 'Baguio Leg',
-    meta: 'July 26, 2026 • Baguio City',
+    meta: 'September 19, 2026 • Baguio City',
   },
   {
     id: 3,

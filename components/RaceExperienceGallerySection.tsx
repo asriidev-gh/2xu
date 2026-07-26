@@ -38,7 +38,7 @@ const EXPERIENCES: ExperienceItem[] = [
     imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1400&q=80',
     alt: 'Mountain landscape with winding road',
     location: 'Baguio City',
-    date: '26 July 2026',
+    date: '19 September 2026',
     status: 'upcoming',
   },
   {
