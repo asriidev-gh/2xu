@@ -12,7 +12,29 @@ const nextConfig = {
       },
     ],
   },
-}
+  async headers() {
+    return [
+      {
+        // Promo / update images change often; don't let CDN/browsers keep stale copies.
+        source: '/images/updates/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
+          },
+        ],
+      },
+      {
+        source: '/images/baguio_leg-:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
+          },
+        ],
+      },
+    ];
+  },
+};
 
-module.exports = nextConfig
-
+module.exports = nextConfig;
