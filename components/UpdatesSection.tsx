@@ -376,11 +376,13 @@ function BaguioPromoUpdatePreview({
         onMouseLeave={() => setThumbnailHovered(false)}
       >
         <Image
+          key={activeImage}
           src={activeImage}
           alt={`Speed Series Baguio leg — Basecamp ${imageIndex + 1}`}
           fill
           className="object-contain object-center bg-gray-950"
           sizes="(max-width: 640px) 100vw, 500px"
+          unoptimized
         />
         {imageCount > 1 && (
           <>

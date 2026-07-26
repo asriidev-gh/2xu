@@ -5,7 +5,7 @@ export async function fetchImageWithProgress(
   onProgress: (percent: number) => void,
   signal: AbortSignal
 ): Promise<string> {
-  const res = await fetch(src, { signal, cache: 'force-cache' });
+  const res = await fetch(src, { signal, cache: 'no-store' });
   if (!res.ok) {
     throw new Error('Failed to load image');
   }
