@@ -32,7 +32,7 @@ const T_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 // Promo formats:
 // - Advocate code: SPS2XU + digits (bypasses payment proof)
-// - Founders Club: FC000001–FC000500 (VIP rate: ₱999 today only, then ₱1,200; payment still required)
+// - Founders Club: FC000001–FC000500 (VIP rate: ₱999 today only, then ₱1,500; payment still required)
 // - Special code: SPSUAAPElite + digits (Athletes Category only)
 const PROMO_MAX_LENGTH = 20;
 

@@ -8,8 +8,8 @@ export const FC_PROMO_DAY_DATE =
   (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_FC_PROMO_DAY_DATE?.trim()) ||
   DEFAULT_FC_PROMO_DAY_DATE;
 
-export const FC_STANDARD_RATE_PHP = 1200;
-export const FC_STANDARD_RATE_USD_DISPLAY = '$21';
+export const FC_STANDARD_RATE_PHP = 1500;
+export const FC_STANDARD_RATE_USD_DISPLAY = '$27';
 
 export const FC_PROMO_DAY_RATE_PHP = 999;
 export const FC_PROMO_DAY_RATE_USD_DISPLAY = '$18';
